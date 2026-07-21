@@ -6,13 +6,13 @@ import Colors, { iosShadow } from 'shared/constants/colors';
 import {
   MOCK_AI_GYM_ROUTINES,
   MOCK_AI_HOME_ROUTINES,
-} from '../data/mock-home-data';
-import { RECOMMENDED_ROUTINES } from '../data/routines';
-import type { HomeLocation, HomeRoutineTab } from '../types/routine';
+} from '../data/mock-ai-routines';
+import { RECOMMENDED_ROUTINES } from '../data/recommended-routines';
+import type { RoutineLocation, RoutineSelectorTab } from '../types/routine';
 import { RoutineAccordion } from './routine-accordion';
 
 const ROUTINE_TABS: {
-  key: HomeRoutineTab;
+  key: RoutineSelectorTab;
   label: string;
   unwired?: boolean;
 }[] = [
@@ -23,8 +23,9 @@ const ROUTINE_TABS: {
 ];
 
 export function RoutineCard() {
-  const [activeTab, setActiveTab] = useState<HomeRoutineTab>('ai');
-  const [selectedLocation, setSelectedLocation] = useState<HomeLocation>('gym');
+  const [activeTab, setActiveTab] = useState<RoutineSelectorTab>('ai');
+  const [selectedLocation, setSelectedLocation] =
+    useState<RoutineLocation>('gym');
   const [expandedRoutineId, setExpandedRoutineId] = useState<string | null>(
     'ai_gym_60',
   );

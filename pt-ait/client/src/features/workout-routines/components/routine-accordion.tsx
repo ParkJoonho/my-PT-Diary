@@ -7,12 +7,12 @@ import {
 import { UnimplementedBadge } from 'shared/components/unimplemented-badge';
 import Colors from 'shared/constants/colors';
 import { resolveStepTag } from '../lib/resolve-step-tag';
-import type { HomeRoutine } from '../types/routine';
+import type { WorkoutRoutine } from '../types/routine';
 
 type RoutineAccordionProps = {
   expanded: boolean;
   onToggle: () => void;
-  routine: HomeRoutine;
+  routine: WorkoutRoutine;
 };
 
 export function RoutineAccordion({

@@ -35,7 +35,7 @@ docs                      컨벤션, 작업 내역, 원본 디자인 참고 문�
 ### 1. 의존성 설치
 
 ```bash
-cd "/Users/jonghyunchoi/Desktop/AI아테나 업무/my-PT-Diary/pt-ait/client"
+cd pt-ait/client
 npm install
 ```
 

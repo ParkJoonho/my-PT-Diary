@@ -8,10 +8,10 @@ import {
 } from 'shared/components/icons/pt-diary-icons';
 import { UnimplementedBadge } from 'shared/components/unimplemented-badge';
 import Colors from 'shared/constants/colors';
-import { HOME_TABS } from '../data/mock-home-data';
-import type { HomeTabItem } from '../types/routine';
+import { APP_TABS } from '../data/tabs';
+import type { AppTabItem } from '../types/tab';
 
-const ICONS: Record<HomeTabItem['key'], typeof HomeTabIcon> = {
+const ICONS: Record<AppTabItem['key'], typeof HomeTabIcon> = {
   home: HomeTabIcon,
   exercise: HistoryTabIcon,
   'pt-log': PTTabIcon,
@@ -19,10 +19,10 @@ const ICONS: Record<HomeTabItem['key'], typeof HomeTabIcon> = {
   condition: MyTabIcon,
 };
 
-export function HomeTabBar() {
+export function AppTabBar() {
   return (
     <View style={styles.tabBar}>
-      {HOME_TABS.map((tab) => {
+      {APP_TABS.map((tab) => {
         const Icon = ICONS[tab.key];
         const active = tab.key === 'home';
         const color = active ? Colors.text : Colors.tabIconDefault;

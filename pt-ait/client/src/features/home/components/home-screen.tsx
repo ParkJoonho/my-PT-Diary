@@ -1,9 +1,10 @@
+import { AppTabBar } from 'features/app-shell/components/app-tab-bar';
+import { WEEKLY_DAYS } from 'features/workout-records/data/mock-weekly-workouts';
+import { RoutineCard } from 'features/workout-routines/components/routine-card';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import Colors from 'shared/constants/colors';
-import { WEEKLY_DAYS } from '../data/mock-home-data';
-import { HomeTabBar } from './home-tab-bar';
+import { HOME_QUICK_ACTIONS } from '../data/quick-actions';
 import { QuickActionCard } from './quick-action-card';
-import { RoutineCard } from './routine-card';
 import { WeeklyTrackerCard } from './weekly-tracker-card';
 
 export function HomeScreen() {
@@ -16,18 +17,11 @@ export function HomeScreen() {
       >
         <WeeklyTrackerCard days={WEEKLY_DAYS} streakCount={2} />
         <RoutineCard />
-        <QuickActionCard
-          kind="outdoor"
-          subtitle="러닝·등산 코스 추천"
-          title="야외운동"
-        />
-        <QuickActionCard
-          kind="guide"
-          subtitle="부위별·기구별 운동 학습"
-          title="운동배우기"
-        />
+        {HOME_QUICK_ACTIONS.map((action) => (
+          <QuickActionCard key={action.kind} {...action} />
+        ))}
       </ScrollView>
-      <HomeTabBar />
+      <AppTabBar />
     </View>
   );
 }

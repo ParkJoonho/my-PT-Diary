@@ -1,20 +1,4 @@
-export interface RoutineStep {
-  name: string;
-  detail: string;
-  type: 'cardio' | 'strength' | 'stretch' | 'rest';
-  restAfter?: string;
-  sets?: number;
-  tag?: string;
-}
-
-export interface WorkoutRoutine {
-  id: string;
-  label: string;
-  duration: string;
-  location: 'gym' | 'home';
-  pattern?: 'general' | 'crossfit';
-  steps: RoutineStep[];
-}
+import type { WorkoutRoutine } from '../types/routine';
 
 export const RECOMMENDED_ROUTINES: WorkoutRoutine[] = [
   {

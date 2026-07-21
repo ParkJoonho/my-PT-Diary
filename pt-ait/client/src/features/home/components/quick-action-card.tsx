@@ -1,23 +1,14 @@
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { UnimplementedBadge } from 'shared/components/unimplemented-badge';
 import Colors, { iosShadow } from 'shared/constants/colors';
-
-type QuickActionCardProps = {
-  kind: 'outdoor' | 'guide';
-  subtitle: string;
-  title: string;
-};
+import type { HomeQuickAction } from '../types/home';
 
 const QUICK_IMAGES = {
   outdoor: require('../../../assets/images/shoes.png'),
   guide: require('../../../assets/images/video.png'),
 };
 
-export function QuickActionCard({
-  kind,
-  subtitle,
-  title,
-}: QuickActionCardProps) {
+export function QuickActionCard({ kind, subtitle, title }: HomeQuickAction) {
   return (
     <Pressable
       accessibilityRole="button"

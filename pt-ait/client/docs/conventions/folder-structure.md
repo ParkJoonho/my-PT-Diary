@@ -8,11 +8,25 @@
 src
 ├── pages
 ├── features
-│   └── home
-│       ├── components
-│       ├── data
-│       ├── lib
-│       └── types
+│   ├── app-shell
+│   ├── auth
+│   ├── home
+│   ├── workout-routines
+│   ├── active-workout
+│   ├── outdoor-workout
+│   ├── exercise-guide
+│   ├── equipment-recognition
+│   ├── workout-records
+│   ├── condition-records
+│   ├── pt-logs
+│   ├── trainer-match
+│   ├── ai-hub
+│   ├── body-analysis
+│   ├── food-analysis
+│   ├── posture-analysis
+│   ├── fitness-analysis
+│   ├── athena-coach
+│   └── shoe-recommendation
 ├── shared
 │   ├── components
 │   ├── constants
@@ -41,25 +55,36 @@ src
 
 도메인별 UI와 로직은 `src/features/[feature-name]` 아래에 둔다.
 
-홈 화면은 아래 구조를 기준으로 한다.
+홈 화면은 대시보드 조립만 맡긴다.
 
 ```text
 src/features/home
 ├── components
 │   ├── weekly-tracker-card.tsx
-│   ├── routine-card.tsx
-│   ├── routine-accordion.tsx
 │   ├── quick-action-card.tsx
-│   └── home-tab-bar.tsx
+│   └── home-screen.tsx
 ├── data
-│   └── routines.ts
-├── lib
-│   └── resolve-step-tag.ts
+│   └── quick-actions.ts
 └── types
-    └── routine.ts
+    └── home.ts
 ```
 
-기능 모듈은 `src/shared`를 가져올 수 있다. 반대로 `src/shared`가 기능 모듈을 가져오면 안 된다.
+홈에서 보이는 기능이라도 아래처럼 독립적으로 커지는 것은 별도 feature로 분리한다.
+
+- `app-shell`: 하단 탭바, 앱 공통 네비게이션 껍데기
+- `workout-routines`: AI추천·헬스장·크로스핏·홈트 루틴 선택
+- `active-workout`: 카운트다운, 타이머, 운동 항목 체크, 운동 완료 저장
+- `outdoor-workout`: 야외운동 코스 입력, 계획 결과, 야외운동 기록 저장
+- `exercise-guide`: 운동 배우기, 부위별·기구별 가이드, 영상 뷰어
+- `equipment-recognition`: 사진으로 기구 찾기
+- `workout-records`: 개인 운동 기록, 주간 완료 계산, 기록 동기화
+- `condition-records`: 컨디션 기록
+- `pt-logs`: PT 수업일지
+- `trainer-match`: AI 트레이너 추천과 매칭
+- `ai-hub`: AI 기능 허브
+- `body-analysis`, `food-analysis`, `posture-analysis`, `fitness-analysis`, `athena-coach`, `shoe-recommendation`: AI 세부 기능
+
+기능 모듈끼리 필요한 참조는 허용한다. 단, `src/shared`는 기능 모듈을 가져오면 안 된다.
 
 ## 공용 영역
 

@@ -1,8 +1,8 @@
+import type { WeeklyDay } from 'features/workout-records/types/weekly-workout';
 import { StyleSheet, Text, View } from 'react-native';
 import { CheckIcon } from 'shared/components/icons/pt-diary-icons';
 import { UnimplementedBadge } from 'shared/components/unimplemented-badge';
 import Colors, { iosShadow } from 'shared/constants/colors';
-import type { WeeklyDay } from '../types/routine';
 
 type WeeklyTrackerCardProps = {
   days: WeeklyDay[];
