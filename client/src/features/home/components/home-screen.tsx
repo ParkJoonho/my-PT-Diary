@@ -1,5 +1,7 @@
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Colors from 'shared/constants/colors';
+import { useWeeklyTrackerSummary } from 'shared/api/weekly-tracker';
+import type { WeeklyTrackerSummaryDto } from 'shared/api/generated/models';
 import { WEEKLY_DAYS } from '../data/mock-home-data';
 import { HomeTabBar } from './home-tab-bar';
 import { QuickActionCard } from './quick-action-card';
@@ -7,6 +9,12 @@ import { RoutineCard } from './routine-card';
 import { WeeklyTrackerCard } from './weekly-tracker-card';
 
 export function HomeScreen() {
+  const weeklyTrackerQuery = useWeeklyTrackerSummary();
+  const weeklyTrackerSummary: WeeklyTrackerSummaryDto | undefined =
+    weeklyTrackerQuery.data;
+  const weeklyDays = weeklyTrackerSummary?.days ?? WEEKLY_DAYS;
+  const streakCount = weeklyTrackerSummary?.streakCount ?? 0;
+
   return (
     <View style={styles.container}>
       <ScrollView
@@ -14,7 +22,17 @@ export function HomeScreen() {
         showsVerticalScrollIndicator={false}
         style={styles.scrollView}
       >
-        <WeeklyTrackerCard days={WEEKLY_DAYS} streakCount={2} />
+        {weeklyTrackerQuery.isLoading ? (
+          <View style={styles.loadingCard}>
+            <ActivityIndicator color={Colors.accent} />
+          </View>
+        ) : weeklyTrackerQuery.isError ? (
+          <View style={styles.loadingCard}>
+            <Text style={styles.errorText}>주간 데이터를 불러오지 못했어요.</Text>
+          </View>
+        ) : (
+          <WeeklyTrackerCard days={weeklyDays} streakCount={streakCount} />
+        )}
         <RoutineCard />
         <QuickActionCard
           kind="outdoor"
@@ -36,6 +54,18 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: Colors.background,
     flex: 1,
+  },
+  errorText: {
+    color: Colors.textMuted,
+    fontFamily: 'Pretendard-Regular',
+    fontSize: 14,
+  },
+  loadingCard: {
+    alignItems: 'center',
+    backgroundColor: Colors.card,
+    borderRadius: 16,
+    justifyContent: 'center',
+    minHeight: 144,
   },
   scrollContent: {
     gap: 10,

@@ -1,9 +1,9 @@
 import { NotFoundException } from '@nestjs/common';
-import { WeeklyWorkoutSource } from './dto/create-weekly-workout.dto';
-import { WeeklyTrackerRepositoryPort } from './weekly-tracker.repository.port';
-import { WeeklyTrackerService } from './weekly-tracker.service';
+import { WeeklyWorkoutSource } from '../dto/create-weekly-workout.dto';
+import { WeeklyTrackerRepositoryPort } from '../weekly-tracker.repository.port';
+import { WeeklyTrackerService } from '../weekly-tracker.service';
 
-describe('WeeklyTrackerService', () => {
+describe('주간 트래커 서비스', () => {
   let repository: jest.Mocked<WeeklyTrackerRepositoryPort>;
   let service: WeeklyTrackerService;
 
@@ -19,7 +19,7 @@ describe('WeeklyTrackerService', () => {
     service = new WeeklyTrackerService(repository);
   });
 
-  it('creates a workout completion and normalizes null notes', async () => {
+  it('운동 완료 레코드를 만들고 응답을 정규화한다', async () => {
     repository.createWorkoutCompletion.mockResolvedValue({
       completed_on: '2026-07-22',
       created_at: '2026-07-22T10:00:00.000Z',
@@ -49,7 +49,7 @@ describe('WeeklyTrackerService', () => {
     });
   });
 
-  it('builds a monday-sunday weekly summary with streak', async () => {
+  it('월요일부터 일요일까지 주간 요약과 스트릭을 계산한다', async () => {
     repository.getCompletionCountsForWeek.mockResolvedValue([
       { completedOn: '2026-07-21', completionCount: 1 },
       { completedOn: '2026-07-22', completionCount: 2 },
@@ -82,7 +82,7 @@ describe('WeeklyTrackerService', () => {
     ]);
   });
 
-  it('counts streak from yesterday when today is empty', async () => {
+  it('오늘 기록이 없으면 어제 기준으로 스트릭을 계산한다', async () => {
     repository.getCompletionCountsForWeek.mockResolvedValue([
       { completedOn: '2026-07-21', completionCount: 1 },
     ]);
@@ -96,7 +96,7 @@ describe('WeeklyTrackerService', () => {
     expect(result.streakCount).toBe(2);
   });
 
-  it('returns zero streak when neither today nor yesterday has workouts', async () => {
+  it('오늘과 어제 모두 비어 있으면 스트릭 0을 반환한다', async () => {
     repository.getCompletionCountsForWeek.mockResolvedValue([]);
     repository.listDistinctCompletedDatesUntil.mockResolvedValue([
       '2026-07-19',
@@ -108,7 +108,7 @@ describe('WeeklyTrackerService', () => {
     expect(result.totalCompletedDays).toBe(0);
   });
 
-  it('maps weekly completion rows for list responses', async () => {
+  it('주간 완료 목록 응답을 화면용 형태로 변환한다', async () => {
     repository.listWorkoutCompletionsForWeek.mockResolvedValue([
       {
         completed_on: '2026-07-21',
@@ -135,7 +135,7 @@ describe('WeeklyTrackerService', () => {
     ]);
   });
 
-  it('delegates delete to the repository', async () => {
+  it('삭제 요청을 저장소로 위임한다', async () => {
     repository.deleteWorkoutCompletion.mockResolvedValue(undefined);
 
     const result = await service.deleteWorkoutCompletion('user-a', 'workout-1');
@@ -147,7 +147,7 @@ describe('WeeklyTrackerService', () => {
     expect(result).toEqual({ deleted: true });
   });
 
-  it('propagates repository delete errors', async () => {
+  it('삭제 실패는 그대로 상위로 전달한다', async () => {
     repository.deleteWorkoutCompletion.mockRejectedValue(
       new NotFoundException('Workout completion not found.'),
     );

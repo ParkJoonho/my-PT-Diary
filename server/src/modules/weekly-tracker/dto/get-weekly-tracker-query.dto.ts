@@ -1,4 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsOptional, IsString, Matches } from 'class-validator';
 
 export class GetWeeklyTrackerQueryDto {
   @ApiPropertyOptional({
@@ -6,5 +7,8 @@ export class GetWeeklyTrackerQueryDto {
     description:
       'Reference date in YYYY-MM-DD format. The server resolves the containing Monday-Sunday week.',
   })
+  @IsOptional()
+  @IsString()
+  @Matches(/^\d{4}-\d{2}-\d{2}$/)
   referenceDate?: string;
 }

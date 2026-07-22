@@ -35,4 +35,22 @@ npm run dev
 npm run lint
 npm run typecheck
 npm test -- --runInBand
+npm run api:generate
+```
+
+Orval 설정은 `orval.config.ts`에 있고, 입력 스펙은 로컬 서버의 `http://127.0.0.1:3000/docs-json`를 사용한다.
+생성 결과는 `src/shared/api/generated` 아래로 떨어지며 Git에는 포함하지 않는다.
+
+## 앱인토스 시뮬레이터 실행
+
+```bash
+APP="샌드박스앱 경로/AppsInTossSandbox.app"
+DEVICE="iPhone 17"
+BUNDLE_ID="com.vivarepublica.ent.cash.test"
+
+xcrun simctl boot "$DEVICE"
+open -a Simulator
+xcrun simctl bootstatus "$DEVICE" -b
+xcrun simctl install booted "$APP"
+xcrun simctl launch booted "$BUNDLE_ID"
 ```

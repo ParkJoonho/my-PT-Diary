@@ -1,6 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { CheckIcon } from 'shared/components/icons/pt-diary-icons';
-import { UnimplementedBadge } from 'shared/components/unimplemented-badge';
 import Colors, { iosShadow } from 'shared/constants/colors';
 import type { WeeklyDay } from '../types/routine';
 
@@ -16,10 +15,7 @@ export function WeeklyTrackerCard({
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <View style={styles.titleRow}>
-          <Text style={styles.title}>주간 트래커</Text>
-          <UnimplementedBadge compact />
-        </View>
+        <Text style={styles.title}>주간 트래커</Text>
         <View style={styles.streakBadge}>
           <Text style={styles.streakBadgeText}>{streakCount}일 연속</Text>
         </View>
@@ -90,10 +86,5 @@ const styles = StyleSheet.create({
     color: Colors.text,
     fontFamily: 'Pretendard-Medium',
     fontSize: 17,
-  },
-  titleRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 8,
   },
 });

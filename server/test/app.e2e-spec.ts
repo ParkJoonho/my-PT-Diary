@@ -4,7 +4,7 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
 
-describe('AppController (e2e)', () => {
+describe('애플리케이션 컨트롤러 E2E', () => {
   let app: INestApplication<App>;
 
   beforeEach(async () => {
@@ -16,7 +16,7 @@ describe('AppController (e2e)', () => {
     await app.init();
   });
 
-  it('/health (GET)', () => {
+  it('헬스 체크 요청에 연결 상태를 반환한다', () => {
     return request(app.getHttpServer())
       .get('/health')
       .expect(200)

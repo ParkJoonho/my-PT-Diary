@@ -41,7 +41,7 @@ const weeklyTrackerSummarySchema = z.object({
   weekStartDate: z.string(),
 });
 
-describe('WeeklyTrackerController (e2e)', () => {
+describe('주간 트래커 컨트롤러 E2E', () => {
   let app: INestApplication<App>;
   let databaseService: DatabaseService;
 
@@ -70,7 +70,7 @@ describe('WeeklyTrackerController (e2e)', () => {
     await app.close();
   });
 
-  it('rejects requests without x-user-key', async () => {
+  it('사용자 키 헤더가 없으면 요청을 거부한다', async () => {
     const response = await request(app.getHttpServer())
       .get('/api/weekly-tracker')
       .expect(400);
@@ -79,7 +79,7 @@ describe('WeeklyTrackerController (e2e)', () => {
     expect(body.message).toBe('Request validation failed.');
   });
 
-  it('rejects invalid completion payloads', async () => {
+  it('잘못된 완료 payload는 400으로 거부한다', async () => {
     const response = await request(app.getHttpServer())
       .post('/api/weekly-tracker/workouts')
       .set('x-user-key', userKey)
@@ -103,7 +103,7 @@ describe('WeeklyTrackerController (e2e)', () => {
     );
   });
 
-  it('creates, summarizes, lists, and deletes weekly tracker completions', async () => {
+  it('생성부터 요약, 목록, 삭제까지 주간 트래커 흐름을 수행한다', async () => {
     const createResponse = await request(app.getHttpServer())
       .post('/api/weekly-tracker/workouts')
       .set('x-user-key', userKey)

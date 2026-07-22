@@ -8,6 +8,8 @@ export type HomeRoutine = WorkoutRoutine & {
 };
 
 export type WeeklyDay = {
+  completionCount?: number;
+  date?: string;
   label: string;
   completed: boolean;
 };

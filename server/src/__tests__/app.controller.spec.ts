@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AppController } from './app.controller';
-import { DatabaseService } from './database/database.service';
+import { AppController } from '../app.controller';
+import { DatabaseService } from '../database/database.service';
 
-describe('AppController', () => {
+describe('애플리케이션 컨트롤러', () => {
   let appController: AppController;
 
   beforeEach(async () => {
@@ -21,7 +21,7 @@ describe('AppController', () => {
     appController = app.get<AppController>(AppController);
   });
 
-  it('should return service metadata', () => {
+  it('서비스 기본 정보를 반환한다', () => {
     expect(appController.getIndex()).toEqual({
       service: 'at-pt-server',
       docs: '/docs',
