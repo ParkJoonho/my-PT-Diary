@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:18-alpine
+    container_name: at-pt-postgres
+    environment:
+      POSTGRES_DB: at_pt
+      POSTGRES_USER: a2t
+      POSTGRES_PASSWORD: a2t
+    ports:
+      - '5432:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U a2t -d at_pt']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - at_pt_postgres_data:/var/lib/postgresql
+
+volumes:
+  at_pt_postgres_data:
