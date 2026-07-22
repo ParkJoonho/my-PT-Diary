@@ -20,5 +20,5 @@
 
 이 저장소 안의 파일을 언급해야 할 때는 저장소 기준 상대경로를 사용한다.
 
-- `src/features/home/components/routine-card.tsx`
+- `src/features/workout-routines/components/routine-card.tsx`
 - `docs/migration/home-design-spec.md`
