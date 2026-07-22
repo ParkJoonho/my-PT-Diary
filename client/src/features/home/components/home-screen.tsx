@@ -1,20 +1,50 @@
+import { Component, Suspense, type PropsWithChildren } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Colors from 'shared/constants/colors';
 import { useWeeklyTrackerSummary } from 'shared/api/weekly-tracker';
-import type { WeeklyTrackerSummaryDto } from 'shared/api/generated/models';
-import { WEEKLY_DAYS } from '../data/mock-home-data';
 import { HomeTabBar } from './home-tab-bar';
 import { QuickActionCard } from './quick-action-card';
 import { RoutineCard } from './routine-card';
 import { WeeklyTrackerCard } from './weekly-tracker-card';
 
-export function HomeScreen() {
-  const weeklyTrackerQuery = useWeeklyTrackerSummary();
-  const weeklyTrackerSummary: WeeklyTrackerSummaryDto | undefined =
-    weeklyTrackerQuery.data;
-  const weeklyDays = weeklyTrackerSummary?.days ?? WEEKLY_DAYS;
-  const streakCount = weeklyTrackerSummary?.streakCount ?? 0;
+function WeeklyTrackerLoading() {
+  return (
+    <View style={styles.loadingCard}>
+      <ActivityIndicator color={Colors.accent} />
+    </View>
+  );
+}
 
+function WeeklyTrackerError() {
+  return (
+    <View style={styles.loadingCard}>
+      <Text style={styles.errorText}>주간 데이터를 불러오지 못했어요.</Text>
+    </View>
+  );
+}
+
+class WeeklyTrackerErrorBoundary extends Component<
+  PropsWithChildren,
+  { hasError: boolean }
+> {
+  state = { hasError: false };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  render() {
+    return this.state.hasError ? <WeeklyTrackerError /> : this.props.children;
+  }
+}
+
+function WeeklyTrackerSection() {
+  const { data } = useWeeklyTrackerSummary();
+
+  return <WeeklyTrackerCard days={data.days} streakCount={data.streakCount} />;
+}
+
+export function HomeScreen() {
   return (
     <View style={styles.container}>
       <ScrollView
@@ -22,17 +52,11 @@ export function HomeScreen() {
         showsVerticalScrollIndicator={false}
         style={styles.scrollView}
       >
-        {weeklyTrackerQuery.isLoading ? (
-          <View style={styles.loadingCard}>
-            <ActivityIndicator color={Colors.accent} />
-          </View>
-        ) : weeklyTrackerQuery.isError ? (
-          <View style={styles.loadingCard}>
-            <Text style={styles.errorText}>주간 데이터를 불러오지 못했어요.</Text>
-          </View>
-        ) : (
-          <WeeklyTrackerCard days={weeklyDays} streakCount={streakCount} />
-        )}
+        <WeeklyTrackerErrorBoundary>
+          <Suspense fallback={<WeeklyTrackerLoading />}>
+            <WeeklyTrackerSection />
+          </Suspense>
+        </WeeklyTrackerErrorBoundary>
         <RoutineCard />
         <QuickActionCard
           kind="outdoor"

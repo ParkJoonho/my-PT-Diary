@@ -16,8 +16,7 @@ export default defineConfig({
       override: {
         query: {
           signal: false,
-          useMutation: true,
-          useQuery: true,
+          useQuery: false,
           useSuspenseQuery: true,
         },
       },

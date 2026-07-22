@@ -1,23 +1,15 @@
-import { useQuery } from '@tanstack/react-query';
 import {
-  weeklyTrackerControllerGetWeeklyTrackerSummary,
+  type weeklyTrackerControllerGetWeeklyTrackerSummaryResponse,
+  useWeeklyTrackerControllerGetWeeklyTrackerSummarySuspense,
 } from './generated/endpoints/weekly-tracker/weekly-tracker';
 import type { WeeklyTrackerSummaryDto } from './generated/models';
-import { getTrackerUserKey } from './user-key';
+import { useTrackerUserKey } from './user-key';
 
 const WEEKLY_TRACKER_QUERY_KEY = ['weekly-tracker'] as const;
 
-export async function fetchWeeklyTrackerSummary(): Promise<WeeklyTrackerSummaryDto> {
-  const userKey = await getTrackerUserKey();
-  const response = await weeklyTrackerControllerGetWeeklyTrackerSummary(
-    undefined,
-    {
-      headers: {
-        'x-user-key': userKey,
-      },
-    },
-  );
-
+export function selectWeeklyTrackerSummary(
+  response: weeklyTrackerControllerGetWeeklyTrackerSummaryResponse,
+): WeeklyTrackerSummaryDto {
   if (response.status !== 200 || !response.data) {
     throw new Error('Weekly tracker summary request failed.');
   }
@@ -26,8 +18,20 @@ export async function fetchWeeklyTrackerSummary(): Promise<WeeklyTrackerSummaryD
 }
 
 export function useWeeklyTrackerSummary() {
-  return useQuery({
-    queryFn: fetchWeeklyTrackerSummary,
-    queryKey: WEEKLY_TRACKER_QUERY_KEY,
+  const userKey = useTrackerUserKey();
+
+  return useWeeklyTrackerControllerGetWeeklyTrackerSummarySuspense<
+    WeeklyTrackerSummaryDto,
+    Error
+  >(undefined, {
+    fetch: {
+      headers: {
+        'x-user-key': userKey,
+      },
+    },
+    query: {
+      queryKey: [...WEEKLY_TRACKER_QUERY_KEY, userKey],
+      select: selectWeeklyTrackerSummary,
+    },
   });
 }

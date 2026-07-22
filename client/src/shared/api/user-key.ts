@@ -1,4 +1,5 @@
 import { getAnonymousKey } from '@apps-in-toss/framework';
+import { useSuspenseQuery } from '@tanstack/react-query';
 
 const DEVELOPMENT_FALLBACK_USER_KEY = 'dev-preview-user';
 
@@ -24,4 +25,12 @@ export async function getTrackerUserKey(): Promise<string> {
   })();
 
   return cachedUserKeyPromise;
+}
+
+export function useTrackerUserKey() {
+  return useSuspenseQuery({
+    queryFn: getTrackerUserKey,
+    queryKey: ['tracker-user-key'],
+    staleTime: Number.POSITIVE_INFINITY,
+  }).data;
 }
