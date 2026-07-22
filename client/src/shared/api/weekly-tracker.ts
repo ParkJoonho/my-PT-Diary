@@ -3,6 +3,7 @@ import {
   useWeeklyTrackerControllerGetWeeklyTrackerSummarySuspense,
 } from './generated/endpoints/weekly-tracker/weekly-tracker';
 import type { WeeklyTrackerSummaryDto } from './generated/models';
+import { getClientTodayDate } from '../lib/date';
 import { useTrackerUserKey } from './user-key';
 
 const WEEKLY_TRACKER_QUERY_KEY = ['weekly-tracker'] as const;
@@ -19,18 +20,19 @@ export function selectWeeklyTrackerSummary(
 
 export function useWeeklyTrackerSummary() {
   const userKey = useTrackerUserKey();
+  const referenceDate = getClientTodayDate();
 
   return useWeeklyTrackerControllerGetWeeklyTrackerSummarySuspense<
     WeeklyTrackerSummaryDto,
     Error
-  >(undefined, {
+  >({ referenceDate }, {
     fetch: {
       headers: {
         'x-user-key': userKey,
       },
     },
     query: {
-      queryKey: [...WEEKLY_TRACKER_QUERY_KEY, userKey],
+      queryKey: [...WEEKLY_TRACKER_QUERY_KEY, userKey, referenceDate],
       select: selectWeeklyTrackerSummary,
     },
   });

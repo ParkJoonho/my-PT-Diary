@@ -4,6 +4,7 @@ import {
   useWeeklyTrackerControllerGetWeeklyTrackerSummarySuspense,
 } from '../generated/endpoints/weekly-tracker/weekly-tracker';
 import type { WeeklyTrackerSummaryDto } from '../generated/models';
+import { getClientTodayDate } from '../../lib/date';
 import { useTrackerUserKey } from '../user-key';
 import {
   selectWeeklyTrackerSummary,
@@ -16,6 +17,10 @@ jest.mock('../generated/endpoints/weekly-tracker/weekly-tracker', () => ({
 
 jest.mock('../user-key', () => ({
   useTrackerUserKey: jest.fn(),
+}));
+
+jest.mock('../../lib/date', () => ({
+  getClientTodayDate: jest.fn(),
 }));
 
 const 주간요약: WeeklyTrackerSummaryDto = {
@@ -32,12 +37,14 @@ describe('주간 트래커 API 래퍼', () => {
   const mockedUseWeeklyTrackerSummarySuspense = jest.mocked(
     useWeeklyTrackerControllerGetWeeklyTrackerSummarySuspense,
   );
+  const mockedGetClientTodayDate = jest.mocked(getClientTodayDate);
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockedGetClientTodayDate.mockReturnValue('2026-07-23');
   });
 
-  it('사용자 키 헤더로 Orval Suspense Query 훅을 호출한다', () => {
+  it('사용자 키 헤더와 클라이언트 기준일로 Orval Suspense Query 훅을 호출한다', () => {
     mockedUseTrackerUserKey.mockReturnValue('테스트-사용자');
     mockedUseWeeklyTrackerSummarySuspense.mockReturnValue({
       data: 주간요약,
@@ -52,7 +59,7 @@ describe('주간 트래커 API 래퍼', () => {
 
     expect(result.current.data).toEqual(주간요약);
     expect(mockedUseWeeklyTrackerSummarySuspense).toHaveBeenCalledWith(
-      undefined,
+      { referenceDate: '2026-07-23' },
       {
         fetch: {
           headers: {
@@ -60,7 +67,7 @@ describe('주간 트래커 API 래퍼', () => {
           },
         },
         query: {
-          queryKey: ['weekly-tracker', '테스트-사용자'],
+          queryKey: ['weekly-tracker', '테스트-사용자', '2026-07-23'],
           select: selectWeeklyTrackerSummary,
         },
       },

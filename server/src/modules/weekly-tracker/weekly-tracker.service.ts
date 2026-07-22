@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { addDays, format, getDay, parse, startOfWeek, subDays } from 'date-fns';
 import { randomUUID } from 'node:crypto';
 import { CreateWeeklyWorkoutDto } from './dto/create-weekly-workout.dto';
 import {
@@ -7,24 +8,14 @@ import {
 } from './weekly-tracker.repository.port';
 
 const KOREAN_DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'] as const;
+const ISO_DATE_FORMAT = 'yyyy-MM-dd';
 
 function formatDate(date: Date) {
-  const year = date.getFullYear();
-  const month = `${date.getMonth() + 1}`.padStart(2, '0');
-  const day = `${date.getDate()}`.padStart(2, '0');
-
-  return `${year}-${month}-${day}`;
+  return format(date, ISO_DATE_FORMAT);
 }
 
 function parseDate(dateString: string) {
-  const [year, month, day] = dateString.split('-').map(Number);
-  return new Date(year, month - 1, day);
-}
-
-function addDays(date: Date, amount: number) {
-  const nextDate = new Date(date);
-  nextDate.setDate(nextDate.getDate() + amount);
-  return nextDate;
+  return parse(dateString, ISO_DATE_FORMAT, new Date(0));
 }
 
 function resolveReferenceDate(referenceDate?: string) {
@@ -37,9 +28,7 @@ function resolveReferenceDate(referenceDate?: string) {
 }
 
 function resolveWeekStart(referenceDate: Date) {
-  const dayIndex = referenceDate.getDay();
-  const diffToMonday = dayIndex === 0 ? -6 : 1 - dayIndex;
-  return addDays(referenceDate, diffToMonday);
+  return startOfWeek(referenceDate, { weekStartsOn: 1 });
 }
 
 @Injectable()
@@ -92,7 +81,7 @@ export class WeeklyTrackerService {
 
       return {
         date: dateString,
-        label: KOREAN_DAY_LABELS[date.getDay()],
+        label: KOREAN_DAY_LABELS[getDay(date)],
         completed: completionCount > 0,
         completionCount,
       };
@@ -142,7 +131,7 @@ export class WeeklyTrackerService {
     referenceDate: Date,
   ) {
     const todayString = formatDate(referenceDate);
-    const yesterdayString = formatDate(addDays(referenceDate, -1));
+    const yesterdayString = formatDate(subDays(referenceDate, 1));
 
     if (
       !distinctCompletedDateSet.has(todayString) &&
@@ -153,12 +142,12 @@ export class WeeklyTrackerService {
 
     let streakDate = distinctCompletedDateSet.has(todayString)
       ? referenceDate
-      : addDays(referenceDate, -1);
+      : subDays(referenceDate, 1);
     let streakCount = 0;
 
     while (distinctCompletedDateSet.has(formatDate(streakDate))) {
       streakCount += 1;
-      streakDate = addDays(streakDate, -1);
+      streakDate = subDays(streakDate, 1);
     }
 
     return streakCount;
