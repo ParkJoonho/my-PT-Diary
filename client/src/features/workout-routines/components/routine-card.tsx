@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { AIInfoIcon } from 'shared/components/icons/pt-diary-icons';
-import { UnimplementedBadge } from 'shared/components/unimplemented-badge';
 import Colors, { iosShadow } from 'shared/constants/colors';
 import {
   MOCK_AI_GYM_ROUTINES,
@@ -18,9 +17,8 @@ import { RoutineAccordion } from './routine-accordion';
 const ROUTINE_TABS: {
   key: HomeRoutineTab;
   label: string;
-  unwired?: boolean;
 }[] = [
-  { key: 'ai', label: 'AI추천', unwired: true },
+  { key: 'ai', label: 'AI추천' },
   { key: 'gym', label: '헬스장' },
   { key: 'crossfit', label: '크로스핏' },
   { key: 'home', label: '홈트' },
@@ -31,10 +29,10 @@ type RoutineCardProps = {
 };
 
 export function RoutineCard({ onStartRoutine }: RoutineCardProps) {
-  const [activeTab, setActiveTab] = useState<HomeRoutineTab>('gym');
+  const [activeTab, setActiveTab] = useState<HomeRoutineTab>('ai');
   const [selectedLocation, setSelectedLocation] = useState<HomeLocation>('gym');
   const [expandedRoutineId, setExpandedRoutineId] = useState<string | null>(
-    'gym_60',
+    'ai_gym_60',
   );
 
   const routines = useMemo(() => {
@@ -85,7 +83,6 @@ export function RoutineCard({ onStartRoutine }: RoutineCardProps) {
                 <Text style={[styles.tabText, active && styles.tabTextActive]}>
                   {tab.label}
                 </Text>
-                {tab.unwired ? <UnimplementedBadge compact /> : null}
               </View>
             </Pressable>
           );

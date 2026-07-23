@@ -44,5 +44,8 @@
     "hermes-compiler": {
       "unplugged": true
     }
+  },
+  "optionalDependencies": {
+    "fsevents": "https://registry.npmjs.org/fsevents/-/fsevents-2.3.3.tgz"
   }
 }

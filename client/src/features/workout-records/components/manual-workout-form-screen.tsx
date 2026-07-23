@@ -294,10 +294,7 @@ function StrengthExerciseEditor({
         value={exercise.name}
       />
       {exercise.sets.map((set, setIndex) => (
-        <View
-          key={`${set.weightKg}-${set.reps}-${set.rir}-${set.restSeconds}`}
-          style={styles.setRow}
-        >
+        <View key={`${exerciseIndex}-${setIndex}`} style={styles.setRow}>
           <Input
             label={`${setIndex + 1}세트 kg`}
             keyboardType="decimal-pad"
