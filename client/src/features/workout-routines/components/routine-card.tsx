@@ -6,9 +6,13 @@ import Colors, { iosShadow } from 'shared/constants/colors';
 import {
   MOCK_AI_GYM_ROUTINES,
   MOCK_AI_HOME_ROUTINES,
-} from '../data/mock-home-data';
-import { RECOMMENDED_ROUTINES } from '../data/routines';
-import type { HomeLocation, HomeRoutineTab } from '../types/routine';
+} from '../data/mock-routines';
+import { RECOMMENDED_ROUTINES } from '../data/recommended-routines';
+import type {
+  HomeLocation,
+  HomeRoutine,
+  HomeRoutineTab,
+} from '../types/routine';
 import { RoutineAccordion } from './routine-accordion';
 
 const ROUTINE_TABS: {
@@ -22,11 +26,15 @@ const ROUTINE_TABS: {
   { key: 'home', label: '홈트' },
 ];
 
-export function RoutineCard() {
-  const [activeTab, setActiveTab] = useState<HomeRoutineTab>('ai');
+type RoutineCardProps = {
+  onStartRoutine?: (routine: HomeRoutine) => void;
+};
+
+export function RoutineCard({ onStartRoutine }: RoutineCardProps) {
+  const [activeTab, setActiveTab] = useState<HomeRoutineTab>('gym');
   const [selectedLocation, setSelectedLocation] = useState<HomeLocation>('gym');
   const [expandedRoutineId, setExpandedRoutineId] = useState<string | null>(
-    'ai_gym_60',
+    'gym_60',
   );
 
   const routines = useMemo(() => {
@@ -53,7 +61,6 @@ export function RoutineCard() {
     <View style={styles.card}>
       <View style={styles.titleRow}>
         <Text style={styles.title}>루틴 선택</Text>
-        <UnimplementedBadge compact />
       </View>
 
       <View style={styles.tabRow}>
@@ -123,6 +130,7 @@ export function RoutineCard() {
           <RoutineAccordion
             expanded={expandedRoutineId === routine.id}
             key={routine.id}
+            onStart={() => onStartRoutine?.(routine)}
             onToggle={() =>
               setExpandedRoutineId((current) =>
                 current === routine.id ? null : routine.id,

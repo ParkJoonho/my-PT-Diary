@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { CheckIcon } from 'shared/components/icons/pt-diary-icons';
 import Colors, { iosShadow } from 'shared/constants/colors';
-import type { WeeklyDay } from '../types/routine';
+import type { WeeklyDay } from '../types/home';
 
 type WeeklyTrackerCardProps = {
   days: WeeklyDay[];

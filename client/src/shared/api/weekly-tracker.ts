@@ -1,12 +1,23 @@
+import { getClientTodayDate } from '../lib/date';
 import {
-  type weeklyTrackerControllerGetWeeklyTrackerSummaryResponse,
   useWeeklyTrackerControllerGetWeeklyTrackerSummarySuspense,
+  type weeklyTrackerControllerGetWeeklyTrackerSummaryResponse,
 } from './generated/endpoints/weekly-tracker/weekly-tracker';
 import type { WeeklyTrackerSummaryDto } from './generated/models';
-import { getClientTodayDate } from '../lib/date';
 import { useTrackerUserKey } from './user-key';
 
-const WEEKLY_TRACKER_QUERY_KEY = ['weekly-tracker'] as const;
+export const WEEKLY_TRACKER_QUERY_KEY = ['weekly-tracker'] as const;
+
+export function getWeeklyTrackerSummaryQueryKey(
+  userKey: string,
+  referenceDate: string,
+) {
+  return [...WEEKLY_TRACKER_QUERY_KEY, userKey, referenceDate] as const;
+}
+
+export function getWeeklyTrackerSummaryQueryKeyPrefix(userKey: string) {
+  return [...WEEKLY_TRACKER_QUERY_KEY, userKey] as const;
+}
 
 export function selectWeeklyTrackerSummary(
   response: weeklyTrackerControllerGetWeeklyTrackerSummaryResponse,
@@ -25,15 +36,18 @@ export function useWeeklyTrackerSummary() {
   return useWeeklyTrackerControllerGetWeeklyTrackerSummarySuspense<
     WeeklyTrackerSummaryDto,
     Error
-  >({ referenceDate }, {
-    fetch: {
-      headers: {
-        'x-user-key': userKey,
+  >(
+    { referenceDate },
+    {
+      fetch: {
+        headers: {
+          'x-user-key': userKey,
+        },
+      },
+      query: {
+        queryKey: getWeeklyTrackerSummaryQueryKey(userKey, referenceDate),
+        select: selectWeeklyTrackerSummary,
       },
     },
-    query: {
-      queryKey: [...WEEKLY_TRACKER_QUERY_KEY, userKey, referenceDate],
-      select: selectWeeklyTrackerSummary,
-    },
-  });
+  );
 }

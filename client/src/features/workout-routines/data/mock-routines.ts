@@ -1,22 +1,4 @@
-import type { HomeRoutine, HomeTabItem, WeeklyDay } from '../types/routine';
-
-export const WEEKLY_DAYS: WeeklyDay[] = [
-  { label: '월', completed: true },
-  { label: '화', completed: true },
-  { label: '수', completed: false },
-  { label: '목', completed: false },
-  { label: '금', completed: false },
-  { label: '토', completed: false },
-  { label: '일', completed: false },
-];
-
-export const HOME_TABS: HomeTabItem[] = [
-  { key: 'home', label: '홈', implemented: true },
-  { key: 'exercise', label: '기록', implemented: false },
-  { key: 'pt-log', label: 'PT', implemented: false },
-  { key: 'ai-hub', label: 'AI', implemented: false },
-  { key: 'condition', label: '내 정보', implemented: false },
-];
+import type { HomeRoutine } from '../types/routine';
 
 export const MOCK_AI_GYM_ROUTINES: HomeRoutine[] = [
   {

@@ -1,3 +1,4 @@
+import { useNavigation } from '@granite-js/react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import {
   AITabIcon,
@@ -8,8 +9,8 @@ import {
 } from 'shared/components/icons/pt-diary-icons';
 import { UnimplementedBadge } from 'shared/components/unimplemented-badge';
 import Colors from 'shared/constants/colors';
-import { HOME_TABS } from '../data/mock-home-data';
-import type { HomeTabItem } from '../types/routine';
+import { HOME_TABS } from '../data/tabs';
+import type { HomeTabItem } from '../types/home';
 
 const ICONS: Record<HomeTabItem['key'], typeof HomeTabIcon> = {
   home: HomeTabIcon,
@@ -19,19 +20,34 @@ const ICONS: Record<HomeTabItem['key'], typeof HomeTabIcon> = {
   condition: MyTabIcon,
 };
 
-export function HomeTabBar() {
+type HomeTabBarProps = {
+  activeKey?: HomeTabItem['key'];
+};
+
+export function HomeTabBar({ activeKey = 'home' }: HomeTabBarProps) {
+  const navigation = useNavigation();
+
   return (
     <View style={styles.tabBar}>
       {HOME_TABS.map((tab) => {
         const Icon = ICONS[tab.key];
-        const active = tab.key === 'home';
+        const active = tab.key === activeKey;
         const color = active ? Colors.text : Colors.tabIconDefault;
 
         return (
           <Pressable
             accessibilityRole="button"
             key={tab.key}
-            onPress={() => undefined}
+            onPress={() => {
+              if (tab.key === 'home') {
+                navigation.navigate({ name: '/', params: {} });
+                return;
+              }
+
+              if (tab.key === 'exercise') {
+                navigation.navigate({ name: '/exercise', params: {} });
+              }
+            }}
             style={({ pressed }) => [styles.tab, pressed && styles.pressed]}
           >
             <Icon color={color} size={24} />

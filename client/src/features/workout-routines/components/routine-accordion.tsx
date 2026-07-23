@@ -4,19 +4,20 @@ import {
   FireIcon,
   TimeIcon,
 } from 'shared/components/icons/pt-diary-icons';
-import { UnimplementedBadge } from 'shared/components/unimplemented-badge';
 import Colors from 'shared/constants/colors';
 import { resolveStepTag } from '../lib/resolve-step-tag';
 import type { HomeRoutine } from '../types/routine';
 
 type RoutineAccordionProps = {
   expanded: boolean;
+  onStart?: () => void;
   onToggle: () => void;
   routine: HomeRoutine;
 };
 
 export function RoutineAccordion({
   expanded,
+  onStart,
   onToggle,
   routine,
 }: RoutineAccordionProps) {
@@ -86,7 +87,7 @@ export function RoutineAccordion({
 
           <Pressable
             accessibilityRole="button"
-            onPress={() => undefined}
+            onPress={onStart}
             style={({ pressed }) => [
               styles.startButton,
               pressed && styles.startButtonPressed,
@@ -94,7 +95,6 @@ export function RoutineAccordion({
           >
             <Text style={styles.startIcon}>▶</Text>
             <Text style={styles.startButtonText}>운동 시작</Text>
-            <UnimplementedBadge compact tone="onAccent" />
           </Pressable>
         </View>
       ) : null}

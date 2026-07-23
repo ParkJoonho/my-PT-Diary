@@ -1,10 +1,8 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { renderHook } from '@testing-library/react-native';
-import {
-  useWeeklyTrackerControllerGetWeeklyTrackerSummarySuspense,
-} from '../generated/endpoints/weekly-tracker/weekly-tracker';
-import type { WeeklyTrackerSummaryDto } from '../generated/models';
 import { getClientTodayDate } from '../../lib/date';
+import { useWeeklyTrackerControllerGetWeeklyTrackerSummarySuspense } from '../generated/endpoints/weekly-tracker/weekly-tracker';
+import type { WeeklyTrackerSummaryDto } from '../generated/models';
 import { useTrackerUserKey } from '../user-key';
 import {
   selectWeeklyTrackerSummary,

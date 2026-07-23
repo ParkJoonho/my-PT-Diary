@@ -4,6 +4,14 @@ import type { WeeklyTrackerSummaryDto } from 'shared/api/generated/models';
 import { useWeeklyTrackerSummary } from 'shared/api/weekly-tracker';
 import { HomeScreen } from '../components/home-screen';
 
+const mockNavigation = {
+  navigate: jest.fn(),
+};
+
+jest.mock('@granite-js/react-native', () => ({
+  useNavigation: () => mockNavigation,
+}));
+
 jest.mock('../components/home-tab-bar', () => ({
   HomeTabBar: () => {
     const React = require('react');
@@ -22,7 +30,7 @@ jest.mock('../components/quick-action-card', () => ({
   },
 }));
 
-jest.mock('../components/routine-card', () => ({
+jest.mock('features/workout-routines/components/routine-card', () => ({
   RoutineCard: () => {
     const React = require('react');
     const { Text } = require('react-native');

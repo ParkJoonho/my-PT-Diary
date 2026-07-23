@@ -1,10 +1,17 @@
-import { Component, Suspense, type PropsWithChildren } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
-import Colors from 'shared/constants/colors';
+import { useNavigation } from '@granite-js/react-native';
+import { RoutineCard } from 'features/workout-routines/components/routine-card';
+import { Component, type PropsWithChildren, Suspense } from 'react';
+import {
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { useWeeklyTrackerSummary } from 'shared/api/weekly-tracker';
+import Colors from 'shared/constants/colors';
 import { HomeTabBar } from './home-tab-bar';
 import { QuickActionCard } from './quick-action-card';
-import { RoutineCard } from './routine-card';
 import { WeeklyTrackerCard } from './weekly-tracker-card';
 
 function WeeklyTrackerLoading() {
@@ -45,6 +52,8 @@ function WeeklyTrackerSection() {
 }
 
 export function HomeScreen() {
+  const navigation = useNavigation();
+
   return (
     <View style={styles.container}>
       <ScrollView
@@ -57,7 +66,11 @@ export function HomeScreen() {
             <WeeklyTrackerSection />
           </Suspense>
         </WeeklyTrackerErrorBoundary>
-        <RoutineCard />
+        <RoutineCard
+          onStartRoutine={(routine) =>
+            navigation.navigate('/active-workout', { routineId: routine.id })
+          }
+        />
         <QuickActionCard
           kind="outdoor"
           subtitle="러닝·등산 코스 추천"

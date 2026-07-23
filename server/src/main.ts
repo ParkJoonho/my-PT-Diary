@@ -16,7 +16,9 @@ async function bootstrap() {
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('AT PT Server')
-    .setDescription('Weekly tracker API for the AT PT Granite client.')
+    .setDescription(
+      'Workout records and weekly tracker API for the AT PT Granite client.',
+    )
     .setVersion('1.0.0')
     .build();
   const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
