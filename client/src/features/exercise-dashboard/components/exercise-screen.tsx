@@ -5,10 +5,10 @@ import {
   useConditionRecords,
 } from 'features/condition-records/api/condition-records';
 import {
-  getConditionScoreColor,
-  getConditionScoreLabel,
-  getSorenessScoreColor,
-  getSorenessScoreLabel,
+  calculateAverageScore,
+  getConditionBadge,
+  getSorePartsText,
+  getSorenessBadge,
 } from 'features/condition-records/lib/condition-record-metadata';
 import { HomeTabBar } from 'features/home/components/home-tab-bar';
 import {
@@ -256,23 +256,21 @@ function SummaryMetricCard({
 }
 
 function TodayConditionCard({ record }: { record: ConditionRecordDto }) {
-  const mainCondition = record.conditions[0] ?? null;
-  const mainSoreness = record.muscleSoreness[0] ?? null;
-  const soreParts = record.muscleSoreness.filter((item) => item.score > 0);
+  const averageConditionScore = calculateAverageScore(record.conditions);
+  const averageSorenessScore = calculateAverageScore(record.muscleSoreness);
+  const conditionBadge = getConditionBadge(averageConditionScore);
+  const sorenessBadge = getSorenessBadge(averageSorenessScore);
 
   return (
     <View style={styles.todayConditionCard}>
       <View style={styles.todayConditionMetric}>
         <Text style={styles.todayConditionLabel}>컨디션</Text>
-        {mainCondition ? (
+        {averageConditionScore > 0 ? (
           <View style={styles.todayConditionValueRow}>
             <Text style={styles.todayConditionValue}>
-              {mainCondition.score.toFixed(1)}
+              {averageConditionScore.toFixed(1)}
             </Text>
-            <Badge
-              color={getConditionScoreColor(mainCondition.score)}
-              label={getConditionScoreLabel(mainCondition.score)}
-            />
+            <Badge color={conditionBadge.color} label={conditionBadge.label} />
           </View>
         ) : (
           <Text style={styles.todayConditionValue}>-</Text>
@@ -283,15 +281,12 @@ function TodayConditionCard({ record }: { record: ConditionRecordDto }) {
 
       <View style={styles.todayConditionMetric}>
         <Text style={styles.todayConditionLabel}>근육통</Text>
-        {mainSoreness ? (
+        {averageSorenessScore > 0 ? (
           <View style={styles.todayConditionValueRow}>
             <Text style={styles.todayConditionValue}>
-              {mainSoreness.score.toFixed(1)}
+              {averageSorenessScore.toFixed(1)}
             </Text>
-            <Badge
-              color={getSorenessScoreColor(mainSoreness.score)}
-              label={getSorenessScoreLabel(mainSoreness.score)}
-            />
+            <Badge color={sorenessBadge.color} label={sorenessBadge.label} />
           </View>
         ) : (
           <Text style={styles.todayConditionValue}>-</Text>
@@ -303,11 +298,7 @@ function TodayConditionCard({ record }: { record: ConditionRecordDto }) {
       <View style={styles.todayConditionMetric}>
         <Text style={styles.todayConditionLabel}>근육통 부위</Text>
         <Text numberOfLines={1} style={styles.todayConditionValue}>
-          {soreParts.length > 0
-            ? soreParts.length === 1
-              ? soreParts[0]?.label
-              : `${soreParts[0]?.label ?? ''} +${soreParts.length - 1}`
-            : '-'}
+          {getSorePartsText(record.muscleSoreness)}
         </Text>
       </View>
     </View>
