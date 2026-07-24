@@ -1,6 +1,16 @@
-import type { WorkoutRecordDto } from 'shared/api/generated/models';
+import type { ManualCardioDto, WorkoutRecordDto } from 'shared/api/generated/models';
+import {
+  formatExerciseTimeLabel,
+  getDailyReport,
+  getExerciseNameSummary,
+  getWorkoutDurationLabel,
+} from './manual-workout-form';
 
 export function getWorkoutRecordTitle(record: WorkoutRecordDto) {
+  if (record.source === 'manual') {
+    return getExerciseNameSummary(record);
+  }
+
   return record.title ?? record.routineLabel ?? '운동 기록';
 }
 
@@ -25,6 +35,12 @@ export function formatDurationSeconds(seconds: number) {
   return restMinutes ? `${hours}시간 ${restMinutes}분` : `${hours}시간`;
 }
 
+export function formatWorkoutDuration(record: WorkoutRecordDto) {
+  return record.source === 'manual'
+    ? getWorkoutDurationLabel(record)
+    : formatExerciseTimeLabel(record.durationSeconds);
+}
+
 export function formatWorkoutVolume(record: WorkoutRecordDto) {
   const volume = record.summary.totalVolumeKg ?? 0;
 
@@ -32,6 +48,10 @@ export function formatWorkoutVolume(record: WorkoutRecordDto) {
 }
 
 export function formatWorkoutCardio(record: WorkoutRecordDto) {
+  if (record.source === 'manual') {
+    return formatManualCardio(record.manualDetail?.cardio);
+  }
+
   const seconds = record.summary.cardioDurationSeconds ?? 0;
 
   return seconds > 0 ? formatDurationSeconds(seconds) : '-';
@@ -45,20 +65,37 @@ export function getWorkoutRecordSummaryLine(record: WorkoutRecordDto) {
     return `${completed}/${total}개 항목 완료`;
   }
 
-  const setCount = record.summary.strengthSetCount ?? 0;
-  const cardioSeconds = record.summary.cardioDurationSeconds ?? 0;
+  const dailyReport = getDailyReport(record);
 
-  if (setCount > 0 && cardioSeconds > 0) {
-    return `근력 ${setCount}세트 · 유산소 ${formatDurationSeconds(cardioSeconds)}`;
+  return dailyReport || '운동 기록이 저장되어 있어요.';
+}
+
+function formatManualCardio(cardio: ManualCardioDto | undefined) {
+  if (!cardio) {
+    return '-';
   }
 
-  if (setCount > 0) {
-    return `근력 ${setCount}세트`;
+  const labels: string[] = [];
+
+  if (cardio.treadmillMinutes) {
+    labels.push(`러닝머신 ${cardio.treadmillMinutes}분`);
   }
 
-  if (cardioSeconds > 0) {
-    return `유산소 ${formatDurationSeconds(cardioSeconds)}`;
+  if (cardio.cycleMinutes) {
+    labels.push(`사이클 ${cardio.cycleMinutes}분`);
   }
 
-  return record.manualDetail?.memo ?? '기록된 메모가 있어요.';
+  if (cardio.stairClimberMinutes) {
+    labels.push(`천국의 계단 ${cardio.stairClimberMinutes}분`);
+  }
+
+  if (!labels.length && cardio.steps) {
+    labels.push(`${cardio.steps.toLocaleString()}걸음`);
+  }
+
+  if (!labels.length && cardio.durationSeconds) {
+    labels.push(formatDurationSeconds(cardio.durationSeconds));
+  }
+
+  return labels.length ? labels.join(' · ') : '-';
 }

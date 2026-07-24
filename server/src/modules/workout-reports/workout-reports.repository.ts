@@ -48,11 +48,11 @@ export class WorkoutReportsRepository implements WorkoutReportsRepositoryPort {
           id,
           user_key,
           checked_on::text,
+          week_number,
           time_zone,
           condition_scores,
           muscle_soreness,
           summary,
-          memo,
           created_at::text,
           updated_at::text
         FROM condition_records

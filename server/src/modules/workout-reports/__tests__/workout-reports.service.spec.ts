@@ -45,6 +45,7 @@ function createWorkoutRecordRow(
     duration_seconds: 3600,
     id: 'workout-1',
     manual_detail: null,
+    performed_at: '2026-07-23 12:34:56+00',
     performed_on: '2026-07-23',
     routine_id: null,
     routine_label: null,
@@ -114,6 +115,7 @@ describe('운동 리포트 서비스', () => {
         completed_on: '2026-07-21',
         duration_seconds: 1800,
         id: 'workout-2',
+        performed_at: '2026-07-21 12:34:56+00',
         performed_on: '2026-07-21',
         summary: {
           cardioDurationSeconds: 0,
@@ -121,6 +123,7 @@ describe('운동 리포트 서비스', () => {
         },
       }),
       createWorkoutRecordRow({
+        performed_at: '2026-07-10 12:34:56+00',
         completed_on: '2026-07-10',
         id: 'workout-3',
         performed_on: '2026-07-10',

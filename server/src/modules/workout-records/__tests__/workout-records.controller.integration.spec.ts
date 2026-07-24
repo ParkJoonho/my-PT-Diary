@@ -64,6 +64,7 @@ function createRecordRow(overrides: Partial<WorkoutRecordRow> = {}) {
     duration_seconds: 1820,
     id: '11111111-1111-4111-8111-111111111111',
     manual_detail: null,
+    performed_at: '2026-07-23 12:34:56+00',
     performed_on: '2026-07-23',
     routine_id: 'gym_60',
     routine_label: '1시간 루틴',
@@ -122,6 +123,7 @@ describe('운동 기록 컨트롤러 통합', () => {
           location: 'gym',
           strengthExercises: [{ name: '벤치프레스', sets: [{ reps: 10 }] }],
         },
+        performed_at: '2026-07-24 12:34:56+00',
         performed_on: '2026-07-24',
         routine_id: null,
         routine_label: null,
@@ -133,6 +135,7 @@ describe('운동 기록 컨트롤러 통합', () => {
     );
     repository.updateManualWorkoutRecord.mockResolvedValue(
       createRecordRow({
+        performed_at: '2026-07-25 12:34:56+00',
         completed_on: '2026-07-25',
         performed_on: '2026-07-25',
         routine_id: null,

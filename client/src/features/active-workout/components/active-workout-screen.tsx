@@ -1,9 +1,9 @@
-import { useCreateRoutineWorkoutCompletion } from 'features/workout-records/api/routine-workout-completions';
+import { useCreateManualWorkoutRecord } from 'features/workout-records/api/workout-records';
 import type { HomeRoutine } from 'features/workout-routines/types/routine';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
 import Colors from 'shared/constants/colors';
-import { createRoutineCompletionPayload } from '../lib/create-routine-completion-payload';
+import { createManualWorkoutPayload } from '../lib/create-manual-workout-payload';
 import { formatTimer } from '../lib/format-duration';
 import type { CompletedStepMap } from '../types/active-workout';
 import { ActiveCountdownOverlay } from './active-countdown-overlay';
@@ -22,7 +22,7 @@ export function ActiveWorkoutScreen({
   onCompleted,
   routine,
 }: ActiveWorkoutScreenProps) {
-  const createCompletion = useCreateRoutineWorkoutCompletion();
+  const createManualWorkoutRecord = useCreateManualWorkoutRecord();
   const [countdown, setCountdown] = useState(COUNTDOWN_START);
   const [countdownDone, setCountdownDone] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -86,15 +86,15 @@ export function ActiveWorkoutScreen({
   };
 
   const saveAndExit = async () => {
-    if (createCompletion.isPending) {
+    if (createManualWorkoutRecord.isPending) {
       return;
     }
 
     setErrorMessage(null);
 
     try {
-      await createCompletion.mutateAsync(
-        createRoutineCompletionPayload({
+      await createManualWorkoutRecord.mutateAsync(
+        createManualWorkoutPayload({
           completedSteps,
           durationSeconds: Math.max(elapsedSeconds, 1),
           routine,
@@ -103,7 +103,7 @@ export function ActiveWorkoutScreen({
 
       Alert.alert(
         '운동 기록 저장 완료',
-        `${routine.label}이 운동 기록에 저장되었습니다.\n\n운동 시간: ${formatTimer(
+        `${routine.label}이 개인 운동기록에 저장되었습니다.\n\n운동 시간: ${formatTimer(
           elapsedSeconds,
         )}\n완료 항목: ${completedCount}/${routine.steps.length}개`,
         [{ text: '확인', onPress: onCompleted }],
@@ -112,7 +112,7 @@ export function ActiveWorkoutScreen({
       setErrorMessage(
         error instanceof Error
           ? error.message
-          : '운동 완료 기록 저장에 실패했어요.',
+          : '운동 기록 저장에 실패했어요.',
       );
     }
   };
@@ -150,7 +150,7 @@ export function ActiveWorkoutScreen({
         />
       )}
 
-      {createCompletion.isPending ? (
+      {createManualWorkoutRecord.isPending ? (
         <View style={styles.savingOverlay}>
           <ActivityIndicator color={Colors.white} />
         </View>

@@ -28,6 +28,7 @@ export type WorkoutRecordRow = {
   routine_source: string | null;
   completed_at: string;
   completed_on: string;
+  performed_at: string;
   performed_on: string;
   time_zone: string;
   duration_seconds: number;
@@ -69,7 +70,7 @@ export abstract class WorkoutRecordsRepositoryPort {
     recordId: string;
     weeklyCompletionId: string;
     userKey: string;
-    title: string;
+    title: string | null;
     performedAt: string;
     performedOn: string;
     timeZone: string;
@@ -91,7 +92,7 @@ export abstract class WorkoutRecordsRepositoryPort {
   abstract updateManualWorkoutRecord(params: {
     recordId: string;
     userKey: string;
-    title: string;
+    title: string | null;
     performedAt: string;
     performedOn: string;
     timeZone: string;

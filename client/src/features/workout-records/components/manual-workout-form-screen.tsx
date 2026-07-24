@@ -1,6 +1,7 @@
 import { useNavigation } from '@granite-js/react-native';
-import { useEffect, useState } from 'react';
+import { type ReactNode, useEffect } from 'react';
 import {
+  Alert,
   KeyboardAvoidingView,
   Pressable,
   ScrollView,
@@ -9,6 +10,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import type { WorkoutRecordDto } from 'shared/api/generated/models';
 import { SuspenseSection } from 'shared/components/async-state';
 import Colors from 'shared/constants/colors';
 import {
@@ -17,16 +19,11 @@ import {
   useWorkoutRecord,
 } from '../api/workout-records';
 import {
-  type ManualStrengthExerciseForm,
-  type ManualWorkoutFormState,
-  buildManualWorkoutPayload,
   calculateManualWorkoutVolume,
-  createEmptyManualStrengthExercise,
-  createEmptyManualWorkoutSet,
-  createManualWorkoutFormState,
-  createManualWorkoutFormStateFromRecord,
   validateManualWorkoutForm,
 } from '../lib/manual-workout-form';
+import { useManualWorkoutFormStore } from '../stores/use-manual-workout-form-store';
+import { buildManualWorkoutPayload } from '../lib/manual-workout-form';
 
 export function ManualWorkoutFormScreen({ recordId }: { recordId?: string }) {
   if (recordId) {
@@ -44,7 +41,7 @@ function EditManualWorkoutForm({ recordId }: { recordId: string }) {
   const { data } = useWorkoutRecord(recordId);
 
   return (
-    <ManualWorkoutFormContent initialRecordId={recordId} initialRecord={data} />
+    <ManualWorkoutFormContent initialRecord={data} initialRecordId={recordId} />
   );
 }
 
@@ -52,48 +49,82 @@ function ManualWorkoutFormContent({
   initialRecord,
   initialRecordId,
 }: {
-  initialRecord?: Parameters<typeof createManualWorkoutFormStateFromRecord>[0];
+  initialRecord?: WorkoutRecordDto;
   initialRecordId?: string;
 }) {
   const navigation = useNavigation();
   const createMutation = useCreateManualWorkoutRecord();
   const updateMutation = useUpdateManualWorkoutRecord();
-  const [form, setForm] = useState<ManualWorkoutFormState>(() =>
-    initialRecord
-      ? createManualWorkoutFormStateFromRecord(initialRecord)
-      : createManualWorkoutFormState(),
+  const form = useManualWorkoutFormStore((state) => state.form);
+  const addSet = useManualWorkoutFormStore((state) => state.addSet);
+  const addStrengthExercise = useManualWorkoutFormStore(
+    (state) => state.addStrengthExercise,
   );
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const hydrateFromRecord = useManualWorkoutFormStore(
+    (state) => state.hydrateFromRecord,
+  );
+  const removeSet = useManualWorkoutFormStore((state) => state.removeSet);
+  const removeStrengthExercise = useManualWorkoutFormStore(
+    (state) => state.removeStrengthExercise,
+  );
+  const resetForCreate = useManualWorkoutFormStore((state) => state.resetForCreate);
+  const setBodyCompositionField = useManualWorkoutFormStore(
+    (state) => state.setBodyCompositionField,
+  );
+  const setCardioField = useManualWorkoutFormStore(
+    (state) => state.setCardioField,
+  );
+  const setMeal = useManualWorkoutFormStore((state) => state.setMeal);
+  const setPerformedOn = useManualWorkoutFormStore(
+    (state) => state.setPerformedOn,
+  );
+  const setStrengthExerciseName = useManualWorkoutFormStore(
+    (state) => state.setStrengthExerciseName,
+  );
+  const setStrengthExerciseRestTime = useManualWorkoutFormStore(
+    (state) => state.setStrengthExerciseRestTime,
+  );
+  const setStrengthExerciseRir = useManualWorkoutFormStore(
+    (state) => state.setStrengthExerciseRir,
+  );
+  const setTextField = useManualWorkoutFormStore((state) => state.setTextField);
+  const updateSetField = useManualWorkoutFormStore(
+    (state) => state.updateSetField,
+  );
 
   useEffect(() => {
     if (initialRecord) {
-      setForm(createManualWorkoutFormStateFromRecord(initialRecord));
+      hydrateFromRecord(initialRecord);
+      return;
     }
-  }, [initialRecord]);
 
-  const updateField = (key: keyof ManualWorkoutFormState, value: string) => {
-    setForm((current) => ({ ...current, [key]: value }));
-  };
+    resetForCreate();
+  }, [hydrateFromRecord, initialRecord, resetForCreate]);
 
   const handleSave = async () => {
     const errors = validateManualWorkoutForm(form);
 
-    if (errors.length) {
-      setErrorMessage(errors[0]?.message ?? '입력값을 확인해 주세요.');
+    if (errors.length > 0) {
+      Alert.alert('알림', errors[0]?.message ?? '입력값을 확인해 주세요.');
       return;
     }
 
-    setErrorMessage(null);
-
     const payload = buildManualWorkoutPayload(form);
 
-    if (initialRecordId) {
-      await updateMutation.mutateAsync({ payload, recordId: initialRecordId });
-    } else {
-      await createMutation.mutateAsync(payload);
-    }
+    try {
+      if (initialRecordId) {
+        await updateMutation.mutateAsync({
+          payload,
+          recordId: initialRecordId,
+        });
+      } else {
+        await createMutation.mutateAsync(payload);
+      }
 
-    navigation.navigate({ name: '/exercise-list', params: {} });
+      navigation.goBack();
+    } catch {
+      Alert.alert('오류', '운동 기록을 저장하지 못했어요.');
+    }
   };
 
   const isPending = createMutation.isPending || updateMutation.isPending;
@@ -108,7 +139,7 @@ function ManualWorkoutFormContent({
           <Text style={styles.headerButtonText}>닫기</Text>
         </Pressable>
         <Text style={styles.headerTitle}>
-          {initialRecordId ? '운동 수정' : '운동 작성'}
+          {initialRecordId ? '운동기록 수정' : '새 운동기록'}
         </Text>
         <Pressable
           disabled={isPending}
@@ -126,240 +157,317 @@ function ManualWorkoutFormContent({
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {errorMessage ? (
-          <Text style={styles.errorText}>{errorMessage}</Text>
-        ) : null}
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>기본 정보</Text>
-          <Input
-            label="제목"
-            onChangeText={(value) => updateField('title', value)}
-            value={form.title}
-          />
+        <Section title="기본 정보">
           <View style={styles.row}>
-            <Input
-              label="운동일"
-              onChangeText={(value) => updateField('performedOn', value)}
+            <InputField
+              label="날짜"
+              onChangeText={setPerformedOn}
+              placeholder="2026-07-24"
               value={form.performedOn}
             />
-            <Input
-              label="시간(분)"
-              keyboardType="number-pad"
-              onChangeText={(value) => updateField('durationMinutes', value)}
-              value={form.durationMinutes}
+            <InputField
+              label="운동시간"
+              onChangeText={(value) => setTextField('exerciseTime', value)}
+              placeholder="60분"
+              value={form.exerciseTime}
             />
           </View>
-        </View>
+        </Section>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>근력 운동</Text>
-          {form.strengthExercises.map((exercise, exerciseIndex) => (
-            <StrengthExerciseEditor
-              exercise={exercise}
-              exerciseIndex={exerciseIndex}
-              key={`${exerciseIndex}-${exercise.name}`}
-              onChange={(nextExercise) =>
-                setForm((current) => ({
-                  ...current,
-                  strengthExercises: current.strengthExercises.map(
-                    (item, index) =>
-                      index === exerciseIndex ? nextExercise : item,
-                  ),
-                }))
-              }
-              onRemove={() =>
-                setForm((current) => ({
-                  ...current,
-                  strengthExercises: current.strengthExercises.filter(
-                    (_, index) => index !== exerciseIndex,
-                  ),
-                }))
-              }
-            />
-          ))}
-          <Pressable
-            onPress={() =>
-              setForm((current) => ({
-                ...current,
-                strengthExercises: [
-                  ...current.strengthExercises,
-                  createEmptyManualStrengthExercise(),
-                ],
-              }))
-            }
-            style={styles.secondaryButton}
-          >
-            <Text style={styles.secondaryButtonText}>운동 추가</Text>
-          </Pressable>
-          <Text style={styles.helperText}>
-            총 볼륨{' '}
-            {calculateManualWorkoutVolume(
-              form.strengthExercises,
-            ).toLocaleString()}
-            kg
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>유산소</Text>
+        <Section title="유산소 (CARDIO)">
           <View style={styles.row}>
-            <Input
-              label="시간(분)"
+            <InputField
               keyboardType="number-pad"
-              onChangeText={(value) =>
-                updateField('cardioDurationMinutes', value)
-              }
-              value={form.cardioDurationMinutes}
+              label="걸음수"
+              onChangeText={(value) => setCardioField('steps', value)}
+              placeholder="0"
+              value={form.steps}
             />
-            <Input
-              label="거리(km)"
-              keyboardType="decimal-pad"
-              onChangeText={(value) => updateField('cardioDistanceKm', value)}
-              value={form.cardioDistanceKm}
-            />
-            <Input
-              label="걸음"
+            <InputField
               keyboardType="number-pad"
-              onChangeText={(value) => updateField('cardioSteps', value)}
-              value={form.cardioSteps}
+              label="러닝머신(분)"
+              onChangeText={(value) => setCardioField('treadmillMinutes', value)}
+              placeholder="0"
+              value={form.treadmillMinutes}
             />
           </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>체성분</Text>
           <View style={styles.row}>
-            <Input
-              label="체중"
-              keyboardType="decimal-pad"
-              onChangeText={(value) => updateField('weightKg', value)}
-              value={form.weightKg}
+            <InputField
+              keyboardType="number-pad"
+              label="사이클(분)"
+              onChangeText={(value) => setCardioField('cycleMinutes', value)}
+              placeholder="0"
+              value={form.cycleMinutes}
             />
-            <Input
-              label="골격근"
-              keyboardType="decimal-pad"
+            <InputField
+              keyboardType="number-pad"
+              label="천국의 계단(분)"
               onChangeText={(value) =>
-                updateField('skeletalMuscleMassKg', value)
+                setCardioField('stairClimberMinutes', value)
               }
+              placeholder="0"
+              value={form.stairClimberMinutes}
+            />
+          </View>
+        </Section>
+
+        <Section title="컨디션 체크">
+          <View style={styles.row}>
+            <InputField
+              label="수면"
+              onChangeText={(value) => setTextField('sleep', value)}
+              placeholder="7시간"
+              value={form.sleep}
+            />
+            <InputField
+              label="컨디션"
+              onChangeText={(value) => setTextField('condition', value)}
+              placeholder="좋음"
+              value={form.condition}
+            />
+          </View>
+          <InputField
+            label="활동 강도"
+            onChangeText={(value) => setTextField('activityLevel', value)}
+            placeholder="보통"
+            value={form.activityLevel}
+          />
+        </Section>
+
+        <Section title="체성분">
+          <View style={styles.row}>
+            <InputField
+              keyboardType="decimal-pad"
+              label="아침 체중(kg)"
+              onChangeText={(value) =>
+                setBodyCompositionField('morningWeightKg', value)
+              }
+              placeholder="0"
+              value={form.morningWeightKg}
+            />
+            <InputField
+              keyboardType="decimal-pad"
+              label="저녁 체중(kg)"
+              onChangeText={(value) =>
+                setBodyCompositionField('eveningWeightKg', value)
+              }
+              placeholder="0"
+              value={form.eveningWeightKg}
+            />
+          </View>
+          <View style={styles.row}>
+            <InputField
+              keyboardType="decimal-pad"
+              label="골격근(kg)"
+              onChangeText={(value) =>
+                setBodyCompositionField('skeletalMuscleMassKg', value)
+              }
+              placeholder="0"
               value={form.skeletalMuscleMassKg}
             />
-            <Input
-              label="체지방률"
+            <InputField
               keyboardType="decimal-pad"
-              onChangeText={(value) => updateField('bodyFatPercentage', value)}
-              value={form.bodyFatPercentage}
+              label="체지방(kg)"
+              onChangeText={(value) => setBodyCompositionField('bodyFatKg', value)}
+              placeholder="0"
+              value={form.bodyFatKg}
             />
           </View>
-        </View>
+          <InputField
+            keyboardType="decimal-pad"
+            label="체지방률(%)"
+            onChangeText={(value) =>
+              setBodyCompositionField('bodyFatPercentage', value)
+            }
+            placeholder="0"
+            value={form.bodyFatPercentage}
+          />
+        </Section>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>메모</Text>
+        <Section title="식단 체크">
+          {form.meals.map((meal, index) => (
+            <InputField
+              key={`meal-${index}`}
+              label={`MEAL ${index + 1}`}
+              onChangeText={(value) => setMeal(index, value)}
+              placeholder="식사 내용"
+              value={meal}
+            />
+          ))}
+        </Section>
+
+        <Section
+          action={
+            <Pressable onPress={addStrengthExercise}>
+              <Text style={styles.actionText}>운동 추가</Text>
+            </Pressable>
+          }
+          title="운동 종목"
+        >
+          {form.strengthExercises.map((exercise, exerciseIndex) => (
+            <View key={`exercise-${exerciseIndex}`} style={styles.exerciseCard}>
+              <View style={styles.exerciseHeader}>
+                <TextInput
+                  onChangeText={(value) =>
+                    setStrengthExerciseName(exerciseIndex, value)
+                  }
+                  placeholder={`운동종목 ${exerciseIndex + 1}`}
+                  placeholderTextColor={Colors.textMuted}
+                  style={styles.exerciseNameInput}
+                  value={exercise.name}
+                />
+                {form.strengthExercises.length > 1 ? (
+                  <Pressable onPress={() => removeStrengthExercise(exerciseIndex)}>
+                    <Text style={styles.removeText}>삭제</Text>
+                  </Pressable>
+                ) : null}
+              </View>
+
+              <View style={styles.setHeader}>
+                <Text style={[styles.setHeaderText, styles.setNumberHeader]}>
+                  SET
+                </Text>
+                <Text style={[styles.setHeaderText, styles.setFieldHeader]}>
+                  무게(kg)
+                </Text>
+                <Text style={[styles.setHeaderText, styles.setFieldHeader]}>
+                  횟수
+                </Text>
+                <Text style={[styles.setHeaderText, styles.setActionHeader]}>
+                  삭제
+                </Text>
+              </View>
+
+              {exercise.sets.map((set, setIndex) => (
+                <View key={`set-${exerciseIndex}-${setIndex}`} style={styles.setRow}>
+                  <Text style={styles.setNumber}>{setIndex + 1}</Text>
+                  <TextInput
+                    keyboardType="decimal-pad"
+                    onChangeText={(value) =>
+                      updateSetField(exerciseIndex, setIndex, 'weightKg', value)
+                    }
+                    placeholder="0"
+                    placeholderTextColor={Colors.textMuted}
+                    style={styles.setInput}
+                    value={set.weightKg}
+                  />
+                  <TextInput
+                    keyboardType="number-pad"
+                    onChangeText={(value) =>
+                      updateSetField(exerciseIndex, setIndex, 'reps', value)
+                    }
+                    placeholder="0"
+                    placeholderTextColor={Colors.textMuted}
+                    style={styles.setInput}
+                    value={set.reps}
+                  />
+                  <Pressable onPress={() => removeSet(exerciseIndex, setIndex)}>
+                    <Text style={styles.setDeleteText}>삭제</Text>
+                  </Pressable>
+                </View>
+              ))}
+
+              <Pressable
+                onPress={() => addSet(exerciseIndex)}
+                style={styles.addSetButton}
+              >
+                <Text style={styles.addSetText}>세트 추가</Text>
+              </Pressable>
+
+              <View style={styles.exerciseFooter}>
+                <MiniField
+                  label="휴식"
+                  onChangeText={(value) =>
+                    setStrengthExerciseRestTime(exerciseIndex, value)
+                  }
+                  placeholder="60초"
+                  value={exercise.restTime}
+                />
+                <MiniField
+                  label="RIR"
+                  onChangeText={(value) =>
+                    setStrengthExerciseRir(exerciseIndex, value)
+                  }
+                  placeholder="0"
+                  value={exercise.rir}
+                />
+                <MiniStat
+                  label="LB"
+                  value={exercise.lbWeight > 0 ? `${exercise.lbWeight}lb` : '-'}
+                />
+              </View>
+
+              <View style={styles.exerciseFooter}>
+                <MiniStat
+                  label="볼륨"
+                  value={exercise.volume > 0 ? `${exercise.volume.toLocaleString()}kg` : '-'}
+                />
+                <MiniStat
+                  label="1RM 추정값"
+                  value={
+                    exercise.estimated1RM > 0
+                      ? `${exercise.estimated1RM}kg`
+                      : '-'
+                  }
+                />
+                <MiniStat
+                  label="MAX"
+                  value={exercise.maxWeight > 0 ? `${exercise.maxWeight}kg` : '-'}
+                />
+              </View>
+            </View>
+          ))}
+          <Text style={styles.helperText}>
+            총 볼륨 {calculateManualWorkoutVolume(form.strengthExercises).toLocaleString()}kg
+          </Text>
+        </Section>
+
+        <Section title="하루 일과 보고">
           <TextInput
             multiline
-            onChangeText={(value) => updateField('memo', value)}
-            placeholder="운동 중 느낀 점"
+            onChangeText={(value) => setTextField('dailyReport', value)}
+            placeholder="오늘의 일과를 기록하세요"
             placeholderTextColor={Colors.textMuted}
-            style={[styles.input, styles.memoInput]}
-            value={form.memo}
+            style={[styles.input, styles.textArea]}
+            value={form.dailyReport}
           />
-        </View>
+        </Section>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
-function StrengthExerciseEditor({
-  exercise,
-  exerciseIndex,
-  onChange,
-  onRemove,
+function Section({
+  action,
+  children,
+  title,
 }: {
-  exercise: ManualStrengthExerciseForm;
-  exerciseIndex: number;
-  onChange: (exercise: ManualStrengthExerciseForm) => void;
-  onRemove: () => void;
+  action?: ReactNode;
+  children: ReactNode;
+  title: string;
 }) {
   return (
-    <View style={styles.exerciseBox}>
-      <View style={styles.exerciseHeader}>
-        <Text style={styles.exerciseTitle}>운동 {exerciseIndex + 1}</Text>
-        <Pressable onPress={onRemove}>
-          <Text style={styles.removeText}>삭제</Text>
-        </Pressable>
+    <View style={styles.section}>
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>{title}</Text>
+        {action}
       </View>
-      <Input
-        label="운동명"
-        onChangeText={(value) => onChange({ ...exercise, name: value })}
-        value={exercise.name}
-      />
-      {exercise.sets.map((set, setIndex) => (
-        <View key={`${exerciseIndex}-${setIndex}`} style={styles.setRow}>
-          <Input
-            label={`${setIndex + 1}세트 kg`}
-            keyboardType="decimal-pad"
-            onChangeText={(value) =>
-              onChange({
-                ...exercise,
-                sets: exercise.sets.map((item, index) =>
-                  index === setIndex ? { ...item, weightKg: value } : item,
-                ),
-              })
-            }
-            value={set.weightKg}
-          />
-          <Input
-            label="횟수"
-            keyboardType="number-pad"
-            onChangeText={(value) =>
-              onChange({
-                ...exercise,
-                sets: exercise.sets.map((item, index) =>
-                  index === setIndex ? { ...item, reps: value } : item,
-                ),
-              })
-            }
-            value={set.reps}
-          />
-          <Input
-            label="RIR"
-            keyboardType="number-pad"
-            onChangeText={(value) =>
-              onChange({
-                ...exercise,
-                sets: exercise.sets.map((item, index) =>
-                  index === setIndex ? { ...item, rir: value } : item,
-                ),
-              })
-            }
-            value={set.rir}
-          />
-        </View>
-      ))}
-      <Pressable
-        onPress={() =>
-          onChange({
-            ...exercise,
-            sets: [...exercise.sets, createEmptyManualWorkoutSet()],
-          })
-        }
-        style={styles.smallButton}
-      >
-        <Text style={styles.smallButtonText}>세트 추가</Text>
-      </Pressable>
+      {children}
     </View>
   );
 }
 
-function Input({
+function InputField({
   keyboardType,
   label,
   onChangeText,
+  placeholder,
   value,
 }: {
-  keyboardType?: 'default' | 'decimal-pad' | 'number-pad';
+  keyboardType?: 'decimal-pad' | 'default' | 'number-pad';
   label: string;
   onChangeText: (value: string) => void;
+  placeholder: string;
   value: string;
 }) {
   return (
@@ -368,6 +476,7 @@ function Input({
       <TextInput
         keyboardType={keyboardType}
         onChangeText={onChangeText}
+        placeholder={placeholder}
         placeholderTextColor={Colors.textMuted}
         style={styles.input}
         value={value}
@@ -376,50 +485,101 @@ function Input({
   );
 }
 
+function MiniField({
+  label,
+  onChangeText,
+  placeholder,
+  value,
+}: {
+  label: string;
+  onChangeText: (value: string) => void;
+  placeholder: string;
+  value: string;
+}) {
+  return (
+    <View style={styles.miniField}>
+      <Text style={styles.miniLabel}>{label}</Text>
+      <TextInput
+        onChangeText={onChangeText}
+        placeholder={placeholder}
+        placeholderTextColor={Colors.textMuted}
+        style={styles.miniInput}
+        value={value}
+      />
+    </View>
+  );
+}
+
+function MiniStat({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.miniField}>
+      <Text style={styles.miniLabel}>{label}</Text>
+      <Text style={styles.miniStat}>{value}</Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  actionText: {
+    color: Colors.accent,
+    fontFamily: 'Pretendard-SemiBold',
+    fontSize: 13,
+  },
+  addSetButton: {
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  addSetText: {
+    color: Colors.accent,
+    fontFamily: 'Pretendard-Medium',
+    fontSize: 13,
+  },
   container: {
     backgroundColor: Colors.background,
     flex: 1,
-    paddingHorizontal: 16,
-    paddingTop: 16,
   },
   content: {
-    gap: 12,
-    paddingBottom: 32,
+    gap: 20,
+    padding: 14,
+    paddingBottom: 36,
   },
-  errorText: {
-    backgroundColor: '#FFECEC',
-    borderRadius: 8,
-    color: Colors.danger,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 13,
-    padding: 12,
+  exerciseCard: {
+    backgroundColor: Colors.card,
+    borderColor: Colors.cardBorder,
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 8,
+    padding: 10,
   },
-  exerciseBox: {
-    backgroundColor: Colors.surfaceMuted,
-    borderRadius: 10,
-    gap: 10,
-    padding: 12,
+  exerciseFooter: {
+    flexDirection: 'row',
+    gap: 6,
+    paddingTop: 6,
   },
   exerciseHeader: {
     alignItems: 'center',
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    gap: 8,
   },
-  exerciseTitle: {
+  exerciseNameInput: {
     color: Colors.text,
+    flex: 1,
     fontFamily: 'Pretendard-SemiBold',
-    fontSize: 14,
+    fontSize: 15,
+    padding: 0,
   },
   header: {
     alignItems: 'center',
+    backgroundColor: Colors.card,
+    borderBottomColor: Colors.cardBorder,
+    borderBottomWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
   headerButton: {
     minWidth: 52,
-    paddingVertical: 8,
   },
   headerButtonText: {
     color: Colors.accent,
@@ -428,8 +588,8 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     color: Colors.text,
-    fontFamily: 'Pretendard-Bold',
-    fontSize: 18,
+    fontFamily: 'Pretendard-SemiBold',
+    fontSize: 17,
   },
   helperText: {
     color: Colors.textMuted,
@@ -439,27 +599,47 @@ const styles = StyleSheet.create({
   input: {
     backgroundColor: Colors.inputBg,
     borderColor: Colors.inputBorder,
-    borderRadius: 8,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 10,
+    borderWidth: 1,
     color: Colors.text,
     fontFamily: 'Pretendard-Regular',
     fontSize: 14,
-    minHeight: 42,
-    paddingHorizontal: 10,
+    padding: 12,
   },
   inputGroup: {
     flex: 1,
-    gap: 6,
+    gap: 4,
   },
   label: {
     color: Colors.textSecondary,
     fontFamily: 'Pretendard-Medium',
     fontSize: 12,
   },
-  memoInput: {
-    minHeight: 92,
-    paddingTop: 10,
-    textAlignVertical: 'top',
+  miniField: {
+    flex: 1,
+    gap: 4,
+  },
+  miniInput: {
+    backgroundColor: Colors.inputBg,
+    borderColor: Colors.inputBorder,
+    borderRadius: 8,
+    borderWidth: 1,
+    color: Colors.text,
+    fontFamily: 'Pretendard-Regular',
+    fontSize: 13,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  miniLabel: {
+    color: Colors.textSecondary,
+    fontFamily: 'Pretendard-Medium',
+    fontSize: 11,
+  },
+  miniStat: {
+    color: Colors.text,
+    fontFamily: 'Pretendard-SemiBold',
+    fontSize: 13,
+    paddingTop: 8,
   },
   removeText: {
     color: Colors.danger,
@@ -468,46 +648,76 @@ const styles = StyleSheet.create({
   },
   row: {
     flexDirection: 'row',
-    gap: 8,
-  },
-  secondaryButton: {
-    alignItems: 'center',
-    borderColor: Colors.accent,
-    borderRadius: 8,
-    borderWidth: StyleSheet.hairlineWidth,
-    paddingVertical: 11,
-  },
-  secondaryButtonText: {
-    color: Colors.accent,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 14,
+    gap: 10,
   },
   section: {
-    backgroundColor: Colors.card,
-    borderColor: Colors.cardBorder,
-    borderRadius: 12,
-    borderWidth: StyleSheet.hairlineWidth,
-    gap: 12,
-    padding: 14,
+    gap: 10,
+  },
+  sectionHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   sectionTitle: {
     color: Colors.text,
     fontFamily: 'Pretendard-SemiBold',
-    fontSize: 15,
+    fontSize: 16,
   },
-  setRow: {
-    flexDirection: 'row',
-    gap: 8,
+  setActionHeader: {
+    width: 36,
   },
-  smallButton: {
+  setDeleteText: {
+    color: Colors.danger,
+    fontFamily: 'Pretendard-Medium',
+    fontSize: 11,
+    width: 36,
+  },
+  setFieldHeader: {
+    flex: 1,
+  },
+  setHeader: {
     alignItems: 'center',
-    backgroundColor: Colors.card,
-    borderRadius: 8,
-    paddingVertical: 9,
+    flexDirection: 'row',
+    gap: 4,
+    marginTop: 2,
   },
-  smallButtonText: {
+  setHeaderText: {
+    color: Colors.textMuted,
+    fontFamily: 'Pretendard-Medium',
+    fontSize: 10,
+    textAlign: 'center',
+  },
+  setInput: {
+    backgroundColor: Colors.inputBg,
+    borderColor: Colors.inputBorder,
+    borderRadius: 8,
+    borderWidth: 1,
+    color: Colors.text,
+    flex: 1,
+    fontFamily: 'Pretendard-Regular',
+    fontSize: 14,
+    minWidth: 0,
+    paddingHorizontal: 2,
+    paddingVertical: 7,
+    textAlign: 'center',
+  },
+  setNumber: {
     color: Colors.textSecondary,
     fontFamily: 'Pretendard-SemiBold',
-    fontSize: 13,
+    fontSize: 12,
+    textAlign: 'center',
+    width: 20,
+  },
+  setNumberHeader: {
+    width: 20,
+  },
+  setRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 4,
+  },
+  textArea: {
+    minHeight: 100,
+    textAlignVertical: 'top',
   },
 });

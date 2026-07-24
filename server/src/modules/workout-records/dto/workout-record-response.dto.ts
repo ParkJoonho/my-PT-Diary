@@ -52,6 +52,9 @@ export class WorkoutRecordSummaryDto {
   stretchStepCount?: number;
 
   @ApiPropertyOptional({ example: 6 })
+  strengthExerciseCount?: number;
+
+  @ApiPropertyOptional({ example: 6 })
   strengthSetCount?: number;
 
   @ApiPropertyOptional({ example: 7200 })
@@ -87,6 +90,24 @@ export class ManualStrengthExerciseDto {
 
   @ApiProperty({ type: [ManualWorkoutSetDto] })
   sets!: ManualWorkoutSetDto[];
+
+  @ApiPropertyOptional({ example: '60초' })
+  restTime?: string;
+
+  @ApiPropertyOptional({ example: '2' })
+  rir?: string;
+
+  @ApiPropertyOptional({ example: 1160 })
+  volume?: number;
+
+  @ApiPropertyOptional({ example: 154.3 })
+  lbWeight?: number;
+
+  @ApiPropertyOptional({ example: 88.7 })
+  estimated1RM?: number;
+
+  @ApiPropertyOptional({ example: 70 })
+  maxWeight?: number;
 }
 
 export class ManualCardioDto {
@@ -98,14 +119,32 @@ export class ManualCardioDto {
 
   @ApiPropertyOptional({ example: 4200 })
   steps?: number;
+
+  @ApiPropertyOptional({ example: 20 })
+  treadmillMinutes?: number;
+
+  @ApiPropertyOptional({ example: 15 })
+  cycleMinutes?: number;
+
+  @ApiPropertyOptional({ example: 10 })
+  stairClimberMinutes?: number;
 }
 
 export class BodyCompositionDto {
   @ApiPropertyOptional({ example: 72.4 })
   weightKg?: number;
 
+  @ApiPropertyOptional({ example: 72.4 })
+  morningWeightKg?: number;
+
+  @ApiPropertyOptional({ example: 71.8 })
+  eveningWeightKg?: number;
+
   @ApiPropertyOptional({ example: 34.2 })
   skeletalMuscleMassKg?: number;
+
+  @ApiPropertyOptional({ example: 18.5 })
+  bodyFatKg?: number;
 
   @ApiPropertyOptional({ example: 18.5 })
   bodyFatPercentage?: number;
@@ -120,6 +159,27 @@ export class ManualWorkoutRecordDetailDto {
 
   @ApiPropertyOptional({ type: [ManualStrengthExerciseDto] })
   strengthExercises?: ManualStrengthExerciseDto[];
+
+  @ApiPropertyOptional({ example: '60분' })
+  exerciseTime?: string;
+
+  @ApiPropertyOptional({ example: '7시간' })
+  sleep?: string;
+
+  @ApiPropertyOptional({ example: '좋음' })
+  condition?: string;
+
+  @ApiPropertyOptional({ example: '보통' })
+  activityLevel?: string;
+
+  @ApiPropertyOptional({
+    type: [String],
+    example: ['닭가슴살 샐러드', '현미밥'],
+  })
+  meals?: string[];
+
+  @ApiPropertyOptional({ example: '오늘의 일과와 운동 느낌 정리' })
+  dailyReport?: string;
 
   @ApiPropertyOptional({ example: '허리 부담 없이 진행' })
   memo?: string;

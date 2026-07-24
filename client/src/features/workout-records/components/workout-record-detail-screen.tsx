@@ -131,18 +131,35 @@ function WorkoutRecordDetailContent({ recordId }: { recordId: string }) {
             <Text style={styles.sectionTitle}>체성분</Text>
             <View style={styles.metricGrid}>
               <Metric
-                label="체중"
+                label="아침 체중"
                 value={
+                  record.bodyComposition.morningWeightKg ??
                   record.bodyComposition.weightKg
-                    ? `${record.bodyComposition.weightKg}kg`
+                    ? `${record.bodyComposition.morningWeightKg ?? record.bodyComposition.weightKg}kg`
                     : '-'
                 }
               />
               <Metric
-                label="골격근량"
+                label="저녁 체중"
+                value={
+                  record.bodyComposition.eveningWeightKg
+                    ? `${record.bodyComposition.eveningWeightKg}kg`
+                    : '-'
+                }
+              />
+              <Metric
+                label="골격근"
                 value={
                   record.bodyComposition.skeletalMuscleMassKg
                     ? `${record.bodyComposition.skeletalMuscleMassKg}kg`
+                    : '-'
+                }
+              />
+              <Metric
+                label="체지방"
+                value={
+                  record.bodyComposition.bodyFatKg
+                    ? `${record.bodyComposition.bodyFatKg}kg`
                     : '-'
                 }
               />
@@ -158,10 +175,45 @@ function WorkoutRecordDetailContent({ recordId }: { recordId: string }) {
           </View>
         ) : null}
 
-        {record.manualDetail?.memo ? (
+        {record.manualDetail?.sleep ||
+        record.manualDetail?.condition ||
+        record.manualDetail?.activityLevel ? (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>메모</Text>
-            <Text style={styles.memo}>{record.manualDetail.memo}</Text>
+            <Text style={styles.sectionTitle}>컨디션 체크</Text>
+            <View style={styles.metricGrid}>
+              <Metric
+                label="수면"
+                value={record.manualDetail?.sleep || '-'}
+              />
+              <Metric
+                label="컨디션"
+                value={record.manualDetail?.condition || '-'}
+              />
+              <Metric
+                label="활동 강도"
+                value={record.manualDetail?.activityLevel || '-'}
+              />
+            </View>
+          </View>
+        ) : null}
+
+        {record.manualDetail?.meals?.length ? (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>식단 체크</Text>
+            {record.manualDetail.meals.map((meal, index) => (
+              <Text key={`meal-${index}`} style={styles.memo}>
+                MEAL {index + 1} · {meal}
+              </Text>
+            ))}
+          </View>
+        ) : null}
+
+        {record.manualDetail?.dailyReport || record.manualDetail?.memo ? (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>하루 일과 보고</Text>
+            <Text style={styles.memo}>
+              {record.manualDetail?.dailyReport ?? record.manualDetail?.memo}
+            </Text>
           </View>
         ) : null}
 

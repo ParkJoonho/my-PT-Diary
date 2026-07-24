@@ -82,6 +82,7 @@ export class WorkoutRecordsRepository implements WorkoutRecordsRepositoryPort {
             routine_source,
             completed_at,
             completed_on,
+            performed_at,
             time_zone,
             duration_seconds,
             steps,
@@ -97,6 +98,7 @@ export class WorkoutRecordsRepository implements WorkoutRecordsRepositoryPort {
             $6,
             $7::timestamptz,
             $8::date,
+            $7::timestamptz,
             $9,
             $10,
             $11::jsonb,
@@ -113,6 +115,7 @@ export class WorkoutRecordsRepository implements WorkoutRecordsRepositoryPort {
             routine_source,
             completed_at::text,
             completed_on::text,
+            COALESCE(performed_at, completed_at)::text AS performed_at,
             COALESCE(performed_on, completed_on)::text AS performed_on,
             time_zone,
             duration_seconds,
@@ -149,7 +152,7 @@ export class WorkoutRecordsRepository implements WorkoutRecordsRepositoryPort {
     recordId: string;
     weeklyCompletionId: string;
     userKey: string;
-    title: string;
+    title: string | null;
     performedAt: string;
     performedOn: string;
     timeZone: string;
@@ -189,6 +192,7 @@ export class WorkoutRecordsRepository implements WorkoutRecordsRepositoryPort {
             title,
             completed_at,
             completed_on,
+            performed_at,
             performed_on,
             time_zone,
             duration_seconds,
@@ -205,6 +209,7 @@ export class WorkoutRecordsRepository implements WorkoutRecordsRepositoryPort {
             $4,
             $5::timestamptz,
             $6::date,
+            $5::timestamptz,
             $6::date,
             $7,
             $8,
@@ -240,7 +245,7 @@ export class WorkoutRecordsRepository implements WorkoutRecordsRepositoryPort {
   async updateManualWorkoutRecord(params: {
     recordId: string;
     userKey: string;
-    title: string;
+    title: string | null;
     performedAt: string;
     performedOn: string;
     timeZone: string;
@@ -258,6 +263,7 @@ export class WorkoutRecordsRepository implements WorkoutRecordsRepositoryPort {
             title = $3,
             completed_at = $4::timestamptz,
             completed_on = $5::date,
+            performed_at = $4::timestamptz,
             performed_on = $5::date,
             time_zone = $6,
             duration_seconds = $7,
@@ -345,7 +351,7 @@ export class WorkoutRecordsRepository implements WorkoutRecordsRepositoryPort {
         SELECT ${this.selectColumns()}
         FROM workout_records
         WHERE ${where.join(' AND ')}
-        ORDER BY completed_on DESC, completed_at DESC, created_at DESC
+        ORDER BY completed_on DESC, COALESCE(performed_at, completed_at) DESC, created_at DESC
       `,
       values,
     );
@@ -423,6 +429,7 @@ export class WorkoutRecordsRepository implements WorkoutRecordsRepositoryPort {
       routine_source,
       completed_at::text,
       completed_on::text,
+      COALESCE(performed_at, completed_at)::text AS performed_at,
       COALESCE(performed_on, completed_on)::text AS performed_on,
       time_zone,
       duration_seconds,

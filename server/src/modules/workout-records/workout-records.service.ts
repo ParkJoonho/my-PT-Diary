@@ -2,6 +2,11 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { CreateManualWorkoutRecordDto } from './dto/create-manual-workout-record.dto';
 import { CreateRoutineWorkoutCompletionDto } from './dto/create-routine-workout-completion.dto';
+import {
+  BodyCompositionDto,
+  ManualCardioDto,
+  ManualStrengthExerciseDto,
+} from './dto/workout-record-response.dto';
 import { ListWorkoutRecordsQueryDto } from './dto/list-workout-records-query.dto';
 import { UpdateManualWorkoutRecordDto } from './dto/update-manual-workout-record.dto';
 import {
@@ -28,6 +33,14 @@ type ManualWorkoutRecordDetail = Omit<
   | 'performedOn'
   | 'timeZone'
   | 'title'
+>;
+
+type NormalizedCardio = NonNullable<ManualWorkoutRecordDetail['cardio']>;
+type NormalizedStrengthExercise = NonNullable<
+  ManualWorkoutRecordDetail['strengthExercises']
+>[number];
+type NormalizedBodyComposition = NonNullable<
+  ManualWorkoutRecordInput['bodyComposition']
 >;
 
 @Injectable()
@@ -77,12 +90,27 @@ export class WorkoutRecordsService {
   ): Promise<WorkoutRecordDto> {
     const recordId = randomUUID();
     const weeklyCompletionId = randomUUID();
-    const manualDetail = this.pickManualDetail(dto);
-    const summary = this.summarizeManualWorkout(dto);
+    const normalizedCardio = this.normalizeCardio(dto.cardio);
+    const normalizedExercises = this.normalizeStrengthExercises(
+      dto.strengthExercises,
+    );
+    const normalizedBodyComposition = this.normalizeBodyComposition(
+      dto.bodyComposition,
+    );
+    const manualDetail = this.pickManualDetail(
+      dto,
+      normalizedCardio,
+      normalizedExercises,
+    );
+    const summary = this.summarizeManualWorkout(
+      normalizedCardio,
+      normalizedExercises,
+    );
+    const title = this.normalizeTitle(dto.title);
 
     const record =
       await this.workoutRecordsRepository.createManualWorkoutRecord({
-        bodyComposition: dto.bodyComposition ?? null,
+        bodyComposition: normalizedBodyComposition,
         durationSeconds: dto.durationSeconds,
         manualDetail,
         performedAt: dto.performedAt,
@@ -90,12 +118,14 @@ export class WorkoutRecordsService {
         recordId,
         summary,
         timeZone: dto.timeZone,
-        title: dto.title,
+        title,
         userKey,
         weeklyCompletionId,
         weeklyCompletionNote: this.buildManualWeeklyCompletionNote(
+          title,
           dto,
           summary,
+          normalizedExercises,
         ),
       });
 
@@ -107,12 +137,27 @@ export class WorkoutRecordsService {
     recordId: string,
     dto: UpdateManualWorkoutRecordDto,
   ): Promise<WorkoutRecordDto> {
-    const manualDetail = this.pickManualDetail(dto);
-    const summary = this.summarizeManualWorkout(dto);
+    const normalizedCardio = this.normalizeCardio(dto.cardio);
+    const normalizedExercises = this.normalizeStrengthExercises(
+      dto.strengthExercises,
+    );
+    const normalizedBodyComposition = this.normalizeBodyComposition(
+      dto.bodyComposition,
+    );
+    const manualDetail = this.pickManualDetail(
+      dto,
+      normalizedCardio,
+      normalizedExercises,
+    );
+    const summary = this.summarizeManualWorkout(
+      normalizedCardio,
+      normalizedExercises,
+    );
+    const title = this.normalizeTitle(dto.title);
 
     const record =
       await this.workoutRecordsRepository.updateManualWorkoutRecord({
-        bodyComposition: dto.bodyComposition ?? null,
+        bodyComposition: normalizedBodyComposition,
         durationSeconds: dto.durationSeconds,
         manualDetail,
         performedAt: dto.performedAt,
@@ -120,11 +165,13 @@ export class WorkoutRecordsService {
         recordId,
         summary,
         timeZone: dto.timeZone,
-        title: dto.title,
+        title,
         userKey,
         weeklyCompletionNote: this.buildManualWeeklyCompletionNote(
+          title,
           dto,
           summary,
+          normalizedExercises,
         ),
       });
 
@@ -194,28 +241,22 @@ export class WorkoutRecordsService {
   }
 
   private summarizeManualWorkout(
-    dto: CreateManualWorkoutRecordDto,
+    cardio: NormalizedCardio | undefined,
+    strengthExercises: NormalizedStrengthExercise[],
   ): WorkoutRecordSummary {
-    const strengthExercises = dto.strengthExercises ?? [];
     const strengthSetCount = strengthExercises.reduce(
       (total, exercise) => total + exercise.sets.length,
       0,
     );
     const totalVolumeKg = strengthExercises.reduce(
-      (total, exercise) =>
-        total +
-        exercise.sets.reduce(
-          (exerciseTotal, set) =>
-            exerciseTotal + (set.weightKg ?? 0) * (set.reps ?? 0),
-          0,
-        ),
+      (total, exercise) => total + (exercise.volume ?? 0),
       0,
     );
 
     return {
-      cardioDistanceMeters: dto.cardio?.distanceMeters ?? 0,
-      cardioDurationSeconds: dto.cardio?.durationSeconds ?? 0,
-      cardioSteps: dto.cardio?.steps ?? 0,
+      cardioDistanceMeters: cardio?.distanceMeters ?? 0,
+      cardioDurationSeconds: cardio?.durationSeconds ?? 0,
+      cardioSteps: cardio?.steps ?? 0,
       strengthExerciseCount: strengthExercises.length,
       strengthSetCount,
       totalVolumeKg,
@@ -223,26 +264,208 @@ export class WorkoutRecordsService {
   }
 
   private buildManualWeeklyCompletionNote(
+    title: string | null,
     dto: CreateManualWorkoutRecordDto,
     summary: WorkoutRecordSummary,
+    strengthExercises: NormalizedStrengthExercise[],
   ) {
+    const baseLabel =
+      title ??
+      strengthExercises[0]?.name ??
+      this.normalizeOptionalText(dto.activityLevel) ??
+      '개인 운동';
     const volume = summary.totalVolumeKg ? ` · ${summary.totalVolumeKg}kg` : '';
     const cardio = summary.cardioDurationSeconds
       ? ` · 유산소 ${Math.round(summary.cardioDurationSeconds / 60)}분`
       : '';
 
-    return `${dto.title}${volume}${cardio}`;
+    return `${baseLabel}${volume}${cardio}`;
   }
 
   private pickManualDetail(
     dto: CreateManualWorkoutRecordDto,
+    cardio: NormalizedCardio | undefined,
+    strengthExercises: NormalizedStrengthExercise[],
   ): ManualWorkoutRecordDetail {
     return {
-      cardio: dto.cardio,
+      activityLevel: this.normalizeOptionalText(dto.activityLevel),
+      cardio,
+      condition: this.normalizeOptionalText(dto.condition),
+      dailyReport: this.normalizeOptionalText(dto.dailyReport),
+      exerciseTime: this.normalizeOptionalText(dto.exerciseTime),
       location: dto.location,
-      memo: dto.memo,
-      strengthExercises: dto.strengthExercises ?? [],
+      meals: this.normalizeMeals(dto.meals),
+      memo: this.normalizeOptionalText(dto.memo),
+      sleep: this.normalizeOptionalText(dto.sleep),
+      strengthExercises: strengthExercises.length ? strengthExercises : undefined,
     };
+  }
+
+  private normalizeTitle(value: string | undefined) {
+    const normalized = this.normalizeOptionalText(value);
+
+    return normalized ?? null;
+  }
+
+  private normalizeCardio(cardio: ManualCardioDto | undefined) {
+    if (!cardio) {
+      return undefined;
+    }
+
+    const treadmillMinutes = this.normalizeOptionalInteger(
+      cardio.treadmillMinutes,
+    );
+    const cycleMinutes = this.normalizeOptionalInteger(cardio.cycleMinutes);
+    const stairClimberMinutes = this.normalizeOptionalInteger(
+      cardio.stairClimberMinutes,
+    );
+    const derivedDurationSeconds =
+      ((treadmillMinutes ?? 0) +
+        (cycleMinutes ?? 0) +
+        (stairClimberMinutes ?? 0)) *
+      60;
+    const durationSeconds =
+      this.normalizeOptionalInteger(cardio.durationSeconds) ??
+      (derivedDurationSeconds > 0 ? derivedDurationSeconds : undefined);
+    const normalized: NormalizedCardio = {
+      cycleMinutes,
+      distanceMeters: this.normalizeOptionalInteger(cardio.distanceMeters),
+      durationSeconds,
+      stairClimberMinutes,
+      steps: this.normalizeOptionalInteger(cardio.steps),
+      treadmillMinutes,
+    };
+
+    return this.hasDefinedValue(normalized) ? normalized : undefined;
+  }
+
+  private normalizeStrengthExercises(
+    strengthExercises: ManualStrengthExerciseDto[] | undefined,
+  ) {
+    if (!strengthExercises?.length) {
+      return [];
+    }
+
+    const normalizedExercises: NormalizedStrengthExercise[] = [];
+
+    strengthExercises.forEach((exercise) => {
+        const name = exercise.name.trim();
+        const sets = exercise.sets
+          .map((set) => ({
+            reps: this.normalizeOptionalInteger(set.reps),
+            restSeconds: this.normalizeOptionalInteger(set.restSeconds),
+            rir: this.normalizeOptionalInteger(set.rir),
+            weightKg: this.normalizeOptionalNumber(set.weightKg),
+          }))
+          .filter((set) => this.hasDefinedValue(set));
+
+        if (!name || !sets.length) {
+          return;
+        }
+
+        const volume = sets.reduce(
+          (total, set) => total + (set.weightKg ?? 0) * (set.reps ?? 0),
+          0,
+        );
+        const maxSet = sets.reduce(
+          (best, set) => ((set.weightKg ?? 0) > (best.weightKg ?? 0) ? set : best),
+          {
+            reps: 0,
+            weightKg: 0,
+          },
+        );
+        const maxWeight = maxSet.weightKg ?? 0;
+        const lbWeight = this.roundToSingleDecimal(maxWeight * 2.20462);
+        const estimated1RM =
+          maxWeight > 0 && (maxSet.reps ?? 0) > 0
+            ? maxSet.reps === 1
+              ? maxWeight
+              : this.roundToSingleDecimal(
+                  maxWeight * (1 + (maxSet.reps ?? 0) / 30),
+                )
+            : 0;
+
+        normalizedExercises.push({
+          estimated1RM,
+          lbWeight,
+          maxWeight,
+          name,
+          restTime: this.normalizeOptionalText(exercise.restTime),
+          rir: this.normalizeOptionalText(exercise.rir),
+          sets,
+          volume,
+        });
+      });
+
+    return normalizedExercises;
+  }
+
+  private normalizeBodyComposition(bodyComposition: BodyCompositionDto | undefined) {
+    if (!bodyComposition) {
+      return null;
+    }
+
+    const morningWeightKg = this.normalizeOptionalNumber(
+      bodyComposition.morningWeightKg,
+    );
+    const eveningWeightKg = this.normalizeOptionalNumber(
+      bodyComposition.eveningWeightKg,
+    );
+    const normalized: NormalizedBodyComposition = {
+      bodyFatKg: this.normalizeOptionalNumber(bodyComposition.bodyFatKg),
+      bodyFatPercentage: this.normalizeOptionalNumber(
+        bodyComposition.bodyFatPercentage,
+      ),
+      eveningWeightKg,
+      morningWeightKg,
+      skeletalMuscleMassKg: this.normalizeOptionalNumber(
+        bodyComposition.skeletalMuscleMassKg,
+      ),
+      weightKg:
+        this.normalizeOptionalNumber(bodyComposition.weightKg) ??
+        morningWeightKg ??
+        eveningWeightKg,
+    };
+
+    return this.hasDefinedValue(normalized) ? normalized : null;
+  }
+
+  private normalizeMeals(meals: string[] | undefined) {
+    if (!meals?.length) {
+      return undefined;
+    }
+
+    const normalized = meals
+      .map((meal) => meal.trim())
+      .filter((meal) => meal.length > 0);
+
+    return normalized.length ? normalized : undefined;
+  }
+
+  private normalizeOptionalText(value: string | undefined) {
+    const normalized = value?.trim();
+
+    return normalized ? normalized : undefined;
+  }
+
+  private normalizeOptionalNumber(value: number | undefined) {
+    return typeof value === 'number' && Number.isFinite(value) && value >= 0
+      ? value
+      : undefined;
+  }
+
+  private normalizeOptionalInteger(value: number | undefined) {
+    const normalized = this.normalizeOptionalNumber(value);
+
+    return normalized === undefined ? undefined : Math.round(normalized);
+  }
+
+  private hasDefinedValue(record: Record<string, unknown>) {
+    return Object.values(record).some((value) => value !== undefined);
+  }
+
+  private roundToSingleDecimal(value: number) {
+    return Math.round(value * 10) / 10;
   }
 
   private mapRecord(record: WorkoutRecordRow): WorkoutRecordDto {
@@ -254,7 +477,7 @@ export class WorkoutRecordsService {
       durationSeconds: record.duration_seconds,
       id: record.id,
       manualDetail: record.manual_detail,
-      performedAt: this.toUtcISOString(record.completed_at),
+      performedAt: this.toUtcISOString(record.performed_at),
       performedOn: record.performed_on,
       routineId: record.routine_id,
       routineLabel: record.routine_label,

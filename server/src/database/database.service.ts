@@ -145,6 +145,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       await this.pool.query(`
         ALTER TABLE workout_records
           ADD COLUMN IF NOT EXISTS title TEXT,
+          ADD COLUMN IF NOT EXISTS performed_at TIMESTAMPTZ,
           ADD COLUMN IF NOT EXISTS performed_on DATE,
           ADD COLUMN IF NOT EXISTS manual_detail JSONB,
           ADD COLUMN IF NOT EXISTS body_composition JSONB

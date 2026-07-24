@@ -60,14 +60,21 @@ const manualWorkoutSetSchema = z.object({
 });
 
 const manualStrengthExerciseSchema = z.object({
+  estimated1RM: z.number().min(0).max(5000).optional(),
+  lbWeight: z.number().min(0).max(5000).optional(),
+  maxWeight: z.number().min(0).max(1000).optional(),
   name: textField('exercise name', 80),
+  restTime: z.string().trim().max(80).optional(),
+  rir: z.string().trim().max(40).optional(),
   sets: z
     .array(manualWorkoutSetSchema)
     .min(1, 'At least one set is required.')
     .max(50, 'Sets must be 50 items or fewer.'),
+  volume: z.number().min(0).max(5_000_000).optional(),
 });
 
 const manualCardioSchema = z.object({
+  cycleMinutes: z.number().int().min(0).max(24 * 60).optional(),
   distanceMeters: z.number().int().min(0).max(1_000_000).optional(),
   durationSeconds: z
     .number()
@@ -75,41 +82,57 @@ const manualCardioSchema = z.object({
     .min(0)
     .max(24 * 60 * 60)
     .optional(),
+  stairClimberMinutes: z.number().int().min(0).max(24 * 60).optional(),
   steps: z.number().int().min(0).max(200_000).optional(),
+  treadmillMinutes: z.number().int().min(0).max(24 * 60).optional(),
 });
 
 const bodyCompositionSchema = z.object({
   bodyFatPercentage: z.number().min(0).max(100).optional(),
+  bodyFatKg: z.number().min(0).max(300).optional(),
+  eveningWeightKg: z.number().min(0).max(500).optional(),
+  morningWeightKg: z.number().min(0).max(500).optional(),
   skeletalMuscleMassKg: z.number().min(0).max(300).optional(),
   weightKg: z.number().min(0).max(500).optional(),
 });
 
 export const manualWorkoutRecordSchema = z
   .object({
+    activityLevel: z.string().trim().max(100).optional(),
     bodyComposition: bodyCompositionSchema.optional(),
     cardio: manualCardioSchema.optional(),
+    condition: z.string().trim().max(100).optional(),
+    dailyReport: z.string().trim().max(2000).optional(),
     durationSeconds: z
       .number()
       .int()
       .min(0)
       .max(24 * 60 * 60),
+    exerciseTime: z.string().trim().max(40).optional(),
     location: z.enum(['gym', 'home', 'outdoor', 'unknown']).optional(),
+    meals: z.array(z.string().trim().max(300)).max(8).optional(),
     memo: z.string().trim().max(1000).optional(),
     performedAt: isoUtcDateTimeSchema,
     performedOn: isoDateStringSchema,
+    sleep: z.string().trim().max(100).optional(),
     strengthExercises: z
       .array(manualStrengthExerciseSchema)
       .max(50, 'Strength exercises must be 50 items or fewer.')
       .optional(),
     timeZone: textField('timeZone', 100),
-    title: textField('title', 100),
+    title: z.string().trim().max(100).optional(),
   })
   .refine(
     (value) =>
       Boolean(value.cardio) ||
       Boolean(value.strengthExercises?.length) ||
       Boolean(value.memo) ||
-      Boolean(value.bodyComposition),
+      Boolean(value.dailyReport) ||
+      Boolean(value.bodyComposition) ||
+      Boolean(value.meals?.some((meal) => meal.length > 0)) ||
+      Boolean(value.sleep) ||
+      Boolean(value.condition) ||
+      Boolean(value.activityLevel),
     {
       message:
         'At least one workout detail, memo, or body composition value is required.',

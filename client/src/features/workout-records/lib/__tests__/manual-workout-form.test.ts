@@ -15,54 +15,71 @@ jest.mock('shared/lib/date', () => ({
 describe('수동 운동 폼 로직', () => {
   it('근력·유산소·체성분 입력을 서버 payload로 변환한다', () => {
     const form = createManualWorkoutFormState();
-    form.title = '상체 개인 운동';
-    form.durationMinutes = '60';
-    form.cardioDurationMinutes = '15';
-    form.cardioDistanceKm = '3';
-    form.cardioSteps = '4200';
-    form.weightKg = '72.4';
+    form.activityLevel = '헬스장';
+    form.exerciseTime = '60분';
+    form.steps = '4200';
+    form.treadmillMinutes = '15';
+    form.morningWeightKg = '72.4';
     form.strengthExercises = [
       {
+        estimated1RM: 0,
+        lbWeight: 0,
+        maxWeight: 0,
         name: '벤치프레스',
+        restTime: '90초',
+        rir: '2',
         sets: [
-          { reps: '10', restSeconds: '90', rir: '2', weightKg: '60' },
-          { reps: '8', restSeconds: '', rir: '', weightKg: '70' },
+          { reps: '10', weightKg: '60' },
+          { reps: '8', weightKg: '70' },
         ],
+        volume: 0,
       },
     ];
 
     expect(buildManualWorkoutPayload(form)).toEqual({
+      activityLevel: '헬스장',
       bodyComposition: {
+        bodyFatKg: undefined,
         bodyFatPercentage: undefined,
+        eveningWeightKg: undefined,
+        morningWeightKg: 72.4,
         skeletalMuscleMassKg: undefined,
         weightKg: 72.4,
       },
       cardio: {
-        distanceMeters: 3000,
+        cycleMinutes: undefined,
         durationSeconds: 900,
+        stairClimberMinutes: undefined,
         steps: 4200,
+        treadmillMinutes: 15,
       },
+      condition: undefined,
+      dailyReport: undefined,
       durationSeconds: 3600,
       location: 'gym',
+      meals: undefined,
       memo: undefined,
       performedAt: '2026-07-23T12:34:56.000Z',
       performedOn: '2026-07-23',
+      sleep: undefined,
       strengthExercises: [
         {
+          estimated1RM: 88.7,
+          lbWeight: 154.3,
+          maxWeight: 70,
           name: '벤치프레스',
+          restTime: '90초',
+          rir: '2',
           sets: [
-            { reps: 10, restSeconds: 90, rir: 2, weightKg: 60 },
-            {
-              reps: 8,
-              restSeconds: undefined,
-              rir: undefined,
-              weightKg: 70,
-            },
+            { reps: 10, weightKg: 60 },
+            { reps: 8, weightKg: 70 },
           ],
+          volume: 1160,
         },
       ],
       timeZone: 'Asia/Seoul',
-      title: '상체 개인 운동',
+      exerciseTime: '60분',
+      title: undefined,
     });
   });
 
@@ -70,11 +87,14 @@ describe('수동 운동 폼 로직', () => {
     expect(
       calculateManualWorkoutVolume([
         {
+          estimated1RM: 0,
+          lbWeight: 0,
+          maxWeight: 120,
           name: '스쿼트',
-          sets: [
-            { reps: '10', restSeconds: '', rir: '', weightKg: '100' },
-            { reps: '8', restSeconds: '', rir: '', weightKg: '120' },
-          ],
+          restTime: '',
+          rir: '',
+          sets: [{ reps: '10', weightKg: '100' }, { reps: '8', weightKg: '120' }],
+          volume: 1960,
         },
       ]),
     ).toBe(1960);
@@ -82,12 +102,10 @@ describe('수동 운동 폼 로직', () => {
 
   it('필수 입력이 없으면 오류를 반환한다', () => {
     const form = createManualWorkoutFormState();
-    form.title = '';
-    form.durationMinutes = '0';
     form.strengthExercises = [];
 
-    expect(validateManualWorkoutForm(form).map((error) => error.field)).toEqual(
-      expect.arrayContaining(['title', 'durationMinutes', 'strengthExercises']),
-    );
+    expect(validateManualWorkoutForm(form).map((error) => error.field)).toEqual([
+      'strengthExercises',
+    ]);
   });
 });
