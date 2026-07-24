@@ -1,3 +1,4 @@
+import { useVisibility } from '@granite-js/react-native';
 import { useCreateRoutineWorkoutCompletion } from 'features/workout-records/api/routine-workout-completions';
 import type { HomeRoutine } from 'features/workout-routines/types/routine';
 import { useEffect, useMemo, useRef } from 'react';
@@ -16,12 +17,18 @@ type ActiveWorkoutScreenProps = {
   routine: HomeRoutine;
 };
 
+function createProgressSessionId() {
+  return `active-workout-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
 export function ActiveWorkoutScreen({
   onCancel,
   onCompleted,
   routine,
 }: ActiveWorkoutScreenProps) {
+  const isVisible = useVisibility();
   const createRoutineWorkoutCompletion = useCreateRoutineWorkoutCompletion();
+  const progressSessionIdRef = useRef(createProgressSessionId());
   const clearErrorMessage = useActiveWorkoutStore(
     (state) => state.clearErrorMessage,
   );
@@ -33,9 +40,6 @@ export function ActiveWorkoutScreen({
   );
   const elapsedSeconds = useActiveWorkoutStore((state) => state.elapsedSeconds);
   const errorMessage = useActiveWorkoutStore((state) => state.errorMessage);
-  const incrementElapsedSeconds = useActiveWorkoutStore(
-    (state) => state.incrementElapsedSeconds,
-  );
   const initializeProgress = useActiveWorkoutStore(
     (state) => state.initializeProgress,
   );
@@ -45,30 +49,34 @@ export function ActiveWorkoutScreen({
     (state) => state.setErrorMessage,
   );
   const skipCountdown = useActiveWorkoutStore((state) => state.skipCountdown);
+  const syncElapsedSeconds = useActiveWorkoutStore(
+    (state) => state.syncElapsedSeconds,
+  );
   const togglePause = useActiveWorkoutStore((state) => state.togglePause);
   const toggleStep = useActiveWorkoutStore((state) => state.toggleStep);
   const countdownTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const progressSessionId = progressSessionIdRef.current;
 
   useEffect(() => {
-    initializeProgress();
+    initializeProgress(progressSessionId);
 
     return () => {
-      resetProgress();
+      resetProgress(progressSessionId);
     };
-  }, [initializeProgress, resetProgress]);
+  }, [initializeProgress, progressSessionId, resetProgress]);
 
   useEffect(() => {
-    if (countdownDone) {
+    if (!isVisible || countdownDone) {
       return;
     }
 
     if (countdown <= 0) {
-      skipCountdown();
+      skipCountdown(progressSessionId);
       return;
     }
 
     countdownTimerRef.current = setTimeout(() => {
-      decrementCountdown();
+      decrementCountdown(progressSessionId);
     }, 1000);
 
     return () => {
@@ -76,19 +84,34 @@ export function ActiveWorkoutScreen({
         clearTimeout(countdownTimerRef.current);
       }
     };
-  }, [countdown, countdownDone, decrementCountdown, skipCountdown]);
+  }, [
+    countdown,
+    countdownDone,
+    decrementCountdown,
+    isVisible,
+    progressSessionId,
+    skipCountdown,
+  ]);
 
   useEffect(() => {
-    if (!countdownDone || isPaused) {
+    if (!isVisible || !countdownDone || isPaused) {
       return;
     }
 
+    syncElapsedSeconds(progressSessionId);
+
     const interval = setInterval(() => {
-      incrementElapsedSeconds();
+      syncElapsedSeconds(progressSessionId);
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [countdownDone, incrementElapsedSeconds, isPaused]);
+  }, [
+    countdownDone,
+    isPaused,
+    isVisible,
+    progressSessionId,
+    syncElapsedSeconds,
+  ]);
 
   const completedCount = useMemo(
     () => routine.steps.filter((_, index) => completedSteps[index]).length,
@@ -100,7 +123,7 @@ export function ActiveWorkoutScreen({
       clearTimeout(countdownTimerRef.current);
     }
 
-    skipCountdown();
+    skipCountdown(progressSessionId);
   };
 
   const saveAndExit = async () => {
@@ -108,13 +131,14 @@ export function ActiveWorkoutScreen({
       return;
     }
 
-    clearErrorMessage();
+    clearErrorMessage(progressSessionId);
+    const currentElapsedSeconds = syncElapsedSeconds(progressSessionId);
 
     try {
       await createRoutineWorkoutCompletion.mutateAsync(
         createRoutineCompletionPayload({
           completedSteps,
-          durationSeconds: Math.max(elapsedSeconds, 1),
+          durationSeconds: Math.max(currentElapsedSeconds, 1),
           routine,
         }),
       );
@@ -122,12 +146,13 @@ export function ActiveWorkoutScreen({
       Alert.alert(
         '운동 기록 저장 완료',
         `${routine.label} 완료 기록이 저장되었습니다.\n\n운동 시간: ${formatTimer(
-          elapsedSeconds,
+          currentElapsedSeconds,
         )}\n완료 항목: ${completedCount}/${routine.steps.length}개`,
         [{ text: '확인', onPress: onCompleted }],
       );
     } catch (error) {
       setErrorMessage(
+        progressSessionId,
         error instanceof Error ? error.message : '운동 기록 저장에 실패했어요.',
       );
     }
@@ -160,14 +185,18 @@ export function ActiveWorkoutScreen({
           elapsedSeconds={elapsedSeconds}
           isPaused={isPaused}
           onEnd={handleEndWorkout}
-          onPauseToggle={togglePause}
+          onPauseToggle={() => {
+            togglePause(progressSessionId);
+          }}
         />
       ) : null}
 
       <WorkoutStepList
         completedSteps={completedSteps}
         errorMessage={errorMessage}
-        onToggleStep={toggleStep}
+        onToggleStep={(stepIndex) => {
+          toggleStep(progressSessionId, stepIndex);
+        }}
         routine={routine}
       />
 
