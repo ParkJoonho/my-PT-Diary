@@ -36,6 +36,14 @@ export class WorkoutReportTotalsDto {
   conditionRecordCount!: number;
 }
 
+export class WorkoutReportManualTotalsDto {
+  @ApiProperty({ example: 8 })
+  workoutRecordCount!: number;
+
+  @ApiProperty({ example: 21640 })
+  totalVolumeKg!: number;
+}
+
 export class WorkoutReportCurrentWeekDto extends WorkoutReportWeekRangeDto {
   @ApiProperty({ example: 3 })
   workoutRecordCount!: number;
@@ -52,12 +60,37 @@ export class WorkoutReportConditionSummaryDto {
   averageSorenessScore!: number | null;
 }
 
+export class WorkoutReportTrendPointDto {
+  @ApiProperty({ example: '2026-07-23' })
+  date!: string;
+
+  @ApiProperty({ example: 1160 })
+  value!: number;
+}
+
+export class WorkoutReportBodyCompositionTrendPointDto {
+  @ApiProperty({ example: '2026-07-23' })
+  date!: string;
+
+  @ApiProperty({ example: 72.4 })
+  weightKg!: number;
+
+  @ApiPropertyOptional({ example: 34.2, nullable: true, type: Number })
+  skeletalMuscleMassKg!: number | null;
+
+  @ApiPropertyOptional({ example: 18.5, nullable: true, type: Number })
+  bodyFatPercentage!: number | null;
+}
+
 export class WorkoutReportSummaryDto {
   @ApiProperty({ example: '2026-07-23' })
   referenceDate!: string;
 
   @ApiProperty({ type: WorkoutReportTotalsDto })
   totals!: WorkoutReportTotalsDto;
+
+  @ApiProperty({ type: WorkoutReportManualTotalsDto })
+  manualTotals!: WorkoutReportManualTotalsDto;
 
   @ApiProperty({ type: WorkoutReportCurrentWeekDto })
   currentWeek!: WorkoutReportCurrentWeekDto;
@@ -67,4 +100,16 @@ export class WorkoutReportSummaryDto {
 
   @ApiProperty({ type: [WeeklyWorkoutFrequencyDto] })
   weeklyFrequency!: WeeklyWorkoutFrequencyDto[];
+
+  @ApiProperty({ type: [WorkoutReportTrendPointDto] })
+  volumeTrend!: WorkoutReportTrendPointDto[];
+
+  @ApiProperty({ type: [WorkoutReportTrendPointDto] })
+  weightTrend!: WorkoutReportTrendPointDto[];
+
+  @ApiProperty({ type: [WorkoutReportBodyCompositionTrendPointDto] })
+  bodyCompositionTrend!: WorkoutReportBodyCompositionTrendPointDto[];
+
+  @ApiProperty({ type: [WorkoutReportTrendPointDto] })
+  conditionTrend!: WorkoutReportTrendPointDto[];
 }

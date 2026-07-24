@@ -1,28 +1,75 @@
 import { useNavigation } from '@granite-js/react-native';
-import { useConditionRecords } from 'features/condition-records/api/condition-records';
-import { HomeTabBar } from 'features/home/components/home-tab-bar';
-import { useWorkoutRecords } from 'features/workout-records/api/workout-records';
-import { WorkoutRecordCard } from 'features/workout-records/components/workout-record-card';
-import { useWorkoutReportSummary } from 'features/workout-reports/api/workout-report-summary';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import type { ConditionRecordDto } from 'shared/api/generated/models';
-import { SuspenseSection } from 'shared/components/async-state';
-import Colors from 'shared/constants/colors';
-import { getClientTodayDate } from 'shared/lib/date';
+import { useQueryClient } from '@tanstack/react-query';
+import {
+  getConditionRecordsQueryKeyPrefix,
+  useConditionRecords,
+} from 'features/condition-records/api/condition-records';
 import {
   getConditionScoreColor,
   getConditionScoreLabel,
   getSorenessScoreColor,
   getSorenessScoreLabel,
 } from 'features/condition-records/lib/condition-record-metadata';
+import { HomeTabBar } from 'features/home/components/home-tab-bar';
+import {
+  getWorkoutRecordsQueryKeyPrefix,
+  useWorkoutRecords,
+} from 'features/workout-records/api/workout-records';
+import { WorkoutRecordCard } from 'features/workout-records/components/workout-record-card';
+import {
+  getWorkoutReportSummaryQueryKeyPrefix,
+  useWorkoutReportSummary,
+} from 'features/workout-reports/api/workout-report-summary';
+import { formatReportNumber } from 'features/workout-reports/components/report-format';
+import { WorkoutReportChartSection } from 'features/workout-reports/components/workout-report-chart-section';
+import { useState } from 'react';
+import {
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import type { ConditionRecordDto } from 'shared/api/generated/models';
+import { useTrackerUserKey } from 'shared/api/user-key';
+import { SuspenseSection } from 'shared/components/async-state';
+import Colors, { iosShadow } from 'shared/constants/colors';
+import { getClientTodayDate } from 'shared/lib/date';
 
 export function ExerciseScreen() {
   const navigation = useNavigation();
+  const queryClient = useQueryClient();
+  const userKey = useTrackerUserKey();
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+
+    try {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: getWorkoutRecordsQueryKeyPrefix(userKey),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: getConditionRecordsQueryKeyPrefix(userKey),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: getWorkoutReportSummaryQueryKeyPrefix(userKey),
+        }),
+      ]);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
       <ScrollView
         contentContainerStyle={styles.content}
+        refreshControl={
+          <RefreshControl onRefresh={handleRefresh} refreshing={refreshing} />
+        }
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
@@ -34,12 +81,13 @@ export function ExerciseScreen() {
 
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>오늘의 운동</Text>
-          <Text
-            onPress={() => navigation.navigate({ name: '/exercise-list', params: {} })}
-            style={styles.linkText}
+          <Pressable
+            onPress={() =>
+              navigation.navigate({ name: '/exercise-list', params: {} })
+            }
           >
-            전체 기록보기
-          </Text>
+            <Text style={styles.linkText}>전체 기록보기</Text>
+          </Pressable>
         </View>
         <SuspenseSection errorMessage="오늘 운동을 불러오지 못했어요.">
           <TodayWorkoutSection />
@@ -47,33 +95,27 @@ export function ExerciseScreen() {
 
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>오늘의 컨디션</Text>
-          <Text
-            onPress={() => navigation.navigate({ name: '/condition-list', params: {} })}
-            style={styles.linkText}
+          <Pressable
+            onPress={() =>
+              navigation.navigate({ name: '/condition-list', params: {} })
+            }
           >
-            전체 기록보기
-          </Text>
+            <Text style={styles.linkText}>전체 기록보기</Text>
+          </Pressable>
         </View>
         <SuspenseSection errorMessage="오늘 컨디션을 불러오지 못했어요.">
           <TodayConditionSection />
         </SuspenseSection>
 
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>운동 리포트</Text>
-          <Text
-            onPress={() => navigation.navigate({ name: '/progress-chart', params: {} })}
-            style={styles.linkText}
-          >
-            전체 보기
-          </Text>
-        </View>
-        <SuspenseSection errorMessage="리포트 요약을 불러오지 못했어요.">
-          <ReportSummarySection />
+        <SuspenseSection errorMessage="리포트를 불러오지 못했어요.">
+          <InlineReportSection />
         </SuspenseSection>
       </ScrollView>
 
       <Pressable
-        onPress={() => navigation.navigate({ name: '/exercise-form', params: {} })}
+        onPress={() =>
+          navigation.navigate({ name: '/exercise-form', params: {} })
+        }
         style={styles.fab}
       >
         <Text style={styles.fabText}>+</Text>
@@ -86,14 +128,20 @@ export function ExerciseScreen() {
 function TodayWorkoutSection() {
   const today = getClientTodayDate();
   const navigation = useNavigation();
-  const { data } = useWorkoutRecords({ from: today, source: 'manual', to: today });
+  const { data } = useWorkoutRecords({
+    from: today,
+    source: 'manual',
+    to: today,
+  });
 
   if (!data.length) {
     return (
       <View style={styles.emptyCard}>
         <Text style={styles.emptyTitle}>오늘의 운동을 기록해보세요.</Text>
         <Pressable
-          onPress={() => navigation.navigate({ name: '/exercise-form', params: {} })}
+          onPress={() =>
+            navigation.navigate({ name: '/exercise-form', params: {} })
+          }
           style={styles.secondaryButton}
         >
           <Text style={styles.secondaryButtonText}>+운동 기록하기</Text>
@@ -132,7 +180,9 @@ function TodayConditionSection() {
       <View style={styles.emptyCard}>
         <Text style={styles.emptyTitle}>오늘 컨디션을 체크해보세요.</Text>
         <Pressable
-          onPress={() => navigation.navigate({ name: '/condition-form', params: {} })}
+          onPress={() =>
+            navigation.navigate({ name: '/condition-form', params: {} })
+          }
           style={styles.secondaryButton}
         >
           <Text style={styles.secondaryButtonText}>+컨디션 체크</Text>
@@ -144,25 +194,64 @@ function TodayConditionSection() {
   return <TodayConditionCard record={data[0]!} />;
 }
 
-function ReportSummarySection() {
+function InlineReportSection() {
   const { data } = useWorkoutReportSummary();
 
   return (
-    <View style={styles.reportCard}>
-      <Metric label="총 운동 횟수" value={`${data.totals.workoutRecordCount}`} />
-      <View style={styles.reportDivider} />
-      <Metric label="총 볼륨 (kg)" value={`${data.totals.totalVolumeKg.toLocaleString()}`} />
-      <View style={styles.reportDivider} />
-      <Metric label="컨디션 체크" value={`${data.totals.conditionRecordCount}`} />
+    <View style={styles.reportSection}>
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>운동 리포트</Text>
+      </View>
+      <Text style={styles.reportSubtitle}>
+        누적된 데이터로 변화를 확인해보세요.
+      </Text>
+
+      <View style={styles.reportMetricRow}>
+        <SummaryMetricCard
+          accentColor={Colors.accent}
+          label="총 운동 횟수"
+          value={formatReportNumber(data.manualTotals.workoutRecordCount)}
+        />
+        <SummaryMetricCard
+          accentColor={Colors.info}
+          label="총 볼륨 (kg)"
+          value={formatReportNumber(data.manualTotals.totalVolumeKg)}
+        />
+        <SummaryMetricCard
+          accentColor={Colors.success}
+          label="컨디션 체크"
+          value={formatReportNumber(data.totals.conditionRecordCount)}
+        />
+      </View>
+
+      <WorkoutReportChartSection summary={data} />
     </View>
   );
 }
 
-function Metric({ label, value }: { label: string; value: string }) {
+function SummaryMetricCard({
+  accentColor,
+  label,
+  value,
+}: {
+  accentColor: string;
+  label: string;
+  value: string;
+}) {
   return (
-    <View style={styles.metric}>
-      <Text style={styles.metricValue}>{value}</Text>
-      <Text style={styles.metricLabel}>{label}</Text>
+    <View style={styles.reportMetricCard}>
+      <View
+        style={[
+          styles.reportMetricAccent,
+          { backgroundColor: `${accentColor}18` },
+        ]}
+      >
+        <View
+          style={[styles.reportMetricDot, { backgroundColor: accentColor }]}
+        />
+      </View>
+      <Text style={styles.reportMetricValue}>{value}</Text>
+      <Text style={styles.reportMetricLabel}>{label}</Text>
     </View>
   );
 }
@@ -178,7 +267,9 @@ function TodayConditionCard({ record }: { record: ConditionRecordDto }) {
         <Text style={styles.todayConditionLabel}>컨디션</Text>
         {mainCondition ? (
           <View style={styles.todayConditionValueRow}>
-            <Text style={styles.todayConditionValue}>{mainCondition.score.toFixed(1)}</Text>
+            <Text style={styles.todayConditionValue}>
+              {mainCondition.score.toFixed(1)}
+            </Text>
             <Badge
               color={getConditionScoreColor(mainCondition.score)}
               label={getConditionScoreLabel(mainCondition.score)}
@@ -195,7 +286,9 @@ function TodayConditionCard({ record }: { record: ConditionRecordDto }) {
         <Text style={styles.todayConditionLabel}>근육통</Text>
         {mainSoreness ? (
           <View style={styles.todayConditionValueRow}>
-            <Text style={styles.todayConditionValue}>{mainSoreness.score.toFixed(1)}</Text>
+            <Text style={styles.todayConditionValue}>
+              {mainSoreness.score.toFixed(1)}
+            </Text>
             <Badge
               color={getSorenessScoreColor(mainSoreness.score)}
               label={getSorenessScoreLabel(mainSoreness.score)}
@@ -224,7 +317,9 @@ function TodayConditionCard({ record }: { record: ConditionRecordDto }) {
 
 function Badge({ color, label }: { color: string; label: string }) {
   return (
-    <View style={[styles.todayConditionBadge, { backgroundColor: `${color}20` }]}>
+    <View
+      style={[styles.todayConditionBadge, { backgroundColor: `${color}20` }]}
+    >
       <Text style={[styles.todayConditionBadgeText, { color }]}>{label}</Text>
     </View>
   );
@@ -245,10 +340,10 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     backgroundColor: Colors.card,
     borderColor: Colors.cardBorder,
-    borderRadius: 14,
-    borderWidth: 1,
+    borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
     gap: 12,
-    padding: 16,
+    padding: 18,
   },
   emptyTitle: {
     color: Colors.textSecondary,
@@ -287,35 +382,53 @@ const styles = StyleSheet.create({
     fontFamily: 'Pretendard-Regular',
     fontSize: 13,
   },
-  metric: {
+  reportMetricAccent: {
     alignItems: 'center',
-    flex: 1,
-    gap: 4,
+    borderRadius: 12,
+    height: 40,
+    justifyContent: 'center',
+    width: 40,
   },
-  metricLabel: {
+  reportMetricCard: {
+    ...iosShadow,
+    alignItems: 'center',
+    backgroundColor: Colors.card,
+    borderRadius: 16,
+    flex: 1,
+    gap: 8,
+    minHeight: 132,
+    paddingHorizontal: 12,
+    paddingVertical: 16,
+  },
+  reportMetricDot: {
+    borderRadius: 6,
+    height: 12,
+    width: 12,
+  },
+  reportMetricLabel: {
     color: Colors.textMuted,
     fontFamily: 'Pretendard-Regular',
     fontSize: 11,
     textAlign: 'center',
   },
-  metricValue: {
-    color: Colors.text,
-    fontFamily: 'Pretendard-Bold',
-    fontSize: 18,
-  },
-  reportCard: {
-    backgroundColor: Colors.card,
-    borderColor: Colors.cardBorder,
-    borderRadius: 14,
-    borderWidth: 1,
+  reportMetricRow: {
     flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    gap: 10,
   },
-  reportDivider: {
-    backgroundColor: Colors.divider,
-    marginHorizontal: 12,
-    width: 1,
+  reportMetricValue: {
+    color: Colors.text,
+    fontFamily: 'Pretendard-Medium',
+    fontSize: 19,
+    textAlign: 'center',
+  },
+  reportSection: {
+    gap: 12,
+    marginTop: 6,
+  },
+  reportSubtitle: {
+    color: Colors.textSecondary,
+    fontFamily: 'Pretendard-Regular',
+    fontSize: 13,
   },
   secondaryButton: {
     backgroundColor: Colors.accentLight,
@@ -341,6 +454,12 @@ const styles = StyleSheet.create({
   stack: {
     gap: 0,
   },
+  title: {
+    color: Colors.text,
+    fontFamily: 'Pretendard-Bold',
+    fontSize: 28,
+    lineHeight: 34,
+  },
   todayConditionBadge: {
     borderRadius: 6,
     paddingHorizontal: 6,
@@ -354,7 +473,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.card,
     borderColor: Colors.cardBorder,
     borderRadius: 14,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
     paddingHorizontal: 16,
     paddingVertical: 14,
@@ -383,10 +502,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 6,
     marginTop: 6,
-  },
-  title: {
-    color: Colors.text,
-    fontFamily: 'Pretendard-Bold',
-    fontSize: 24,
   },
 });

@@ -1,153 +1,121 @@
 import { describe, expect, it } from '@jest/globals';
-import type {
-  ConditionRecordDto,
-  WorkoutRecordDto,
-} from 'shared/api/generated/models';
+import type { WorkoutReportSummaryDto } from 'shared/api/generated/models';
 import {
-  CONDITION_LABELS,
-  MUSCLE_SORENESS_LABELS,
-} from 'features/condition-records/lib/condition-record-metadata';
-import {
-  buildBodyCompositionTrend,
-  buildConditionTrend,
-  buildVolumeTrend,
+  formatReportCompactNumber,
+  formatShortDate,
+  getWorkoutReportInsight,
 } from '../report-format';
 
-function getConditionScore(label: string) {
-  switch (label) {
-    case '훈련 동기':
-      return 4;
-    case '일상피로도':
-      return 4;
-    case '수면시간':
-      return 4;
-    case '수행력':
-      return 4;
-    default:
-      return 0;
-  }
-}
-
-function createWorkoutRecord(
-  overrides: Partial<WorkoutRecordDto> = {},
-): WorkoutRecordDto {
+function createSummary(
+  overrides: Partial<WorkoutReportSummaryDto> = {},
+): WorkoutReportSummaryDto {
   return {
-    bodyComposition: null,
-    completedAt: '2026-07-23T12:34:56.000Z',
-    completedOn: '2026-07-23',
-    createdAt: '2026-07-23T12:35:00.000Z',
-    durationSeconds: 3600,
-    id: 'record-1',
-    manualDetail: null,
-    performedAt: '2026-07-23T12:34:56.000Z',
-    performedOn: '2026-07-23',
-    routineId: null,
-    routineLabel: null,
-    routineSource: null,
-    source: 'manual',
-    steps: [],
-    summary: {},
-    timeZone: 'Asia/Seoul',
-    title: '운동',
-    updatedAt: '2026-07-23T12:35:00.000Z',
-    weeklyCompletionId: null,
-    ...overrides,
-  };
-}
-
-function createConditionRecord(
-  overrides: Partial<ConditionRecordDto> = {},
-): ConditionRecordDto {
-  return {
-    conditions: CONDITION_LABELS.map((label) => ({
-      label,
-      score: getConditionScore(label),
-    })),
-    createdAt: 1753274102000,
-    date: '2026-07-23',
-    id: 'condition-1',
-    muscleSoreness: MUSCLE_SORENESS_LABELS.map((label) => ({
-      label,
-      score: 0,
-    })),
-    summary: {
+    bodyCompositionTrend: [],
+    condition: {
       averageConditionScore: 4,
-      averageSorenessScore: null,
-      selectedConditionCount: 4,
-      selectedSorenessCount: 0,
-      severeSorenessCount: 0,
+      averageSorenessScore: 2,
     },
-    weekNumber: 1,
+    conditionTrend: [],
+    currentWeek: {
+      weekEndDate: '2026-07-25',
+      weekStartDate: '2026-07-19',
+      workoutDayCount: 2,
+      workoutRecordCount: 3,
+    },
+    manualTotals: {
+      totalVolumeKg: 1160,
+      workoutRecordCount: 2,
+    },
+    referenceDate: '2026-07-23',
+    totals: {
+      cardioDurationSeconds: 900,
+      conditionRecordCount: 1,
+      durationSeconds: 3600,
+      totalVolumeKg: 1160,
+      workoutDayCount: 2,
+      workoutRecordCount: 3,
+    },
+    volumeTrend: [],
+    weightTrend: [],
+    weeklyFrequency: [],
     ...overrides,
   };
 }
 
-describe('운동 리포트 추이 포맷', () => {
-  it('볼륨 추이를 날짜순 최근 8개로 만든다', () => {
-    const trend = buildVolumeTrend(
-      Array.from({ length: 10 }, (_, index) =>
-        createWorkoutRecord({
-          id: `record-${index}`,
-          performedOn: `2026-07-${String(index + 1).padStart(2, '0')}`,
-          summary: { totalVolumeKg: index * 100 },
+describe('운동 리포트 포맷 유틸', () => {
+  it('짧은 날짜 라벨을 월/일 형식으로 만든다', () => {
+    expect(formatShortDate('2026-07-24')).toBe('7/24');
+  });
+
+  it('큰 수는 k 단위로 축약한다', () => {
+    expect(formatReportCompactNumber(1160)).toBe('1.2k');
+    expect(formatReportCompactNumber(840)).toBe('840');
+  });
+
+  it('볼륨 탭 인사이트를 이전 기록 대비로 만든다', () => {
+    expect(
+      getWorkoutReportInsight(
+        createSummary({
+          volumeTrend: [
+            { date: '2026-07-21', value: 840 },
+            { date: '2026-07-23', value: 1160 },
+          ],
         }),
+        'volume',
       ),
-    );
-
-    expect(trend).toHaveLength(8);
-    expect(trend[0]).toEqual({ date: '2026-07-03', value: 200 });
-    expect(trend.at(-1)).toEqual({ date: '2026-07-10', value: 900 });
+    ).toContain('320kg 늘었어요');
   });
 
-  it('컨디션 추이를 날짜순으로 만든다', () => {
+  it('체중 탭 인사이트를 첫 기록 대비로 만든다', () => {
     expect(
-      buildConditionTrend([
-        createConditionRecord({
-          date: '2026-07-03',
-          summary: {
-            averageConditionScore: 3,
-            averageSorenessScore: null,
-            selectedConditionCount: 1,
-            selectedSorenessCount: 0,
-            severeSorenessCount: 0,
-          },
+      getWorkoutReportInsight(
+        createSummary({
+          weightTrend: [
+            { date: '2026-07-01', value: 70.5 },
+            { date: '2026-07-23', value: 72.0 },
+          ],
         }),
-        createConditionRecord({
-          date: '2026-07-01',
-          summary: {
-            averageConditionScore: 5,
-            averageSorenessScore: null,
-            selectedConditionCount: 1,
-            selectedSorenessCount: 0,
-            severeSorenessCount: 0,
-          },
-        }),
-      ]),
-    ).toEqual([
-      { date: '2026-07-01', value: 5 },
-      { date: '2026-07-03', value: 3 },
-    ]);
+        'weight',
+      ),
+    ).toBe('첫 기록 대비 1.5kg 늘었어요.');
   });
 
-  it('체성분 추이를 체중이 있는 기록으로 만든다', () => {
+  it('컨디션 탭 인사이트를 평균과 비교한다', () => {
     expect(
-      buildBodyCompositionTrend([
-        createWorkoutRecord({
-          bodyComposition: { weightKg: 72.4 },
-          performedOn: '2026-07-02',
+      getWorkoutReportInsight(
+        createSummary({
+          conditionTrend: [
+            { date: '2026-07-20', value: 3 },
+            { date: '2026-07-21', value: 4 },
+            { date: '2026-07-23', value: 5 },
+          ],
         }),
-        createWorkoutRecord({
-          bodyComposition: null,
-          performedOn: '2026-07-01',
+        'condition',
+      ),
+    ).toBe('최근 컨디션이 평균(4.0) 이상으로 좋은 상태입니다.');
+  });
+
+  it('주간 빈도 인사이트를 평균 횟수 기준으로 만든다', () => {
+    expect(
+      getWorkoutReportInsight(
+        createSummary({
+          weeklyFrequency: [
+            {
+              weekEndDate: '2026-07-11',
+              weekStartDate: '2026-07-05',
+              workoutDayCount: 2,
+              workoutRecordCount: 2,
+            },
+            {
+              weekEndDate: '2026-07-18',
+              weekStartDate: '2026-07-12',
+              workoutDayCount: 4,
+              workoutRecordCount: 4,
+            },
+          ],
         }),
-      ]),
-    ).toEqual([
-      {
-        bodyFatPercentage: undefined,
-        date: '2026-07-02',
-        skeletalMuscleMassKg: undefined,
-        weightKg: 72.4,
-      },
-    ]);
+        'frequency',
+      ),
+    ).toBe('주당 평균 3.0회 운동하고 있습니다. 꾸준히 잘하고 있어요!');
   });
 });

@@ -34,15 +34,28 @@ jest.mock('shared/lib/date', () => ({
 }));
 
 const 리포트요약: WorkoutReportSummaryDto = {
+  bodyCompositionTrend: [
+    {
+      bodyFatPercentage: 18.5,
+      date: '2026-07-23',
+      skeletalMuscleMassKg: 34.2,
+      weightKg: 72.4,
+    },
+  ],
   condition: {
     averageConditionScore: 4,
     averageSorenessScore: 2,
   },
+  conditionTrend: [{ date: '2026-07-23', value: 4 }],
   currentWeek: {
-    weekEndDate: '2026-07-26',
-    weekStartDate: '2026-07-20',
+    weekEndDate: '2026-07-25',
+    weekStartDate: '2026-07-19',
     workoutDayCount: 2,
     workoutRecordCount: 3,
+  },
+  manualTotals: {
+    totalVolumeKg: 1160,
+    workoutRecordCount: 2,
   },
   referenceDate: '2026-07-23',
   totals: {
@@ -53,7 +66,16 @@ const 리포트요약: WorkoutReportSummaryDto = {
     workoutDayCount: 2,
     workoutRecordCount: 3,
   },
-  weeklyFrequency: [],
+  volumeTrend: [{ date: '2026-07-23', value: 1160 }],
+  weightTrend: [{ date: '2026-07-23', value: 72.4 }],
+  weeklyFrequency: [
+    {
+      weekEndDate: '2026-07-25',
+      weekStartDate: '2026-07-19',
+      workoutDayCount: 2,
+      workoutRecordCount: 3,
+    },
+  ],
 };
 
 describe('운동 리포트 API wrapper', () => {

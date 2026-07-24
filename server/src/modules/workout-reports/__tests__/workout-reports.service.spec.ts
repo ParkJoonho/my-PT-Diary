@@ -109,10 +109,23 @@ describe('운동 리포트 서비스', () => {
 
   it('운동 기록과 컨디션 기록을 리포트 요약으로 집계한다', async () => {
     repository.listWorkoutRecordsForReport.mockResolvedValue([
-      createWorkoutRecordRow(),
+      createWorkoutRecordRow({
+        body_composition: {
+          bodyFatPercentage: 18.5,
+          morningWeightKg: 72.4,
+          skeletalMuscleMassKg: 34.2,
+          weightKg: 72.4,
+        },
+      }),
       createWorkoutRecordRow({
         completed_at: '2026-07-21 12:34:56+00',
         completed_on: '2026-07-21',
+        body_composition: {
+          bodyFatPercentage: 19.1,
+          morningWeightKg: 71.8,
+          skeletalMuscleMassKg: 33.8,
+          weightKg: 71.8,
+        },
         duration_seconds: 1800,
         id: 'workout-2',
         performed_at: '2026-07-21 12:34:56+00',
@@ -123,16 +136,24 @@ describe('운동 리포트 서비스', () => {
         },
       }),
       createWorkoutRecordRow({
-        performed_at: '2026-07-10 12:34:56+00',
-        completed_on: '2026-07-10',
+        completed_at: '2026-07-19 12:34:56+00',
+        completed_on: '2026-07-19',
         id: 'workout-3',
-        performed_on: '2026-07-10',
+        performed_at: '2026-07-19 12:34:56+00',
+        performed_on: '2026-07-19',
+        routine_label: '루틴 완료',
+        source: WorkoutRecordSource.Routine,
+        summary: {
+          cardioDurationSeconds: 300,
+          totalVolumeKg: 0,
+        },
       }),
     ]);
     repository.listConditionRecordsForReport.mockResolvedValue([
       createConditionRecordRow(),
       createConditionRecordRow({
         checked_on: '2026-07-22',
+        created_at: '2026-07-22 08:00:00+00',
         id: 'condition-2',
         summary: {
           averageConditionScore: 3,
@@ -149,16 +170,20 @@ describe('운동 리포트 서비스', () => {
     });
 
     expect(result.currentWeek).toEqual({
-      weekEndDate: '2026-07-26',
-      weekStartDate: '2026-07-20',
-      workoutDayCount: 2,
+      weekEndDate: '2026-07-25',
+      weekStartDate: '2026-07-19',
+      workoutDayCount: 3,
+      workoutRecordCount: 3,
+    });
+    expect(result.manualTotals).toEqual({
+      totalVolumeKg: 2000,
       workoutRecordCount: 2,
     });
     expect(result.totals).toEqual({
-      cardioDurationSeconds: 1800,
+      cardioDurationSeconds: 1200,
       conditionRecordCount: 2,
       durationSeconds: 9000,
-      totalVolumeKg: 3160,
+      totalVolumeKg: 2000,
       workoutDayCount: 3,
       workoutRecordCount: 3,
     });
@@ -166,12 +191,38 @@ describe('운동 리포트 서비스', () => {
       averageConditionScore: 3.5,
       averageSorenessScore: 1.5,
     });
+    expect(result.volumeTrend).toEqual([
+      { date: '2026-07-21', value: 840 },
+      { date: '2026-07-23', value: 1160 },
+    ]);
+    expect(result.weightTrend).toEqual([
+      { date: '2026-07-21', value: 71.8 },
+      { date: '2026-07-23', value: 72.4 },
+    ]);
+    expect(result.bodyCompositionTrend).toEqual([
+      {
+        bodyFatPercentage: 19.1,
+        date: '2026-07-21',
+        skeletalMuscleMassKg: 33.8,
+        weightKg: 71.8,
+      },
+      {
+        bodyFatPercentage: 18.5,
+        date: '2026-07-23',
+        skeletalMuscleMassKg: 34.2,
+        weightKg: 72.4,
+      },
+    ]);
+    expect(result.conditionTrend).toEqual([
+      { date: '2026-07-22', value: 3 },
+      { date: '2026-07-23', value: 4 },
+    ]);
     expect(result.weeklyFrequency).toHaveLength(12);
     expect(result.weeklyFrequency.at(-1)).toEqual(
       expect.objectContaining({
-        weekEndDate: '2026-07-26',
-        weekStartDate: '2026-07-20',
-        workoutRecordCount: 2,
+        weekEndDate: '2026-07-25',
+        weekStartDate: '2026-07-19',
+        workoutRecordCount: 3,
       }),
     );
   });
