@@ -1,8 +1,38 @@
 import { WorkoutRecordSource } from '../../workout-records/dto/workout-record-response.dto';
 import { WorkoutRecordRow } from '../../workout-records/workout-records.repository.port';
+import {
+  CONDITION_LABELS,
+  MUSCLE_SORENESS_LABELS,
+} from '../../condition-records/condition-records.constants';
 import { ConditionRecordRow } from '../../condition-records/condition-records.repository.port';
 import { WorkoutReportsRepositoryPort } from '../workout-reports.repository.port';
 import { WorkoutReportsService } from '../workout-reports.service';
+
+function getConditionScore(label: string) {
+  switch (label) {
+    case '훈련 동기':
+      return 5;
+    case '수면시간':
+      return 3;
+    case '수행력':
+      return 4;
+    default:
+      return 0;
+  }
+}
+
+function getSorenessScore(label: string) {
+  switch (label) {
+    case '가슴':
+      return 2;
+    case '광배근':
+      return 1;
+    case '대퇴사두근':
+      return 3;
+    default:
+      return 0;
+  }
+}
 
 function createWorkoutRecordRow(
   overrides: Partial<WorkoutRecordRow> = {},
@@ -39,23 +69,16 @@ function createConditionRecordRow(
 ): ConditionRecordRow {
   return {
     checked_on: '2026-07-23',
-    condition_scores: {
-      energy: 4,
-      motivation: 5,
-      sleep: 3,
-      stress: 0,
-    },
+    condition_scores: CONDITION_LABELS.map((label) => ({
+      label,
+      score: getConditionScore(label),
+    })),
     created_at: '2026-07-23 12:35:00+00',
     id: 'condition-1',
-    memo: null,
-    muscle_soreness: {
-      arms: 0,
-      back: 1,
-      chest: 2,
-      core: 0,
-      legs: 3,
-      shoulders: 0,
-    },
+    muscle_soreness: MUSCLE_SORENESS_LABELS.map((label) => ({
+      label,
+      score: getSorenessScore(label),
+    })),
     summary: {
       averageConditionScore: 4,
       averageSorenessScore: 2,
@@ -66,6 +89,7 @@ function createConditionRecordRow(
     time_zone: 'Asia/Seoul',
     updated_at: '2026-07-23 12:35:00+00',
     user_key: 'user-a',
+    week_number: 1,
     ...overrides,
   };
 }

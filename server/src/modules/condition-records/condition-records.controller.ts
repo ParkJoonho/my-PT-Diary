@@ -47,7 +47,7 @@ export class ConditionRecordsController {
   ) {}
 
   @ApiOperation({
-    summary: 'Create or replace the current user condition record for a date.',
+    summary: 'Create a condition record for the current user key.',
   })
   @ApiCreatedResponse({
     type: ConditionRecordDto,
@@ -98,7 +98,7 @@ export class ConditionRecordsController {
   }
 
   @ApiOperation({
-    summary: 'Replace a condition record for the current user key.',
+    summary: 'Update a condition record for the current user key.',
   })
   @ApiOkResponse({
     type: ConditionRecordDto,

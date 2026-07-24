@@ -1,6 +1,7 @@
 import { createRoute } from '@granite-js/react-native';
 import { ActiveWorkoutScreen } from 'features/active-workout/components/active-workout-screen';
-import { findRoutineById } from 'features/workout-routines/lib/find-routine';
+import { resolveActiveWorkoutRouteRoutine } from 'features/active-workout/lib/resolve-active-workout-routine';
+import { useActiveWorkoutStore } from 'features/active-workout/stores/use-active-workout-store';
 import { StyleSheet, Text, View } from 'react-native';
 import Colors from 'shared/constants/colors';
 
@@ -23,7 +24,14 @@ export const Route = createRoute('/active-workout', {
 function ActiveWorkoutRoute() {
   const navigation = Route.useNavigation();
   const { routineId } = Route.useParams();
-  const routine = findRoutineById(routineId);
+  const clearSelectedRoutine = useActiveWorkoutStore(
+    (state) => state.clearSelectedRoutine,
+  );
+  const selectedRoutine = useActiveWorkoutStore((state) => state.selectedRoutine);
+  const routine = resolveActiveWorkoutRouteRoutine({
+    routeRoutineId: routineId,
+    selectedRoutine,
+  });
 
   if (!routine) {
     return (
@@ -38,8 +46,14 @@ function ActiveWorkoutRoute() {
 
   return (
     <ActiveWorkoutScreen
-      onCancel={() => navigation.goBack()}
-      onCompleted={() => navigation.navigate('/')}
+      onCancel={() => {
+        clearSelectedRoutine();
+        navigation.goBack();
+      }}
+      onCompleted={() => {
+        clearSelectedRoutine();
+        navigation.navigate('/');
+      }}
       routine={routine}
     />
   );

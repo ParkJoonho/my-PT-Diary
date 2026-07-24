@@ -1,5 +1,6 @@
 import { useNavigation } from '@granite-js/react-native';
 import { RoutineCard } from 'features/workout-routines/components/routine-card';
+import { useActiveWorkoutStore } from 'features/active-workout/stores/use-active-workout-store';
 import { Component, type PropsWithChildren, Suspense } from 'react';
 import {
   ActivityIndicator,
@@ -53,6 +54,9 @@ function WeeklyTrackerSection() {
 
 export function HomeScreen() {
   const navigation = useNavigation();
+  const setSelectedRoutine = useActiveWorkoutStore(
+    (state) => state.setSelectedRoutine,
+  );
 
   return (
     <View style={styles.container}>
@@ -67,9 +71,10 @@ export function HomeScreen() {
           </Suspense>
         </WeeklyTrackerErrorBoundary>
         <RoutineCard
-          onStartRoutine={(routine) =>
-            navigation.navigate('/active-workout', { routineId: routine.id })
-          }
+          onStartRoutine={(routine) => {
+            setSelectedRoutine(routine);
+            navigation.navigate('/active-workout', { routineId: routine.id });
+          }}
         />
         <QuickActionCard
           kind="outdoor"

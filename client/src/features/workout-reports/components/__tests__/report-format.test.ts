@@ -4,10 +4,29 @@ import type {
   WorkoutRecordDto,
 } from 'shared/api/generated/models';
 import {
+  CONDITION_LABELS,
+  MUSCLE_SORENESS_LABELS,
+} from 'features/condition-records/lib/condition-record-metadata';
+import {
   buildBodyCompositionTrend,
   buildConditionTrend,
   buildVolumeTrend,
 } from '../report-format';
+
+function getConditionScore(label: string) {
+  switch (label) {
+    case '훈련 동기':
+      return 4;
+    case '일상피로도':
+      return 4;
+    case '수면시간':
+      return 4;
+    case '수행력':
+      return 4;
+    default:
+      return 0;
+  }
+}
 
 function createWorkoutRecord(
   overrides: Partial<WorkoutRecordDto> = {},
@@ -40,24 +59,17 @@ function createConditionRecord(
   overrides: Partial<ConditionRecordDto> = {},
 ): ConditionRecordDto {
   return {
-    checkedOn: '2026-07-23',
-    conditionScores: {
-      energy: 4,
-      motivation: 4,
-      sleep: 4,
-      stress: 4,
-    },
-    createdAt: '2026-07-23T12:35:00.000Z',
+    conditions: CONDITION_LABELS.map((label) => ({
+      label,
+      score: getConditionScore(label),
+    })),
+    createdAt: 1753274102000,
+    date: '2026-07-23',
     id: 'condition-1',
-    memo: null,
-    muscleSoreness: {
-      arms: 0,
-      back: 0,
-      chest: 0,
-      core: 0,
-      legs: 0,
-      shoulders: 0,
-    },
+    muscleSoreness: MUSCLE_SORENESS_LABELS.map((label) => ({
+      label,
+      score: 0,
+    })),
     summary: {
       averageConditionScore: 4,
       averageSorenessScore: null,
@@ -65,8 +77,7 @@ function createConditionRecord(
       selectedSorenessCount: 0,
       severeSorenessCount: 0,
     },
-    timeZone: 'Asia/Seoul',
-    updatedAt: '2026-07-23T12:35:00.000Z',
+    weekNumber: 1,
     ...overrides,
   };
 }
@@ -92,7 +103,7 @@ describe('운동 리포트 추이 포맷', () => {
     expect(
       buildConditionTrend([
         createConditionRecord({
-          checkedOn: '2026-07-03',
+          date: '2026-07-03',
           summary: {
             averageConditionScore: 3,
             averageSorenessScore: null,
@@ -102,7 +113,7 @@ describe('운동 리포트 추이 포맷', () => {
           },
         }),
         createConditionRecord({
-          checkedOn: '2026-07-01',
+          date: '2026-07-01',
           summary: {
             averageConditionScore: 5,
             averageSorenessScore: null,

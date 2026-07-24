@@ -1,6 +1,7 @@
 import { useNavigation } from '@granite-js/react-native';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import {
+  Alert,
   KeyboardAvoidingView,
   Pressable,
   ScrollView,
@@ -11,23 +12,28 @@ import {
 } from 'react-native';
 import { SuspenseSection } from 'shared/components/async-state';
 import Colors from 'shared/constants/colors';
+import { getClientTodayDate } from 'shared/lib/date';
 import {
   useConditionRecord,
   useCreateConditionRecord,
-  useDeleteConditionRecord,
   useUpdateConditionRecord,
 } from '../api/condition-records';
+import type { ConditionRecordDto } from 'shared/api/generated/models';
 import {
-  CONDITION_QUESTIONS,
-  type ConditionFormState,
-  MUSCLE_QUESTIONS,
   buildConditionPayload,
-  createConditionFormState,
-  createConditionFormStateFromRecord,
-  getConditionScoreLabel,
-  getSorenessScoreLabel,
   validateConditionForm,
 } from '../lib/condition-form';
+import {
+  getConditionScoreColor,
+  getSorenessScoreColor,
+} from '../lib/condition-record-metadata';
+import { MUSCLE_INFO_MAP } from '../lib/condition-muscle-info';
+import { useConditionFormStore } from '../stores/use-condition-form-store';
+import { ConditionMuscleInfoModal } from './condition-muscle-info-modal';
+import {
+  ConditionScoreRow,
+  MuscleSorenessScoreRow,
+} from './condition-score-row';
 
 export function ConditionFormScreen({ conditionId }: { conditionId?: string }) {
   if (conditionId) {
@@ -57,58 +63,82 @@ function ConditionFormContent({
   initialRecord,
 }: {
   initialConditionId?: string;
-  initialRecord?: Parameters<typeof createConditionFormStateFromRecord>[0];
+  initialRecord?: ConditionRecordDto;
 }) {
   const navigation = useNavigation();
   const createMutation = useCreateConditionRecord();
-  const deleteMutation = useDeleteConditionRecord();
   const updateMutation = useUpdateConditionRecord();
-  const [form, setForm] = useState<ConditionFormState>(() =>
-    initialRecord
-      ? createConditionFormStateFromRecord(initialRecord)
-      : createConditionFormState(),
+  const form = useConditionFormStore((state) => state.form);
+  const closeMuscleTooltip = useConditionFormStore(
+    (state) => state.closeMuscleTooltip,
   );
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const hydrateFromRecord = useConditionFormStore(
+    (state) => state.hydrateFromRecord,
+  );
+  const muscleTooltipLabel = useConditionFormStore(
+    (state) => state.muscleTooltipLabel,
+  );
+  const openMuscleTooltip = useConditionFormStore(
+    (state) => state.openMuscleTooltip,
+  );
+  const resetForCreate = useConditionFormStore((state) => state.resetForCreate);
+  const setDate = useConditionFormStore((state) => state.setDate);
+  const setWeekNumberInput = useConditionFormStore(
+    (state) => state.setWeekNumberInput,
+  );
+  const toggleConditionScore = useConditionFormStore(
+    (state) => state.toggleConditionScore,
+  );
+  const toggleMuscleSorenessScore = useConditionFormStore(
+    (state) => state.toggleMuscleSorenessScore,
+  );
 
   useEffect(() => {
     if (initialRecord) {
-      setForm(createConditionFormStateFromRecord(initialRecord));
+      hydrateFromRecord(initialRecord);
+      return;
     }
-  }, [initialRecord]);
+
+    resetForCreate(getClientTodayDate());
+  }, [hydrateFromRecord, initialRecord, resetForCreate]);
+
+  useEffect(
+    () => () => {
+      closeMuscleTooltip();
+    },
+    [closeMuscleTooltip],
+  );
 
   const handleSave = async () => {
     const error = validateConditionForm(form);
 
     if (error) {
-      setErrorMessage(error);
+      Alert.alert('알림', error);
       return;
     }
-
-    setErrorMessage(null);
 
     const payload = buildConditionPayload(form);
 
-    if (initialConditionId) {
-      await updateMutation.mutateAsync({
-        conditionId: initialConditionId,
-        payload,
-      });
-    } else {
-      await createMutation.mutateAsync(payload);
-    }
+    try {
+      if (initialConditionId) {
+        await updateMutation.mutateAsync({
+          conditionId: initialConditionId,
+          payload,
+        });
+      } else {
+        await createMutation.mutateAsync(payload);
+      }
 
-    navigation.navigate({ name: '/condition-list', params: {} });
+      navigation.navigate({ name: '/condition-list', params: {} });
+    } catch {
+      Alert.alert('오류', '컨디션 기록을 저장하지 못했어요.');
+    }
   };
 
   const isPending = createMutation.isPending || updateMutation.isPending;
-  const handleDelete = async () => {
-    if (!initialConditionId) {
-      return;
-    }
-
-    await deleteMutation.mutateAsync(initialConditionId);
-    navigation.navigate({ name: '/condition-list', params: {} });
-  };
+  const muscleInfo = muscleTooltipLabel
+    ? MUSCLE_INFO_MAP[muscleTooltipLabel] ?? null
+    : null;
 
   return (
     <KeyboardAvoidingView style={styles.container}>
@@ -138,149 +168,76 @@ function ConditionFormContent({
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {errorMessage ? (
-          <Text style={styles.errorText}>{errorMessage}</Text>
-        ) : null}
-
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>기본 정보</Text>
-          <Text style={styles.label}>체크일</Text>
-          <TextInput
-            onChangeText={(value) =>
-              setForm((current) => ({ ...current, checkedOn: value }))
-            }
-            style={styles.input}
-            value={form.checkedOn}
-          />
+          <View style={styles.row}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>날짜</Text>
+              <TextInput
+                onChangeText={setDate}
+                placeholder="2026-07-24"
+                placeholderTextColor={Colors.textMuted}
+                style={styles.input}
+                value={form.date}
+              />
+            </View>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>주차</Text>
+              <TextInput
+                keyboardType="number-pad"
+                onChangeText={setWeekNumberInput}
+                placeholder="1"
+                placeholderTextColor={Colors.textMuted}
+                style={styles.input}
+                value={form.weekNumberInput}
+              />
+            </View>
+          </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>컨디션</Text>
-          {CONDITION_QUESTIONS.map((question) => (
-            <ScoreRow
-              key={question.key}
-              label={question.label}
+          <View style={styles.sectionTitleRow}>
+            <Text style={styles.sectionTitle}>컨디션 체크</Text>
+            <Text style={styles.sectionSubtitle}>1=매우 나쁨 ~ 5=매우 좋음</Text>
+          </View>
+          {form.conditions.map((item, index) => (
+            <ConditionScoreRow
+              colorForScore={getConditionScoreColor}
+              key={item.label}
+              label={item.label}
               maxScore={5}
-              onSelect={(score) =>
-                setForm((current) => ({
-                  ...current,
-                  conditionScores: {
-                    ...current.conditionScores,
-                    [question.key]:
-                      current.conditionScores[question.key] === score
-                        ? 0
-                        : score,
-                  },
-                }))
-              }
-              score={form.conditionScores[question.key]}
-              scoreLabel={getConditionScoreLabel(
-                form.conditionScores[question.key],
-              )}
+              onSelect={(score) => toggleConditionScore(index, score)}
+              score={item.score}
             />
           ))}
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>근육통</Text>
-          {MUSCLE_QUESTIONS.map((question) => (
-            <ScoreRow
-              key={question.key}
-              label={question.label}
+          <View style={styles.sectionTitleRow}>
+            <View style={styles.sectionTitleWithHint}>
+              <Text style={styles.sectionTitle}>근육통 체크</Text>
+              <View style={styles.hintBadge}>
+                <Text style={styles.hintBadgeText}>부위를 누르면 위치 안내</Text>
+              </View>
+            </View>
+            <Text style={styles.sectionSubtitle}>1=없음 ~ 4=심함</Text>
+          </View>
+          {form.muscleSoreness.map((item, index) => (
+            <MuscleSorenessScoreRow
+              colorForScore={getSorenessScoreColor}
+              key={item.label}
+              label={item.label}
               maxScore={4}
-              onSelect={(score) =>
-                setForm((current) => ({
-                  ...current,
-                  muscleSoreness: {
-                    ...current.muscleSoreness,
-                    [question.key]:
-                      current.muscleSoreness[question.key] === score
-                        ? 0
-                        : score,
-                  },
-                }))
-              }
-              score={form.muscleSoreness[question.key]}
-              scoreLabel={getSorenessScoreLabel(
-                form.muscleSoreness[question.key],
-              )}
+              onInfoPress={() => openMuscleTooltip(item.label)}
+              onSelect={(score) => toggleMuscleSorenessScore(index, score)}
+              score={item.score}
             />
           ))}
         </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>메모</Text>
-          <TextInput
-            multiline
-            onChangeText={(value) =>
-              setForm((current) => ({ ...current, memo: value }))
-            }
-            placeholder="오늘 몸 상태"
-            placeholderTextColor={Colors.textMuted}
-            style={[styles.input, styles.memoInput]}
-            value={form.memo}
-          />
-        </View>
-
-        {initialConditionId ? (
-          <Pressable
-            disabled={deleteMutation.isPending}
-            onPress={handleDelete}
-            style={styles.deleteButton}
-          >
-            <Text style={styles.deleteText}>
-              {deleteMutation.isPending ? '삭제 중' : '삭제'}
-            </Text>
-          </Pressable>
-        ) : null}
       </ScrollView>
-    </KeyboardAvoidingView>
-  );
-}
 
-function ScoreRow({
-  label,
-  maxScore,
-  onSelect,
-  score,
-  scoreLabel,
-}: {
-  label: string;
-  maxScore: number;
-  onSelect: (score: number) => void;
-  score: number;
-  scoreLabel: string;
-}) {
-  return (
-    <View style={styles.scoreRow}>
-      <View style={styles.scoreHeader}>
-        <Text style={styles.scoreLabel}>{label}</Text>
-        <Text style={styles.scoreValue}>{scoreLabel}</Text>
-      </View>
-      <View style={styles.scoreButtons}>
-        {Array.from({ length: maxScore }, (_, index) => index + 1).map(
-          (value) => (
-            <Pressable
-              key={value}
-              onPress={() => onSelect(value)}
-              style={[
-                styles.scoreButton,
-                score === value && styles.scoreButtonActive,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.scoreButtonText,
-                  score === value && styles.scoreButtonTextActive,
-                ]}
-              >
-                {value}
-              </Text>
-            </Pressable>
-          ),
-        )}
-      </View>
-    </View>
+      <ConditionMuscleInfoModal info={muscleInfo} onClose={closeMuscleTooltip} />
+    </KeyboardAvoidingView>
   );
 }
 
@@ -292,28 +249,8 @@ const styles = StyleSheet.create({
     paddingTop: 16,
   },
   content: {
-    gap: 12,
+    gap: 24,
     paddingBottom: 32,
-  },
-  errorText: {
-    backgroundColor: '#FFECEC',
-    borderRadius: 8,
-    color: Colors.danger,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 13,
-    padding: 12,
-  },
-  deleteButton: {
-    alignItems: 'center',
-    borderColor: Colors.danger,
-    borderRadius: 10,
-    borderWidth: StyleSheet.hairlineWidth,
-    paddingVertical: 14,
-  },
-  deleteText: {
-    color: Colors.danger,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 15,
   },
   header: {
     alignItems: 'center',
@@ -335,78 +272,59 @@ const styles = StyleSheet.create({
     fontFamily: 'Pretendard-Bold',
     fontSize: 18,
   },
+  hintBadge: {
+    backgroundColor: `${Colors.info}14`,
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  hintBadgeText: {
+    color: Colors.info,
+    fontFamily: 'Pretendard-Medium',
+    fontSize: 10,
+  },
   input: {
     backgroundColor: Colors.inputBg,
     borderColor: Colors.inputBorder,
-    borderRadius: 8,
+    borderRadius: 10,
     borderWidth: StyleSheet.hairlineWidth,
     color: Colors.text,
     fontFamily: 'Pretendard-Regular',
     fontSize: 14,
-    minHeight: 42,
-    paddingHorizontal: 10,
+    padding: 12,
+  },
+  inputGroup: {
+    flex: 1,
+    gap: 4,
   },
   label: {
     color: Colors.textSecondary,
     fontFamily: 'Pretendard-Medium',
     fontSize: 12,
   },
-  memoInput: {
-    minHeight: 92,
-    paddingTop: 10,
-    textAlignVertical: 'top',
-  },
-  scoreButton: {
-    alignItems: 'center',
-    backgroundColor: Colors.surfaceMuted,
-    borderRadius: 8,
-    flex: 1,
-    paddingVertical: 10,
-  },
-  scoreButtonActive: {
-    backgroundColor: Colors.accent,
-  },
-  scoreButtonText: {
-    color: Colors.textSecondary,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 13,
-  },
-  scoreButtonTextActive: {
-    color: Colors.white,
-  },
-  scoreButtons: {
+  row: {
     flexDirection: 'row',
-    gap: 6,
-  },
-  scoreHeader: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  scoreLabel: {
-    color: Colors.text,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 14,
-  },
-  scoreRow: {
-    gap: 8,
-  },
-  scoreValue: {
-    color: Colors.textMuted,
-    fontFamily: 'Pretendard-Regular',
-    fontSize: 12,
+    gap: 10,
   },
   section: {
-    backgroundColor: Colors.card,
-    borderColor: Colors.cardBorder,
-    borderRadius: 12,
-    borderWidth: StyleSheet.hairlineWidth,
-    gap: 12,
-    padding: 14,
+    gap: 10,
+  },
+  sectionSubtitle: {
+    color: Colors.textMuted,
+    fontFamily: 'Pretendard-Regular',
+    fontSize: 11,
   },
   sectionTitle: {
     color: Colors.text,
     fontFamily: 'Pretendard-SemiBold',
-    fontSize: 15,
+    fontSize: 16,
+  },
+  sectionTitleRow: {
+    gap: 2,
+  },
+  sectionTitleWithHint: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
   },
 });

@@ -1,28 +1,27 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Allow } from 'class-validator';
 import {
-  ConditionScoresDto,
-  MuscleSorenessDto,
+  ConditionItemDto,
 } from './condition-record-response.dto';
 
 export class CreateConditionRecordDto {
   @ApiProperty({ example: '2026-07-23' })
   @Allow()
-  checkedOn!: string;
+  date!: string;
 
-  @ApiProperty({ example: 'Asia/Seoul' })
+  @ApiProperty({ example: 1 })
   @Allow()
-  timeZone!: string;
+  weekNumber!: number;
 
-  @ApiProperty({ type: ConditionScoresDto })
+  @ApiPropertyOptional({ example: 'Asia/Seoul' })
   @Allow()
-  conditionScores!: ConditionScoresDto;
+  timeZone?: string;
 
-  @ApiProperty({ type: MuscleSorenessDto })
+  @ApiProperty({ type: ConditionItemDto, isArray: true })
   @Allow()
-  muscleSoreness!: MuscleSorenessDto;
+  conditions!: ConditionItemDto[];
 
-  @ApiPropertyOptional({ example: '수면 부족, 하체 근육통 약간 있음' })
+  @ApiProperty({ type: ConditionItemDto, isArray: true })
   @Allow()
-  memo?: string;
+  muscleSoreness!: ConditionItemDto[];
 }

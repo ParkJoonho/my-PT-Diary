@@ -78,11 +78,11 @@ export function ExerciseScreen() {
           <Text style={styles.sectionTitle}>오늘 컨디션</Text>
           <Text
             onPress={() =>
-              navigation.navigate({ name: '/condition-form', params: {} })
+              navigation.navigate({ name: '/condition-list', params: {} })
             }
             style={styles.linkText}
           >
-            체크
+            전체 기록보기
           </Text>
         </View>
         <SuspenseSection errorMessage="오늘 컨디션을 불러오지 못했어요.">
@@ -176,14 +176,6 @@ function TodayConditionSection() {
 
   return (
     <ConditionRecordCard
-      onPress={() =>
-        navigation.navigate({
-          name: '/condition-form',
-          params: {
-            conditionId: record.id,
-          },
-        })
-      }
       record={record}
     />
   );

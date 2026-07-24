@@ -1,5 +1,7 @@
 import {
-  ConditionScoresInput,
+  ConditionsInput,
+  LegacyConditionScoresInput,
+  LegacyMuscleSorenessInput,
   MuscleSorenessInput,
 } from './condition-records.schemas';
 
@@ -15,36 +17,36 @@ export type ConditionRecordRow = {
   id: string;
   user_key: string;
   checked_on: string;
+  week_number: number;
   time_zone: string;
-  condition_scores: ConditionScoresInput;
-  muscle_soreness: MuscleSorenessInput;
+  condition_scores: ConditionsInput | LegacyConditionScoresInput;
+  muscle_soreness: MuscleSorenessInput | LegacyMuscleSorenessInput;
   summary: ConditionRecordSummary;
-  memo: string | null;
   created_at: string;
   updated_at: string;
 };
 
 export abstract class ConditionRecordsRepositoryPort {
-  abstract upsertConditionRecord(params: {
+  abstract createConditionRecord(params: {
     id: string;
     userKey: string;
-    checkedOn: string;
+    date: string;
+    weekNumber: number;
     timeZone: string;
-    conditionScores: ConditionScoresInput;
+    conditions: ConditionsInput;
     muscleSoreness: MuscleSorenessInput;
     summary: ConditionRecordSummary;
-    memo: string | null;
   }): Promise<ConditionRecordRow>;
 
   abstract updateConditionRecord(params: {
     id: string;
     userKey: string;
-    checkedOn: string;
+    date: string;
+    weekNumber: number;
     timeZone: string;
-    conditionScores: ConditionScoresInput;
+    conditions: ConditionsInput;
     muscleSoreness: MuscleSorenessInput;
     summary: ConditionRecordSummary;
-    memo: string | null;
   }): Promise<ConditionRecordRow>;
 
   abstract listConditionRecords(params: {

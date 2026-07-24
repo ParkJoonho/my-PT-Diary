@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
+import { DEFAULT_CONDITION_TIME_ZONE } from './condition-records.constants';
 import { ConditionRecordDto } from './dto/condition-record-response.dto';
 import { CreateConditionRecordDto } from './dto/create-condition-record.dto';
 import { ListConditionRecordsQueryDto } from './dto/list-condition-records-query.dto';
@@ -10,7 +11,10 @@ import {
   ConditionRecordsRepositoryPort,
 } from './condition-records.repository.port';
 import {
-  ConditionScoresInput,
+  ConditionItemInput,
+  ConditionsInput,
+  LegacyConditionScoresInput,
+  LegacyMuscleSorenessInput,
   MuscleSorenessInput,
 } from './condition-records.schemas';
 
@@ -24,15 +28,15 @@ export class ConditionRecordsService {
     userKey: string,
     dto: CreateConditionRecordDto,
   ): Promise<ConditionRecordDto> {
-    const record = await this.conditionRecordsRepository.upsertConditionRecord({
-      checkedOn: dto.checkedOn,
-      conditionScores: dto.conditionScores,
+    const record = await this.conditionRecordsRepository.createConditionRecord({
+      conditions: dto.conditions,
+      date: dto.date,
       id: randomUUID(),
-      memo: dto.memo ?? null,
       muscleSoreness: dto.muscleSoreness,
-      summary: this.summarize(dto.conditionScores, dto.muscleSoreness),
-      timeZone: dto.timeZone,
+      summary: this.summarize(dto.conditions, dto.muscleSoreness),
+      timeZone: dto.timeZone ?? DEFAULT_CONDITION_TIME_ZONE,
       userKey,
+      weekNumber: dto.weekNumber,
     });
 
     return this.mapRecord(record);
@@ -44,14 +48,14 @@ export class ConditionRecordsService {
     dto: UpdateConditionRecordDto,
   ): Promise<ConditionRecordDto> {
     const record = await this.conditionRecordsRepository.updateConditionRecord({
-      checkedOn: dto.checkedOn,
-      conditionScores: dto.conditionScores,
+      conditions: dto.conditions,
+      date: dto.date,
       id: conditionId,
-      memo: dto.memo ?? null,
       muscleSoreness: dto.muscleSoreness,
-      summary: this.summarize(dto.conditionScores, dto.muscleSoreness),
-      timeZone: dto.timeZone,
+      summary: this.summarize(dto.conditions, dto.muscleSoreness),
+      timeZone: dto.timeZone ?? DEFAULT_CONDITION_TIME_ZONE,
       userKey,
+      weekNumber: dto.weekNumber,
     });
 
     return this.mapRecord(record);
@@ -95,13 +99,14 @@ export class ConditionRecordsService {
   }
 
   private summarize(
-    conditionScores: ConditionScoresInput,
+    conditions: ConditionsInput,
     muscleSoreness: MuscleSorenessInput,
   ): ConditionRecordSummary {
     const selectedConditionScores =
-      Object.values(conditionScores).filter(Boolean);
-    const selectedSorenessScores =
-      Object.values(muscleSoreness).filter(Boolean);
+      conditions.map((item) => item.score).filter(Boolean);
+    const selectedSorenessScores = muscleSoreness
+      .map((item) => item.score)
+      .filter(Boolean);
 
     return {
       averageConditionScore: this.average(selectedConditionScores),
@@ -126,20 +131,73 @@ export class ConditionRecordsService {
   }
 
   private mapRecord(record: ConditionRecordRow): ConditionRecordDto {
+    const conditions = this.normalizeConditions(record.condition_scores);
+    const muscleSoreness = this.normalizeMuscleSoreness(record.muscle_soreness);
+
     return {
-      checkedOn: record.checked_on,
-      conditionScores: record.condition_scores,
-      createdAt: this.toUtcISOString(record.created_at),
+      conditions,
+      createdAt: this.toUnixMilliseconds(record.created_at),
+      date: record.checked_on,
       id: record.id,
-      memo: record.memo,
-      muscleSoreness: record.muscle_soreness,
+      muscleSoreness,
       summary: record.summary,
-      timeZone: record.time_zone,
-      updatedAt: this.toUtcISOString(record.updated_at),
+      weekNumber: record.week_number,
     };
   }
 
-  private toUtcISOString(value: string) {
-    return new Date(value).toISOString();
+  private normalizeConditions(
+    value: ConditionsInput | LegacyConditionScoresInput,
+  ): ConditionItemInput[] {
+    if (Array.isArray(value)) {
+      return value;
+    }
+
+    return [
+      { label: '훈련 동기', score: value.motivation },
+      { label: '일상피로도', score: 0 },
+      { label: '수면시간', score: value.sleep },
+      { label: '수면의 질', score: 0 },
+      { label: '식욕', score: 0 },
+      { label: '성욕', score: 0 },
+      { label: '소화력(식사)', score: 0 },
+      { label: '장내가스', score: 0 },
+      { label: '배변', score: 0 },
+      { label: '심박수', score: 0 },
+      { label: '식단 준수성', score: 0 },
+      { label: '훈련 준수성', score: 0 },
+      { label: '발기 빈도 및 강도', score: 0 },
+      { label: '월경 전/중/후 반응', score: 0 },
+      { label: '수행력', score: value.energy },
+    ];
+  }
+
+  private normalizeMuscleSoreness(
+    value: MuscleSorenessInput | LegacyMuscleSorenessInput,
+  ): ConditionItemInput[] {
+    if (Array.isArray(value)) {
+      return value;
+    }
+
+    return [
+      { label: '가슴', score: value.chest },
+      { label: '승모근', score: 0 },
+      { label: '광배근', score: value.back },
+      { label: '전삼각근', score: 0 },
+      { label: '측삼각근', score: value.shoulders },
+      { label: '후삼각근', score: 0 },
+      { label: '상완이두근', score: value.arms },
+      { label: '상완삼두근', score: 0 },
+      { label: '대퇴사두근', score: value.legs },
+      { label: '대퇴이두근', score: 0 },
+      { label: '둔근', score: 0 },
+      { label: '내전근', score: 0 },
+      { label: '복근', score: value.core },
+      { label: '허리', score: 0 },
+      { label: '종아리', score: 0 },
+    ];
+  }
+
+  private toUnixMilliseconds(value: string) {
+    return new Date(value).getTime();
   }
 }

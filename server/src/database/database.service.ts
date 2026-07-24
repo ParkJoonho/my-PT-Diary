@@ -160,16 +160,24 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           id TEXT PRIMARY KEY,
           user_key TEXT NOT NULL,
           checked_on DATE NOT NULL,
+          week_number INTEGER NOT NULL DEFAULT 1,
           time_zone TEXT NOT NULL,
           condition_scores JSONB NOT NULL,
           muscle_soreness JSONB NOT NULL,
           summary JSONB NOT NULL,
-          memo TEXT,
           created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-          updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-          CONSTRAINT condition_records_user_key_checked_on_key
-            UNIQUE (user_key, checked_on)
+          updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         )
+      `);
+
+      await this.pool.query(`
+        ALTER TABLE condition_records
+          ADD COLUMN IF NOT EXISTS week_number INTEGER NOT NULL DEFAULT 1
+      `);
+
+      await this.pool.query(`
+        ALTER TABLE condition_records
+          DROP CONSTRAINT IF EXISTS condition_records_user_key_checked_on_key
       `);
 
       await this.pool.query(`

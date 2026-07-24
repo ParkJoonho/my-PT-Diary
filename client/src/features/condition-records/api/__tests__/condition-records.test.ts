@@ -17,12 +17,42 @@ import type {
 } from 'shared/api/generated/models';
 import { useTrackerUserKey } from 'shared/api/user-key';
 import {
+  CONDITION_LABELS,
+  MUSCLE_SORENESS_LABELS,
+} from '../../lib/condition-record-metadata';
+import {
   getConditionRecordsQueryKey,
   getConditionRecordsQueryKeyPrefix,
   selectConditionRecords,
   useConditionRecords,
   useCreateConditionRecord,
 } from '../condition-records';
+
+function getConditionScore(label: string) {
+  switch (label) {
+    case '훈련 동기':
+      return 5;
+    case '수면시간':
+      return 3;
+    case '수행력':
+      return 4;
+    default:
+      return 0;
+  }
+}
+
+function getSorenessScore(label: string) {
+  switch (label) {
+    case '가슴':
+      return 2;
+    case '광배근':
+      return 1;
+    case '대퇴사두근':
+      return 3;
+    default:
+      return 0;
+  }
+}
 
 jest.mock('@tanstack/react-query', () => ({
   useMutation: jest.fn((options) => options),
@@ -46,24 +76,17 @@ jest.mock('shared/api/user-key', () => ({
 }));
 
 const 컨디션기록: ConditionRecordDto = {
-  checkedOn: '2026-07-23',
-  conditionScores: {
-    energy: 4,
-    motivation: 5,
-    sleep: 3,
-    stress: 0,
-  },
-  createdAt: '2026-07-23T12:35:00.000Z',
+  conditions: CONDITION_LABELS.map((label) => ({
+    label,
+    score: getConditionScore(label),
+  })),
+  createdAt: 1753274102000,
+  date: '2026-07-23',
   id: 'condition-1',
-  memo: null,
-  muscleSoreness: {
-    arms: 0,
-    back: 1,
-    chest: 2,
-    core: 0,
-    legs: 3,
-    shoulders: 0,
-  },
+  muscleSoreness: MUSCLE_SORENESS_LABELS.map((label) => ({
+    label,
+    score: getSorenessScore(label),
+  })),
   summary: {
     averageConditionScore: 4,
     averageSorenessScore: 2,
@@ -71,15 +94,15 @@ const 컨디션기록: ConditionRecordDto = {
     selectedSorenessCount: 3,
     severeSorenessCount: 1,
   },
-  timeZone: 'Asia/Seoul',
-  updatedAt: '2026-07-23T12:35:00.000Z',
+  weekNumber: 1,
 };
 
 const 컨디션Payload: CreateConditionRecordDto = {
-  checkedOn: '2026-07-23',
-  conditionScores: 컨디션기록.conditionScores,
+  conditions: 컨디션기록.conditions,
+  date: '2026-07-23',
   muscleSoreness: 컨디션기록.muscleSoreness,
   timeZone: 'Asia/Seoul',
+  weekNumber: 1,
 };
 
 describe('컨디션 기록 API wrapper', () => {

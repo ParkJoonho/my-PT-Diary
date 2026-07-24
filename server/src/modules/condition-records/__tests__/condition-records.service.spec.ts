@@ -3,27 +3,51 @@ import {
   ConditionRecordRow,
   ConditionRecordsRepositoryPort,
 } from '../condition-records.repository.port';
+import {
+  CONDITION_LABELS,
+  MUSCLE_SORENESS_LABELS,
+} from '../condition-records.constants';
 import { ConditionRecordsService } from '../condition-records.service';
 import { CreateConditionRecordDto } from '../dto/create-condition-record.dto';
 
+function getConditionScore(label: string) {
+  switch (label) {
+    case '훈련 동기':
+      return 5;
+    case '수면시간':
+      return 3;
+    case '수행력':
+      return 4;
+    default:
+      return 0;
+  }
+}
+
+function getSorenessScore(label: string) {
+  switch (label) {
+    case '가슴':
+      return 2;
+    case '광배근':
+      return 1;
+    case '대퇴사두근':
+      return 3;
+    default:
+      return 0;
+  }
+}
+
 const 컨디션요청: CreateConditionRecordDto = {
-  checkedOn: '2026-07-23',
-  conditionScores: {
-    energy: 4,
-    motivation: 5,
-    sleep: 3,
-    stress: 0,
-  },
-  memo: '수면 부족',
-  muscleSoreness: {
-    arms: 0,
-    back: 1,
-    chest: 2,
-    core: 0,
-    legs: 3,
-    shoulders: 0,
-  },
+  conditions: CONDITION_LABELS.map((label) => ({
+    label,
+    score: getConditionScore(label),
+  })),
+  date: '2026-07-23',
+  muscleSoreness: MUSCLE_SORENESS_LABELS.map((label) => ({
+    label,
+    score: getSorenessScore(label),
+  })),
   timeZone: 'Asia/Seoul',
+  weekNumber: 1,
 };
 
 function createConditionRow(
@@ -31,10 +55,9 @@ function createConditionRow(
 ): ConditionRecordRow {
   return {
     checked_on: '2026-07-23',
-    condition_scores: 컨디션요청.conditionScores,
+    condition_scores: 컨디션요청.conditions,
     created_at: '2026-07-23 12:35:00+00',
     id: 'condition-1',
-    memo: '수면 부족',
     muscle_soreness: 컨디션요청.muscleSoreness,
     summary: {
       averageConditionScore: 4,
@@ -46,6 +69,7 @@ function createConditionRow(
     time_zone: 'Asia/Seoul',
     updated_at: '2026-07-23 12:35:00+00',
     user_key: 'user-a',
+    week_number: 1,
     ...overrides,
   };
 }
@@ -56,27 +80,27 @@ describe('컨디션 기록 서비스', () => {
 
   beforeEach(() => {
     repository = {
+      createConditionRecord: jest.fn(),
       deleteConditionRecord: jest.fn(),
       findConditionRecord: jest.fn(),
       listConditionRecords: jest.fn(),
       updateConditionRecord: jest.fn(),
-      upsertConditionRecord: jest.fn(),
     };
     service = new ConditionRecordsService(repository);
   });
 
-  it('컨디션 기록을 요약해서 날짜별 upsert로 저장한다', async () => {
-    repository.upsertConditionRecord.mockResolvedValue(createConditionRow());
+  it('컨디션 기록을 요약해서 새 레코드로 저장한다', async () => {
+    repository.createConditionRecord.mockResolvedValue(createConditionRow());
 
     const result = await service.createConditionRecord('user-a', 컨디션요청);
-    const createArgs = repository.upsertConditionRecord.mock.calls[0]?.[0];
+    const createArgs = repository.createConditionRecord.mock.calls[0]?.[0];
 
     expect(createArgs).toEqual(
       expect.objectContaining({
-        checkedOn: '2026-07-23',
-        memo: '수면 부족',
+        date: '2026-07-23',
         timeZone: 'Asia/Seoul',
         userKey: 'user-a',
+        weekNumber: 1,
       }),
     );
     expect(createArgs?.summary).toEqual({
@@ -86,7 +110,7 @@ describe('컨디션 기록 서비스', () => {
       selectedSorenessCount: 3,
       severeSorenessCount: 1,
     });
-    expect(result.checkedOn).toBe('2026-07-23');
+    expect(result.date).toBe('2026-07-23');
   });
 
   it('컨디션 목록을 응답 DTO로 변환한다', async () => {
@@ -104,9 +128,9 @@ describe('컨디션 기록 서비스', () => {
     });
     expect(result[0]).toEqual(
       expect.objectContaining({
-        checkedOn: '2026-07-23',
+        date: '2026-07-23',
         id: 'condition-1',
-        memo: '수면 부족',
+        weekNumber: 1,
       }),
     );
   });

@@ -5,29 +5,57 @@ import { App } from 'supertest/types';
 import { z } from 'zod';
 import { ConditionRecordsController } from '../condition-records.controller';
 import {
+  CONDITION_LABELS,
+  MUSCLE_SORENESS_LABELS,
+} from '../condition-records.constants';
+import {
   ConditionRecordRow,
   ConditionRecordsRepositoryPort,
 } from '../condition-records.repository.port';
 import { ConditionRecordsService } from '../condition-records.service';
 
+function getConditionScore(label: string) {
+  switch (label) {
+    case '훈련 동기':
+      return 5;
+    case '수면시간':
+      return 3;
+    case '수행력':
+      return 4;
+    default:
+      return 0;
+  }
+}
+
+function getSorenessScore(label: string) {
+  switch (label) {
+    case '가슴':
+      return 2;
+    case '광배근':
+      return 1;
+    case '대퇴사두근':
+      return 3;
+    default:
+      return 0;
+  }
+}
+
 const conditionRecordSchema = z.object({
-  checkedOn: z.string(),
-  conditionScores: z.object({
-    energy: z.number(),
-    motivation: z.number(),
-    sleep: z.number(),
-    stress: z.number(),
-  }),
+  conditions: z.array(
+    z.object({
+      label: z.string(),
+      score: z.number(),
+    }),
+  ),
+  createdAt: z.number(),
+  date: z.string(),
   id: z.string(),
-  memo: z.string().nullable(),
-  muscleSoreness: z.object({
-    arms: z.number(),
-    back: z.number(),
-    chest: z.number(),
-    core: z.number(),
-    legs: z.number(),
-    shoulders: z.number(),
-  }),
+  muscleSoreness: z.array(
+    z.object({
+      label: z.string(),
+      score: z.number(),
+    }),
+  ),
   summary: z.object({
     averageConditionScore: z.number().nullable(),
     averageSorenessScore: z.number().nullable(),
@@ -35,7 +63,7 @@ const conditionRecordSchema = z.object({
     selectedSorenessCount: z.number(),
     severeSorenessCount: z.number(),
   }),
-  timeZone: z.string(),
+  weekNumber: z.number(),
 });
 
 function createConditionRow(
@@ -43,23 +71,16 @@ function createConditionRow(
 ): ConditionRecordRow {
   return {
     checked_on: '2026-07-23',
-    condition_scores: {
-      energy: 4,
-      motivation: 5,
-      sleep: 3,
-      stress: 0,
-    },
+    condition_scores: CONDITION_LABELS.map((label) => ({
+      label,
+      score: getConditionScore(label),
+    })),
     created_at: '2026-07-23 12:35:00+00',
     id: '11111111-1111-4111-8111-111111111111',
-    memo: '수면 부족',
-    muscle_soreness: {
-      arms: 0,
-      back: 1,
-      chest: 2,
-      core: 0,
-      legs: 3,
-      shoulders: 0,
-    },
+    muscle_soreness: MUSCLE_SORENESS_LABELS.map((label) => ({
+      label,
+      score: getSorenessScore(label),
+    })),
     summary: {
       averageConditionScore: 4,
       averageSorenessScore: 2,
@@ -70,6 +91,7 @@ function createConditionRow(
     time_zone: 'Asia/Seoul',
     updated_at: '2026-07-23 12:35:00+00',
     user_key: 'user-a',
+    week_number: 1,
     ...overrides,
   };
 }
@@ -80,17 +102,17 @@ describe('컨디션 기록 컨트롤러 통합', () => {
 
   beforeEach(async () => {
     repository = {
+      createConditionRecord: jest.fn(),
       deleteConditionRecord: jest.fn(),
       findConditionRecord: jest.fn(),
       listConditionRecords: jest.fn(),
       updateConditionRecord: jest.fn(),
-      upsertConditionRecord: jest.fn(),
     };
-    repository.upsertConditionRecord.mockResolvedValue(createConditionRow());
+    repository.createConditionRecord.mockResolvedValue(createConditionRow());
     repository.listConditionRecords.mockResolvedValue([createConditionRow()]);
     repository.findConditionRecord.mockResolvedValue(createConditionRow());
     repository.updateConditionRecord.mockResolvedValue(
-      createConditionRow({ memo: '수정함' }),
+      createConditionRow(),
     );
     repository.deleteConditionRecord.mockResolvedValue(createConditionRow());
 
@@ -113,37 +135,51 @@ describe('컨디션 기록 컨트롤러 통합', () => {
     await app.close();
   });
 
+  it('잘못된 근육통 payload는 400을 반환한다', async () => {
+    await request(app.getHttpServer())
+      .post('/api/condition-records')
+      .set('x-user-key', 'integration-user')
+      .send({
+        conditions: CONDITION_LABELS.map((label) => ({
+          label,
+          score: getConditionScore(label),
+        })),
+        date: '2026-07-23',
+        muscleSoreness: {
+          invalid: true,
+        },
+        timeZone: 'Asia/Seoul',
+        weekNumber: 1,
+      })
+      .expect(400);
+  });
+
   it('컨디션 기록을 생성하고 사용자 키를 저장소에 전달한다', async () => {
     const response = await request(app.getHttpServer())
       .post('/api/condition-records')
       .set('x-user-key', 'integration-user')
       .send({
-        checkedOn: '2026-07-23',
-        conditionScores: {
-          energy: 4,
-          motivation: 5,
-          sleep: 3,
-          stress: 0,
-        },
-        memo: '수면 부족',
-        muscleSoreness: {
-          arms: 0,
-          back: 1,
-          chest: 2,
-          core: 0,
-          legs: 3,
-          shoulders: 0,
-        },
+        conditions: CONDITION_LABELS.map((label) => ({
+          label,
+          score: getConditionScore(label),
+        })),
+        date: '2026-07-23',
+        muscleSoreness: MUSCLE_SORENESS_LABELS.map((label) => ({
+          label,
+          score: getSorenessScore(label),
+        })),
         timeZone: 'Asia/Seoul',
+        weekNumber: 1,
       })
       .expect(201);
 
     const body = conditionRecordSchema.parse(response.body);
-    expect(body.checkedOn).toBe('2026-07-23');
-    expect(repository.upsertConditionRecord.mock.calls[0]?.[0]).toEqual(
+    expect(body.date).toBe('2026-07-23');
+    expect(repository.createConditionRecord.mock.calls[0]?.[0]).toEqual(
       expect.objectContaining({
-        checkedOn: '2026-07-23',
+        date: '2026-07-23',
         userKey: 'integration-user',
+        weekNumber: 1,
       }),
     );
   });
@@ -153,22 +189,17 @@ describe('컨디션 기록 컨트롤러 통합', () => {
       .post('/api/condition-records')
       .set('x-user-key', 'integration-user')
       .send({
-        checkedOn: '2026-07-23',
-        conditionScores: {
-          energy: 6,
-          motivation: 5,
-          sleep: 3,
-          stress: 0,
-        },
-        muscleSoreness: {
-          arms: 0,
-          back: 1,
-          chest: 2,
-          core: 0,
-          legs: 5,
-          shoulders: 0,
-        },
+        conditions: CONDITION_LABELS.map((label) => ({
+          label,
+          score: label === '훈련 동기' ? 6 : 0,
+        })),
+        date: '2026-07-23',
+        muscleSoreness: MUSCLE_SORENESS_LABELS.map((label) => ({
+          label,
+          score: label === '가슴' ? 5 : 0,
+        })),
         timeZone: 'Asia/Seoul',
+        weekNumber: 1,
       })
       .expect(400);
   });

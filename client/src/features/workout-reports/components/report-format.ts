@@ -46,10 +46,10 @@ export function buildConditionTrend(records: ConditionRecordDto[]) {
       (record) => typeof record.summary.averageConditionScore === 'number',
     )
     .slice()
-    .sort((a, b) => a.checkedOn.localeCompare(b.checkedOn))
+    .sort((a, b) => a.date.localeCompare(b.date))
     .slice(-8)
     .map((record) => ({
-      date: record.checkedOn,
+      date: record.date,
       value: record.summary.averageConditionScore ?? 0,
     }));
 }

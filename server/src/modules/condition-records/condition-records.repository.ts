@@ -6,7 +6,7 @@ import {
   ConditionRecordsRepositoryPort,
 } from './condition-records.repository.port';
 import {
-  ConditionScoresInput,
+  ConditionsInput,
   MuscleSorenessInput,
 } from './condition-records.schemas';
 
@@ -14,15 +14,15 @@ import {
 export class ConditionRecordsRepository implements ConditionRecordsRepositoryPort {
   constructor(private readonly databaseService: DatabaseService) {}
 
-  async upsertConditionRecord(params: {
+  async createConditionRecord(params: {
     id: string;
     userKey: string;
-    checkedOn: string;
+    date: string;
+    weekNumber: number;
     timeZone: string;
-    conditionScores: ConditionScoresInput;
+    conditions: ConditionsInput;
     muscleSoreness: MuscleSorenessInput;
     summary: ConditionRecordSummary;
-    memo: string | null;
   }) {
     const result = await this.databaseService.query<ConditionRecordRow>(
       `
@@ -30,32 +30,24 @@ export class ConditionRecordsRepository implements ConditionRecordsRepositoryPor
           id,
           user_key,
           checked_on,
+          week_number,
           time_zone,
           condition_scores,
           muscle_soreness,
-          summary,
-          memo
+          summary
         )
-        VALUES ($1, $2, $3::date, $4, $5::jsonb, $6::jsonb, $7::jsonb, $8)
-        ON CONFLICT (user_key, checked_on)
-        DO UPDATE SET
-          time_zone = EXCLUDED.time_zone,
-          condition_scores = EXCLUDED.condition_scores,
-          muscle_soreness = EXCLUDED.muscle_soreness,
-          summary = EXCLUDED.summary,
-          memo = EXCLUDED.memo,
-          updated_at = NOW()
+        VALUES ($1, $2, $3::date, $4, $5, $6::jsonb, $7::jsonb, $8::jsonb)
         RETURNING ${this.selectColumns()}
       `,
       [
         params.id,
         params.userKey,
-        params.checkedOn,
+        params.date,
+        params.weekNumber,
         params.timeZone,
-        JSON.stringify(params.conditionScores),
+        JSON.stringify(params.conditions),
         JSON.stringify(params.muscleSoreness),
         JSON.stringify(params.summary),
-        params.memo,
       ],
     );
 
@@ -65,23 +57,23 @@ export class ConditionRecordsRepository implements ConditionRecordsRepositoryPor
   async updateConditionRecord(params: {
     id: string;
     userKey: string;
-    checkedOn: string;
+    date: string;
+    weekNumber: number;
     timeZone: string;
-    conditionScores: ConditionScoresInput;
+    conditions: ConditionsInput;
     muscleSoreness: MuscleSorenessInput;
     summary: ConditionRecordSummary;
-    memo: string | null;
   }) {
     const result = await this.databaseService.query<ConditionRecordRow>(
       `
         UPDATE condition_records
         SET
           checked_on = $3::date,
-          time_zone = $4,
-          condition_scores = $5::jsonb,
-          muscle_soreness = $6::jsonb,
-          summary = $7::jsonb,
-          memo = $8,
+          week_number = $4,
+          time_zone = $5,
+          condition_scores = $6::jsonb,
+          muscle_soreness = $7::jsonb,
+          summary = $8::jsonb,
           updated_at = NOW()
         WHERE id = $1
           AND user_key = $2
@@ -90,12 +82,12 @@ export class ConditionRecordsRepository implements ConditionRecordsRepositoryPor
       [
         params.id,
         params.userKey,
-        params.checkedOn,
+        params.date,
+        params.weekNumber,
         params.timeZone,
-        JSON.stringify(params.conditionScores),
+        JSON.stringify(params.conditions),
         JSON.stringify(params.muscleSoreness),
         JSON.stringify(params.summary),
-        params.memo,
       ],
     );
 
@@ -178,11 +170,11 @@ export class ConditionRecordsRepository implements ConditionRecordsRepositoryPor
       id,
       user_key,
       checked_on::text,
+      week_number,
       time_zone,
       condition_scores,
       muscle_soreness,
       summary,
-      memo,
       created_at::text,
       updated_at::text
     `;

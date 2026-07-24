@@ -1,37 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-export class ConditionScoresDto {
-  @ApiProperty({ example: 4 })
-  energy!: number;
-
-  @ApiProperty({ example: 3 })
-  sleep!: number;
+export class ConditionItemDto {
+  @ApiProperty({ example: '훈련 동기' })
+  label!: string;
 
   @ApiProperty({ example: 4 })
-  stress!: number;
-
-  @ApiProperty({ example: 5 })
-  motivation!: number;
-}
-
-export class MuscleSorenessDto {
-  @ApiProperty({ example: 2 })
-  chest!: number;
-
-  @ApiProperty({ example: 1 })
-  back!: number;
-
-  @ApiProperty({ example: 0 })
-  legs!: number;
-
-  @ApiProperty({ example: 1 })
-  shoulders!: number;
-
-  @ApiProperty({ example: 0 })
-  arms!: number;
-
-  @ApiProperty({ example: 0 })
-  core!: number;
+  score!: number;
 }
 
 export class ConditionRecordSummaryDto {
@@ -56,30 +30,20 @@ export class ConditionRecordDto {
   id!: string;
 
   @ApiProperty({ example: '2026-07-23' })
-  checkedOn!: string;
+  date!: string;
 
-  @ApiProperty({ example: 'Asia/Seoul' })
-  timeZone!: string;
+  @ApiProperty({ example: 1 })
+  weekNumber!: number;
 
-  @ApiProperty({ type: ConditionScoresDto })
-  conditionScores!: ConditionScoresDto;
+  @ApiProperty({ type: ConditionItemDto, isArray: true })
+  conditions!: ConditionItemDto[];
 
-  @ApiProperty({ type: MuscleSorenessDto })
-  muscleSoreness!: MuscleSorenessDto;
+  @ApiProperty({ type: ConditionItemDto, isArray: true })
+  muscleSoreness!: ConditionItemDto[];
 
   @ApiProperty({ type: ConditionRecordSummaryDto })
   summary!: ConditionRecordSummaryDto;
 
-  @ApiPropertyOptional({
-    example: '수면 부족, 하체 근육통 약간 있음',
-    nullable: true,
-    type: String,
-  })
-  memo!: string | null;
-
-  @ApiProperty({ example: '2026-07-23T12:35:02.000Z' })
-  createdAt!: string;
-
-  @ApiProperty({ example: '2026-07-23T12:35:02.000Z' })
-  updatedAt!: string;
+  @ApiPropertyOptional({ example: 1753274102000, type: Number })
+  createdAt!: number;
 }
