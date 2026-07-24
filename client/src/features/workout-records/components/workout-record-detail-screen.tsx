@@ -13,6 +13,8 @@ import {
   getWorkoutRecordTitle,
 } from '../lib/workout-record-format';
 
+const MEAL_LABELS = ['MEAL 1', 'MEAL 2', 'MEAL 3', 'MEAL 4'] as const;
+
 export function WorkoutRecordDetailScreen({ recordId }: { recordId: string }) {
   return (
     <SuspenseSection errorMessage="운동 기록 상세를 불러오지 못했어요.">
@@ -133,8 +135,8 @@ function WorkoutRecordDetailContent({ recordId }: { recordId: string }) {
               <Metric
                 label="아침 체중"
                 value={
-                  record.bodyComposition.morningWeightKg ??
-                  record.bodyComposition.weightKg
+                  (record.bodyComposition.morningWeightKg ??
+                  record.bodyComposition.weightKg)
                     ? `${record.bodyComposition.morningWeightKg ?? record.bodyComposition.weightKg}kg`
                     : '-'
                 }
@@ -181,10 +183,7 @@ function WorkoutRecordDetailContent({ recordId }: { recordId: string }) {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>컨디션 체크</Text>
             <View style={styles.metricGrid}>
-              <Metric
-                label="수면"
-                value={record.manualDetail?.sleep || '-'}
-              />
+              <Metric label="수면" value={record.manualDetail?.sleep || '-'} />
               <Metric
                 label="컨디션"
                 value={record.manualDetail?.condition || '-'}
@@ -200,11 +199,19 @@ function WorkoutRecordDetailContent({ recordId }: { recordId: string }) {
         {record.manualDetail?.meals?.length ? (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>식단 체크</Text>
-            {record.manualDetail.meals.map((meal, index) => (
-              <Text key={`meal-${index}`} style={styles.memo}>
-                MEAL {index + 1} · {meal}
-              </Text>
-            ))}
+            {MEAL_LABELS.map((label, index) => {
+              const meal = record.manualDetail?.meals?.[index];
+
+              if (!meal) {
+                return null;
+              }
+
+              return (
+                <Text key={label} style={styles.memo}>
+                  {label} · {meal}
+                </Text>
+              );
+            })}
           </View>
         ) : null}
 

@@ -16,6 +16,7 @@ import {
   useWorkoutRecords,
 } from 'features/workout-records/api/workout-records';
 import { WorkoutRecordCard } from 'features/workout-records/components/workout-record-card';
+import { getWorkoutRecordRoute } from 'features/workout-records/lib/get-workout-record-route';
 import {
   getWorkoutReportSummaryQueryKeyPrefix,
   useWorkoutReportSummary,
@@ -130,7 +131,6 @@ function TodayWorkoutSection() {
   const navigation = useNavigation();
   const { data } = useWorkoutRecords({
     from: today,
-    source: 'manual',
     to: today,
   });
 
@@ -155,14 +155,7 @@ function TodayWorkoutSection() {
       {data.map((record) => (
         <WorkoutRecordCard
           key={record.id}
-          onPress={() =>
-            navigation.navigate({
-              name: '/exercise-form',
-              params: {
-                recordId: record.id,
-              },
-            })
-          }
+          onPress={() => navigation.navigate(getWorkoutRecordRoute(record))}
           record={record}
         />
       ))}
@@ -191,7 +184,13 @@ function TodayConditionSection() {
     );
   }
 
-  return <TodayConditionCard record={data[0]!} />;
+  const latestRecord = data[0];
+
+  if (!latestRecord) {
+    return null;
+  }
+
+  return <TodayConditionCard record={latestRecord} />;
 }
 
 function InlineReportSection() {
@@ -210,12 +209,12 @@ function InlineReportSection() {
         <SummaryMetricCard
           accentColor={Colors.accent}
           label="총 운동 횟수"
-          value={formatReportNumber(data.manualTotals.workoutRecordCount)}
+          value={formatReportNumber(data.totals.workoutRecordCount)}
         />
         <SummaryMetricCard
           accentColor={Colors.info}
           label="총 볼륨 (kg)"
-          value={formatReportNumber(data.manualTotals.totalVolumeKg)}
+          value={formatReportNumber(data.totals.totalVolumeKg)}
         />
         <SummaryMetricCard
           accentColor={Colors.success}

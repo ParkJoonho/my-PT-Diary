@@ -17,7 +17,10 @@ export function ConditionMuscleInfoModal({
       visible={!!info}
     >
       <Pressable onPress={onClose} style={styles.overlay}>
-        <Pressable onPress={(event) => event.stopPropagation()} style={styles.card}>
+        <Pressable
+          onPress={(event) => event.stopPropagation()}
+          style={styles.card}
+        >
           {info ? (
             <>
               <View style={styles.header}>
@@ -27,7 +30,11 @@ export function ConditionMuscleInfoModal({
                 </Pressable>
               </View>
 
-              <Image resizeMode="contain" source={info.image} style={styles.image} />
+              <Image
+                resizeMode="contain"
+                source={info.image}
+                style={styles.image}
+              />
 
               <InfoSection label="위치" value={info.location} />
               <InfoSection label="설명" value={info.description} />

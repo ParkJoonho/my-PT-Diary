@@ -33,7 +33,9 @@ export function ConditionRecordCard({
           <Text style={styles.metricLabel}>컨디션</Text>
           <View style={styles.metricValueRow}>
             <Text style={styles.metricValue}>
-              {averageConditionScore > 0 ? averageConditionScore.toFixed(1) : '-'}
+              {averageConditionScore > 0
+                ? averageConditionScore.toFixed(1)
+                : '-'}
             </Text>
             {averageConditionScore > 0 ? (
               <View
@@ -42,7 +44,9 @@ export function ConditionRecordCard({
                   { backgroundColor: `${conditionBadge.color}22` },
                 ]}
               >
-                <Text style={[styles.badgeText, { color: conditionBadge.color }]}>
+                <Text
+                  style={[styles.badgeText, { color: conditionBadge.color }]}
+                >
                   {conditionBadge.label}
                 </Text>
               </View>
@@ -65,7 +69,9 @@ export function ConditionRecordCard({
                   { backgroundColor: `${sorenessBadge.color}22` },
                 ]}
               >
-                <Text style={[styles.badgeText, { color: sorenessBadge.color }]}>
+                <Text
+                  style={[styles.badgeText, { color: sorenessBadge.color }]}
+                >
                   {sorenessBadge.label}
                 </Text>
               </View>
@@ -77,7 +83,10 @@ export function ConditionRecordCard({
 
         <View style={styles.metric}>
           <Text style={styles.metricLabel}>근육통 부위</Text>
-          <Text numberOfLines={1} style={[styles.metricValue, styles.metricValueText]}>
+          <Text
+            numberOfLines={1}
+            style={[styles.metricValue, styles.metricValueText]}
+          >
             {getSorePartsText(record.muscleSoreness)}
           </Text>
         </View>

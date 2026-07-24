@@ -23,14 +23,15 @@ describe('수동 운동 폼 로직', () => {
     form.strengthExercises = [
       {
         estimated1RM: 0,
+        id: 'exercise-1',
         lbWeight: 0,
         maxWeight: 0,
         name: '벤치프레스',
         restTime: '90초',
         rir: '2',
         sets: [
-          { reps: '10', weightKg: '60' },
-          { reps: '8', weightKg: '70' },
+          { id: 'set-1', reps: '10', weightKg: '60' },
+          { id: 'set-2', reps: '8', weightKg: '70' },
         ],
         volume: 0,
       },
@@ -88,12 +89,16 @@ describe('수동 운동 폼 로직', () => {
       calculateManualWorkoutVolume([
         {
           estimated1RM: 0,
+          id: 'exercise-1',
           lbWeight: 0,
           maxWeight: 120,
           name: '스쿼트',
           restTime: '',
           rir: '',
-          sets: [{ reps: '10', weightKg: '100' }, { reps: '8', weightKg: '120' }],
+          sets: [
+            { id: 'set-1', reps: '10', weightKg: '100' },
+            { id: 'set-2', reps: '8', weightKg: '120' },
+          ],
           volume: 1960,
         },
       ]),
@@ -104,8 +109,8 @@ describe('수동 운동 폼 로직', () => {
     const form = createManualWorkoutFormState();
     form.strengthExercises = [];
 
-    expect(validateManualWorkoutForm(form).map((error) => error.field)).toEqual([
-      'strengthExercises',
-    ]);
+    expect(validateManualWorkoutForm(form).map((error) => error.field)).toEqual(
+      ['strengthExercises'],
+    );
   });
 });

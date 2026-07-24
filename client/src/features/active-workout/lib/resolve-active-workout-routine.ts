@@ -8,7 +8,10 @@ export function resolveActiveWorkoutRouteRoutine({
   routeRoutineId?: string;
   selectedRoutine?: HomeRoutine | null;
 }) {
-  if (selectedRoutine && (!routeRoutineId || selectedRoutine.id === routeRoutineId)) {
+  if (
+    selectedRoutine &&
+    (!routeRoutineId || selectedRoutine.id === routeRoutineId)
+  ) {
     return selectedRoutine;
   }
 

@@ -14,12 +14,14 @@ import {
 } from 'shared/lib/date';
 
 export type ManualWorkoutSetForm = {
+  id: string;
   reps: string;
   weightKg: string;
 };
 
 export type ManualStrengthExerciseForm = {
   estimated1RM: number;
+  id: string;
   lbWeight: number;
   maxWeight: number;
   name: string;
@@ -59,8 +61,17 @@ export type ManualWorkoutFormError = {
   message: string;
 };
 
+let manualWorkoutFormEntityId = 0;
+
+function createManualWorkoutFormEntityId(prefix: string) {
+  manualWorkoutFormEntityId += 1;
+
+  return `${prefix}-${manualWorkoutFormEntityId}`;
+}
+
 export function createEmptyManualWorkoutSet(): ManualWorkoutSetForm {
   return {
+    id: createManualWorkoutFormEntityId('set'),
     reps: '',
     weightKg: '',
   };
@@ -69,6 +80,7 @@ export function createEmptyManualWorkoutSet(): ManualWorkoutSetForm {
 export function createEmptyManualStrengthExercise(): ManualStrengthExerciseForm {
   return recalculateManualStrengthExercise({
     estimated1RM: 0,
+    id: createManualWorkoutFormEntityId('exercise'),
     lbWeight: 0,
     maxWeight: 0,
     name: '',
@@ -138,6 +150,7 @@ export function createManualWorkoutFormStateFromRecord(
       ? detail.strengthExercises.map((exercise) =>
           recalculateManualStrengthExercise({
             estimated1RM: exercise.estimated1RM ?? 0,
+            id: createManualWorkoutFormEntityId('exercise'),
             lbWeight: exercise.lbWeight ?? 0,
             maxWeight: exercise.maxWeight ?? 0,
             name: exercise.name,
@@ -146,6 +159,7 @@ export function createManualWorkoutFormStateFromRecord(
             sets:
               exercise.sets.length > 0
                 ? exercise.sets.map((set) => ({
+                    id: createManualWorkoutFormEntityId('set'),
                     reps: formatOptionalNumber(set.reps),
                     weightKg: formatOptionalNumber(set.weightKg),
                   }))
@@ -161,7 +175,9 @@ export function createManualWorkoutFormStateFromRecord(
 export function buildManualWorkoutPayload(
   form: ManualWorkoutFormState,
 ): CreateManualWorkoutRecordDto | UpdateManualWorkoutRecordDto {
-  const normalizedExercises = normalizeStrengthExercises(form.strengthExercises);
+  const normalizedExercises = normalizeStrengthExercises(
+    form.strengthExercises,
+  );
   const cardio = buildCardioPayload(form);
   const bodyComposition = buildBodyCompositionPayload(form);
   const meals = form.meals.map((meal) => meal.trim());
@@ -187,7 +203,9 @@ export function buildManualWorkoutPayload(
     performedAt: getUtcISOString(),
     performedOn: form.performedOn,
     sleep: sleep || undefined,
-    strengthExercises: normalizedExercises.length ? normalizedExercises : undefined,
+    strengthExercises: normalizedExercises.length
+      ? normalizedExercises
+      : undefined,
     timeZone: getClientTimeZone(),
   };
 }
@@ -300,12 +318,15 @@ export function getExerciseNameSummary(record: WorkoutRecordDto) {
   }
 
   return exercises.length === 1
-    ? exercises[0]?.name ?? '-'
+    ? (exercises[0]?.name ?? '-')
     : `${exercises[0]?.name ?? '-'} +${exercises.length - 1}`;
 }
 
 export function getWorkoutDurationLabel(record: WorkoutRecordDto) {
-  return record.manualDetail?.exerciseTime ?? formatExerciseTimeLabel(record.durationSeconds);
+  return (
+    record.manualDetail?.exerciseTime ??
+    formatExerciseTimeLabel(record.durationSeconds)
+  );
 }
 
 export function getDailyReport(record: WorkoutRecordDto) {
@@ -322,7 +343,9 @@ function padMeals(meals: string[] | undefined) {
   return normalized;
 }
 
-function buildCardioPayload(form: ManualWorkoutFormState): ManualCardioDto | null {
+function buildCardioPayload(
+  form: ManualWorkoutFormState,
+): ManualCardioDto | null {
   const treadmillMinutes = parseOptionalInteger(form.treadmillMinutes);
   const cycleMinutes = parseOptionalInteger(form.cycleMinutes);
   const stairClimberMinutes = parseOptionalInteger(form.stairClimberMinutes);
@@ -363,31 +386,31 @@ function normalizeStrengthExercises(
 ): ManualStrengthExerciseDto[] {
   const normalizedExercises: ManualStrengthExerciseDto[] = [];
 
-  exercises.forEach((exercise) => {
-      const name = exercise.name.trim();
-      const sets = normalizeSets(exercise.sets);
+  for (const exercise of exercises) {
+    const name = exercise.name.trim();
+    const sets = normalizeSets(exercise.sets);
 
-      if (!name || !sets.length) {
-        return;
-      }
+    if (!name || !sets.length) {
+      continue;
+    }
 
-      const recalculated = recalculateManualStrengthExercise({
-        ...exercise,
-        name,
-        sets: exercise.sets,
-      });
-
-      normalizedExercises.push({
-        estimated1RM: recalculated.estimated1RM || undefined,
-        lbWeight: recalculated.lbWeight || undefined,
-        maxWeight: recalculated.maxWeight || undefined,
-        name,
-        restTime: exercise.restTime?.trim() || undefined,
-        rir: exercise.rir?.trim() || undefined,
-        sets,
-        volume: recalculated.volume || undefined,
-      });
+    const recalculated = recalculateManualStrengthExercise({
+      ...exercise,
+      name,
+      sets: exercise.sets,
     });
+
+    normalizedExercises.push({
+      estimated1RM: recalculated.estimated1RM || undefined,
+      lbWeight: recalculated.lbWeight || undefined,
+      maxWeight: recalculated.maxWeight || undefined,
+      name,
+      restTime: exercise.restTime?.trim() || undefined,
+      rir: exercise.rir?.trim() || undefined,
+      sets,
+      volume: recalculated.volume || undefined,
+    });
+  }
 
   return normalizedExercises;
 }
@@ -402,7 +425,8 @@ function normalizeSets(sets: ManualWorkoutSetForm[]): ManualWorkoutSetDto[] {
 }
 
 function hasAnyWorkoutDetail(form: ManualWorkoutFormState) {
-  const hasStrengthExercises = normalizeStrengthExercises(form.strengthExercises).length > 0;
+  const hasStrengthExercises =
+    normalizeStrengthExercises(form.strengthExercises).length > 0;
   const hasCardio = buildCardioPayload(form) !== null;
   const hasBodyComposition = buildBodyCompositionPayload(form) !== null;
   const hasMeals = form.meals.some((meal) => meal.trim().length > 0);
@@ -458,7 +482,9 @@ function hasManualCardio(cardio: ManualCardioDto | undefined) {
   );
 }
 
-function inferLocation(activityLevel: string): CreateManualWorkoutRecordDto['location'] {
+function inferLocation(
+  activityLevel: string,
+): CreateManualWorkoutRecordDto['location'] {
   if (activityLevel.includes('홈')) {
     return 'home';
   }

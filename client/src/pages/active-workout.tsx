@@ -27,7 +27,9 @@ function ActiveWorkoutRoute() {
   const clearSelectedRoutine = useActiveWorkoutStore(
     (state) => state.clearSelectedRoutine,
   );
-  const selectedRoutine = useActiveWorkoutStore((state) => state.selectedRoutine);
+  const selectedRoutine = useActiveWorkoutStore(
+    (state) => state.selectedRoutine,
+  );
   const routine = resolveActiveWorkoutRouteRoutine({
     routeRoutineId: routineId,
     selectedRoutine,

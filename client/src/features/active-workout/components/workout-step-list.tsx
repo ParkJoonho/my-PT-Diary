@@ -1,5 +1,6 @@
 import type { HomeRoutine } from 'features/workout-routines/types/routine';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { UnimplementedBadge } from 'shared/components/unimplemented-badge';
 import Colors, { iosShadow } from 'shared/constants/colors';
 import type { CompletedStepMap } from '../types/active-workout';
 
@@ -31,7 +32,9 @@ export function WorkoutStepList({
           {routine.duration} · {routine.location === 'home' ? '홈트' : '헬스장'}
         </Text>
 
-        {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+        {errorMessage ? (
+          <Text style={styles.errorText}>{errorMessage}</Text>
+        ) : null}
 
         {routine.steps.map((step, index) => {
           const completed = completedSteps[index] ?? false;
@@ -72,10 +75,7 @@ export function WorkoutStepList({
                 </View>
 
                 <View
-                  style={[
-                    styles.stepContent,
-                    isLast && styles.stepContentLast,
-                  ]}
+                  style={[styles.stepContent, isLast && styles.stepContentLast]}
                 >
                   <View style={styles.stepTopRow}>
                     <Text
@@ -102,10 +102,21 @@ export function WorkoutStepList({
                       { backgroundColor: `${typeColor}18` },
                     ]}
                   >
-                    <Text style={[styles.stepTypeTagText, { color: typeColor }]}>
+                    <Text
+                      style={[styles.stepTypeTagText, { color: typeColor }]}
+                    >
                       {typeLabel}
                     </Text>
                   </View>
+
+                  {step.type !== 'cardio' ? (
+                    <View style={styles.stepActionRow}>
+                      <ActionChip label="음성가이드" />
+                      {step.type === 'strength' ? (
+                        <ActionChip label="영상촬영" />
+                      ) : null}
+                    </View>
+                  ) : null}
                 </View>
               </View>
 
@@ -126,7 +137,32 @@ export function WorkoutStepList({
   );
 }
 
+function ActionChip({ label }: { label: string }) {
+  return (
+    <Pressable accessibilityRole="button" style={styles.actionChip}>
+      <Text style={styles.actionChipText}>{label}</Text>
+      <UnimplementedBadge compact />
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
+  actionChip: {
+    alignItems: 'center',
+    backgroundColor: Colors.surfaceMuted,
+    borderColor: Colors.cardBorder,
+    borderRadius: 999,
+    borderWidth: StyleSheet.hairlineWidth,
+    flexDirection: 'row',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  actionChipText: {
+    color: Colors.textSecondary,
+    fontFamily: 'Pretendard-Medium',
+    fontSize: 12,
+  },
   card: {
     ...iosShadow,
     backgroundColor: Colors.white,
@@ -194,6 +230,12 @@ const styles = StyleSheet.create({
   },
   stepContentLast: {
     paddingBottom: 0,
+  },
+  stepActionRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 10,
   },
   stepDetail: {
     color: Colors.accent,

@@ -10,6 +10,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import type { ConditionRecordDto } from 'shared/api/generated/models';
 import { SuspenseSection } from 'shared/components/async-state';
 import Colors from 'shared/constants/colors';
 import { getClientTodayDate } from 'shared/lib/date';
@@ -18,16 +19,15 @@ import {
   useCreateConditionRecord,
   useUpdateConditionRecord,
 } from '../api/condition-records';
-import type { ConditionRecordDto } from 'shared/api/generated/models';
 import {
   buildConditionPayload,
   validateConditionForm,
 } from '../lib/condition-form';
+import { MUSCLE_INFO_MAP } from '../lib/condition-muscle-info';
 import {
   getConditionScoreColor,
   getSorenessScoreColor,
 } from '../lib/condition-record-metadata';
-import { MUSCLE_INFO_MAP } from '../lib/condition-muscle-info';
 import { useConditionFormStore } from '../stores/use-condition-form-store';
 import { ConditionMuscleInfoModal } from './condition-muscle-info-modal';
 import {
@@ -137,7 +137,7 @@ function ConditionFormContent({
 
   const isPending = createMutation.isPending || updateMutation.isPending;
   const muscleInfo = muscleTooltipLabel
-    ? MUSCLE_INFO_MAP[muscleTooltipLabel] ?? null
+    ? (MUSCLE_INFO_MAP[muscleTooltipLabel] ?? null)
     : null;
 
   return (
@@ -198,7 +198,9 @@ function ConditionFormContent({
         <View style={styles.section}>
           <View style={styles.sectionTitleRow}>
             <Text style={styles.sectionTitle}>컨디션 체크</Text>
-            <Text style={styles.sectionSubtitle}>1=매우 나쁨 ~ 5=매우 좋음</Text>
+            <Text style={styles.sectionSubtitle}>
+              1=매우 나쁨 ~ 5=매우 좋음
+            </Text>
           </View>
           {form.conditions.map((item, index) => (
             <ConditionScoreRow
@@ -217,7 +219,9 @@ function ConditionFormContent({
             <View style={styles.sectionTitleWithHint}>
               <Text style={styles.sectionTitle}>근육통 체크</Text>
               <View style={styles.hintBadge}>
-                <Text style={styles.hintBadgeText}>부위를 누르면 위치 안내</Text>
+                <Text style={styles.hintBadgeText}>
+                  부위를 누르면 위치 안내
+                </Text>
               </View>
             </View>
             <Text style={styles.sectionSubtitle}>1=없음 ~ 4=심함</Text>
@@ -236,7 +240,10 @@ function ConditionFormContent({
         </View>
       </ScrollView>
 
-      <ConditionMuscleInfoModal info={muscleInfo} onClose={closeMuscleTooltip} />
+      <ConditionMuscleInfoModal
+        info={muscleInfo}
+        onClose={closeMuscleTooltip}
+      />
     </KeyboardAvoidingView>
   );
 }

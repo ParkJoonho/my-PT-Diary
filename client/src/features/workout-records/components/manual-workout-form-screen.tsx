@@ -22,8 +22,10 @@ import {
   calculateManualWorkoutVolume,
   validateManualWorkoutForm,
 } from '../lib/manual-workout-form';
-import { useManualWorkoutFormStore } from '../stores/use-manual-workout-form-store';
 import { buildManualWorkoutPayload } from '../lib/manual-workout-form';
+import { useManualWorkoutFormStore } from '../stores/use-manual-workout-form-store';
+
+const MEAL_LABELS = ['MEAL 1', 'MEAL 2', 'MEAL 3', 'MEAL 4'] as const;
 
 export function ManualWorkoutFormScreen({ recordId }: { recordId?: string }) {
   if (recordId) {
@@ -67,7 +69,9 @@ function ManualWorkoutFormContent({
   const removeStrengthExercise = useManualWorkoutFormStore(
     (state) => state.removeStrengthExercise,
   );
-  const resetForCreate = useManualWorkoutFormStore((state) => state.resetForCreate);
+  const resetForCreate = useManualWorkoutFormStore(
+    (state) => state.resetForCreate,
+  );
   const setBodyCompositionField = useManualWorkoutFormStore(
     (state) => state.setBodyCompositionField,
   );
@@ -186,7 +190,9 @@ function ManualWorkoutFormContent({
             <InputField
               keyboardType="number-pad"
               label="러닝머신(분)"
-              onChangeText={(value) => setCardioField('treadmillMinutes', value)}
+              onChangeText={(value) =>
+                setCardioField('treadmillMinutes', value)
+              }
               placeholder="0"
               value={form.treadmillMinutes}
             />
@@ -268,7 +274,9 @@ function ManualWorkoutFormContent({
             <InputField
               keyboardType="decimal-pad"
               label="체지방(kg)"
-              onChangeText={(value) => setBodyCompositionField('bodyFatKg', value)}
+              onChangeText={(value) =>
+                setBodyCompositionField('bodyFatKg', value)
+              }
               placeholder="0"
               value={form.bodyFatKg}
             />
@@ -285,13 +293,13 @@ function ManualWorkoutFormContent({
         </Section>
 
         <Section title="식단 체크">
-          {form.meals.map((meal, index) => (
+          {MEAL_LABELS.map((label, index) => (
             <InputField
-              key={`meal-${index}`}
-              label={`MEAL ${index + 1}`}
+              key={label}
+              label={label}
               onChangeText={(value) => setMeal(index, value)}
               placeholder="식사 내용"
-              value={meal}
+              value={form.meals[index] ?? ''}
             />
           ))}
         </Section>
@@ -305,7 +313,7 @@ function ManualWorkoutFormContent({
           title="운동 종목"
         >
           {form.strengthExercises.map((exercise, exerciseIndex) => (
-            <View key={`exercise-${exerciseIndex}`} style={styles.exerciseCard}>
+            <View key={exercise.id} style={styles.exerciseCard}>
               <View style={styles.exerciseHeader}>
                 <TextInput
                   onChangeText={(value) =>
@@ -317,7 +325,9 @@ function ManualWorkoutFormContent({
                   value={exercise.name}
                 />
                 {form.strengthExercises.length > 1 ? (
-                  <Pressable onPress={() => removeStrengthExercise(exerciseIndex)}>
+                  <Pressable
+                    onPress={() => removeStrengthExercise(exerciseIndex)}
+                  >
                     <Text style={styles.removeText}>삭제</Text>
                   </Pressable>
                 ) : null}
@@ -339,7 +349,7 @@ function ManualWorkoutFormContent({
               </View>
 
               {exercise.sets.map((set, setIndex) => (
-                <View key={`set-${exerciseIndex}-${setIndex}`} style={styles.setRow}>
+                <View key={set.id} style={styles.setRow}>
                   <Text style={styles.setNumber}>{setIndex + 1}</Text>
                   <TextInput
                     keyboardType="decimal-pad"
@@ -400,7 +410,11 @@ function ManualWorkoutFormContent({
               <View style={styles.exerciseFooter}>
                 <MiniStat
                   label="볼륨"
-                  value={exercise.volume > 0 ? `${exercise.volume.toLocaleString()}kg` : '-'}
+                  value={
+                    exercise.volume > 0
+                      ? `${exercise.volume.toLocaleString()}kg`
+                      : '-'
+                  }
                 />
                 <MiniStat
                   label="1RM 추정값"
@@ -412,13 +426,19 @@ function ManualWorkoutFormContent({
                 />
                 <MiniStat
                   label="MAX"
-                  value={exercise.maxWeight > 0 ? `${exercise.maxWeight}kg` : '-'}
+                  value={
+                    exercise.maxWeight > 0 ? `${exercise.maxWeight}kg` : '-'
+                  }
                 />
               </View>
             </View>
           ))}
           <Text style={styles.helperText}>
-            총 볼륨 {calculateManualWorkoutVolume(form.strengthExercises).toLocaleString()}kg
+            총 볼륨{' '}
+            {calculateManualWorkoutVolume(
+              form.strengthExercises,
+            ).toLocaleString()}
+            kg
           </Text>
         </Section>
 

@@ -17,9 +17,17 @@ jest.mock('shared/lib/date', () => ({
 describe('컨디션 폼 로직', () => {
   it('컨디션 입력을 서버 payload로 변환한다', () => {
     const form = createConditionFormState();
-    form.conditions[0] = { ...form.conditions[0]!, score: 4 };
-    form.conditions[2] = { ...form.conditions[2]!, score: 3 };
-    form.muscleSoreness[8] = { ...form.muscleSoreness[8]!, score: 2 };
+    const firstCondition = form.conditions[0];
+    const thirdCondition = form.conditions[2];
+    const targetSoreness = form.muscleSoreness[8];
+
+    if (!firstCondition || !thirdCondition || !targetSoreness) {
+      throw new Error('테스트용 컨디션 항목이 필요해요.');
+    }
+
+    form.conditions[0] = { ...firstCondition, score: 4 };
+    form.conditions[2] = { ...thirdCondition, score: 3 };
+    form.muscleSoreness[8] = { ...targetSoreness, score: 2 };
 
     expect(buildConditionPayload(form)).toEqual({
       conditions: form.conditions,

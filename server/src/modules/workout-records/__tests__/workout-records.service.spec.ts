@@ -89,8 +89,13 @@ function createRecordRow(overrides: Partial<WorkoutRecordRow> = {}) {
     source: WorkoutRecordSource.Routine,
     steps: 루틴완료요청.steps,
     summary: {
+      cardioDistanceMeters: 6000,
+      cardioDurationSeconds: 1200,
       cardioStepCount: 1,
+      cardioSteps: 0,
       completedStepCount: 2,
+      strengthExerciseCount: 1,
+      strengthSetCount: 3,
       strengthStepCount: 1,
       stretchStepCount: 0,
       totalStepCount: 3,
@@ -147,8 +152,13 @@ describe('운동 기록 서비스', () => {
       }),
     );
     expect(createArgs?.summary).toEqual({
+      cardioDistanceMeters: 6000,
+      cardioDurationSeconds: 1200,
       cardioStepCount: 1,
+      cardioSteps: 0,
       completedStepCount: 2,
+      strengthExerciseCount: 1,
+      strengthSetCount: 3,
       strengthStepCount: 1,
       stretchStepCount: 0,
       totalStepCount: 3,

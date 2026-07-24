@@ -68,8 +68,7 @@ export const MUSCLE_INFO_MAP: Record<string, MuscleInfo> = {
   상완삼두근: {
     description:
       '팔 뒤쪽에 위치한 근육으로, 이두근의 반대편입니다. 팔꿈치를 펴는 동작에 사용되며, 팔 전체 근육의 약 2/3를 차지합니다.',
-    exercises:
-      '트라이셉스 익스텐션, 딥스, 클로즈그립 벤치프레스, 킥백',
+    exercises: '트라이셉스 익스텐션, 딥스, 클로즈그립 벤치프레스, 킥백',
     image: require('../../../assets/muscles/triceps.png'),
     label: '상완삼두근 (삼두근)',
     location: '팔 뒤쪽 윗부분, 어깨와 팔꿈치 사이',
@@ -93,8 +92,7 @@ export const MUSCLE_INFO_MAP: Record<string, MuscleInfo> = {
   둔근: {
     description:
       '인체에서 가장 크고 강한 근육 중 하나입니다. 엉덩이를 펴거나, 다리를 옆/뒤로 움직이는 동작에 사용됩니다. 바른 자세 유지에 매우 중요합니다.',
-    exercises:
-      '힙 스러스트, 스쿼트, 불가리안 스플릿 스쿼트, 글루트 브릿지',
+    exercises: '힙 스러스트, 스쿼트, 불가리안 스플릿 스쿼트, 글루트 브릿지',
     image: require('../../../assets/muscles/glutes.png'),
     label: '둔근 (엉덩이)',
     location: '엉덩이 전체, 골반 뒤쪽을 감싸는 부위',

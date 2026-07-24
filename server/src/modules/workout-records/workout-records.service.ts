@@ -217,15 +217,34 @@ export class WorkoutRecordsService {
     steps: RoutineWorkoutStepInput[],
   ): WorkoutRecordSummary {
     const completedSteps = steps.filter((step) => step.completed);
+    const completedStrengthSteps = completedSteps.filter(
+      (step) => step.type === WorkoutStepType.Strength,
+    );
+    const completedCardioSteps = completedSteps.filter(
+      (step) => step.type === WorkoutStepType.Cardio,
+    );
 
     return {
-      cardioStepCount: completedSteps.filter(
-        (step) => step.type === WorkoutStepType.Cardio,
-      ).length,
+      cardioDistanceMeters: completedCardioSteps.reduce(
+        (total, step) => total + this.parseDistanceMetersFromDetail(step.detail),
+        0,
+      ),
+      cardioDurationSeconds: completedCardioSteps.reduce(
+        (total, step) => total + this.parseDurationSecondsFromDetail(step.detail),
+        0,
+      ),
+      cardioStepCount: completedCardioSteps.length,
+      cardioSteps: completedCardioSteps.reduce(
+        (total, step) => total + this.parseStepCountFromDetail(step.detail),
+        0,
+      ),
       completedStepCount: completedSteps.length,
-      strengthStepCount: completedSteps.filter(
-        (step) => step.type === WorkoutStepType.Strength,
-      ).length,
+      strengthExerciseCount: completedStrengthSteps.length,
+      strengthSetCount: completedStrengthSteps.reduce(
+        (total, step) => total + this.resolveStrengthSetCount(step),
+        0,
+      ),
+      strengthStepCount: completedStrengthSteps.length,
       stretchStepCount: completedSteps.filter(
         (step) => step.type === WorkoutStepType.Stretch,
       ).length,
@@ -280,6 +299,61 @@ export class WorkoutRecordsService {
       : '';
 
     return `${baseLabel}${volume}${cardio}`;
+  }
+
+  private resolveStrengthSetCount(step: RoutineWorkoutStepInput) {
+    if (step.sets) {
+      return step.sets;
+    }
+
+    const setsMatch = step.detail.match(/(\d+)\s*세트/);
+
+    if (setsMatch?.[1]) {
+      return Number.parseInt(setsMatch[1], 10);
+    }
+
+    return 1;
+  }
+
+  private parseDurationSecondsFromDetail(detail: string) {
+    const hoursMatch = detail.match(/(\d+)\s*시간/);
+    const minutesMatch = detail.match(/(\d+)\s*분/);
+    const secondsMatch = detail.match(/(\d+)\s*초/);
+    const hours = hoursMatch?.[1] ? Number.parseInt(hoursMatch[1], 10) : 0;
+    const minutes = minutesMatch?.[1]
+      ? Number.parseInt(minutesMatch[1], 10)
+      : 0;
+    const seconds = secondsMatch?.[1]
+      ? Number.parseInt(secondsMatch[1], 10)
+      : 0;
+
+    return hours * 60 * 60 + minutes * 60 + seconds;
+  }
+
+  private parseDistanceMetersFromDetail(detail: string) {
+    const kilometersMatch = detail.match(/(\d+(?:\.\d+)?)\s*km/i);
+
+    if (kilometersMatch?.[1]) {
+      return Math.round(Number.parseFloat(kilometersMatch[1]) * 1000);
+    }
+
+    const metersMatch = detail.match(/(\d+(?:\.\d+)?)\s*m/i);
+
+    if (metersMatch?.[1]) {
+      return Math.round(Number.parseFloat(metersMatch[1]));
+    }
+
+    return 0;
+  }
+
+  private parseStepCountFromDetail(detail: string) {
+    const stepsMatch = detail.match(/(\d[\d,]*)\s*걸음/);
+
+    if (!stepsMatch?.[1]) {
+      return 0;
+    }
+
+    return Number.parseInt(stepsMatch[1].replaceAll(',', ''), 10);
   }
 
   private pickManualDetail(

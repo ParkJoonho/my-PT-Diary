@@ -1,4 +1,7 @@
-import type { ManualCardioDto, WorkoutRecordDto } from 'shared/api/generated/models';
+import type {
+  ManualCardioDto,
+  WorkoutRecordDto,
+} from 'shared/api/generated/models';
 import {
   formatExerciseTimeLabel,
   getDailyReport,

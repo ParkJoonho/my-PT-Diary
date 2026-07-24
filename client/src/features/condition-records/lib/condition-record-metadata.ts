@@ -106,16 +106,18 @@ export function getSorenessScoreColor(score: number) {
 }
 
 export function calculateAverageScore(items: ConditionItemDto[]) {
-  const scores = items.filter((item) => item.score > 0).map((item) => item.score);
+  const scores = items
+    .filter((item) => item.score > 0)
+    .map((item) => item.score);
 
   if (!scores.length) {
     return 0;
   }
 
   return Number(
-    (
-      scores.reduce((total, score) => total + score, 0) / scores.length
-    ).toFixed(1),
+    (scores.reduce((total, score) => total + score, 0) / scores.length).toFixed(
+      1,
+    ),
   );
 }
 
@@ -171,7 +173,7 @@ export function getSorePartsText(items: ConditionItemDto[]) {
   }
 
   return soreParts.length === 1
-    ? soreParts[0]?.label ?? '없음'
+    ? (soreParts[0]?.label ?? '없음')
     : `${soreParts[0]?.label ?? ''} +${soreParts.length - 1}`;
 }
 

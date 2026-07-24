@@ -1,5 +1,5 @@
 import type { ConditionRecordDto } from 'shared/api/generated/models';
-import { create, type StateCreator } from 'zustand';
+import { type StateCreator, create } from 'zustand';
 import {
   CONDITION_LABELS,
   MUSCLE_SORENESS_LABELS,

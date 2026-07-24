@@ -1,3 +1,4 @@
+import { formatExerciseTimeLabel } from 'features/workout-records/lib/manual-workout-form';
 import type { HomeRoutine } from 'features/workout-routines/types/routine';
 import type { CreateManualWorkoutRecordDto } from 'shared/api/generated/models';
 import {
@@ -5,7 +6,6 @@ import {
   getClientTimeZone,
   getUtcISOString,
 } from 'shared/lib/date';
-import { formatExerciseTimeLabel } from 'features/workout-records/lib/manual-workout-form';
 import type { CompletedStepMap } from '../types/active-workout';
 
 export function createManualWorkoutPayload({
@@ -19,7 +19,9 @@ export function createManualWorkoutPayload({
   now?: Date;
   routine: HomeRoutine;
 }): CreateManualWorkoutRecordDto {
-  const completedCount = routine.steps.filter((_, index) => completedSteps[index]).length;
+  const completedCount = routine.steps.filter(
+    (_, index) => completedSteps[index],
+  ).length;
   const strengthExercises = routine.steps
     .filter((step, index) => step.type === 'strength' && completedSteps[index])
     .map((step) => {

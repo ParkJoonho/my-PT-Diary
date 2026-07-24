@@ -1,12 +1,12 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { WorkoutRecordDto } from 'shared/api/generated/models';
 import Colors, { iosShadow } from 'shared/constants/colors';
+import { getExerciseNameSummary } from '../lib/manual-workout-form';
 import {
   formatWorkoutDuration,
   formatWorkoutVolume,
   getWorkoutRecordSummaryLine,
 } from '../lib/workout-record-format';
-import { getExerciseNameSummary } from '../lib/manual-workout-form';
 
 type WorkoutRecordCardProps = {
   onLongPress?: () => void;
@@ -26,27 +26,22 @@ export function WorkoutRecordCard({
       style={({ pressed }) => [styles.card, pressed && styles.pressed]}
     >
       <View style={styles.metricRow}>
-        <Metric
-          label="운동시간"
-          value={formatWorkoutDuration(record)}
-        />
+        <Metric label="운동시간" value={formatWorkoutDuration(record)} />
         <View style={styles.metricDivider} />
         <Metric
           label="운동종목"
           value={
             record.source === 'manual'
               ? getExerciseNameSummary(record)
-              : record.routineLabel ?? record.title ?? '-'
+              : (record.routineLabel ?? record.title ?? '-')
           }
         />
         <View style={styles.metricDivider} />
         <Metric label="총 중량" value={formatWorkoutVolume(record)} />
       </View>
-      {record.source === 'manual' ? (
-        <Text style={styles.summary} numberOfLines={2}>
-          {getWorkoutRecordSummaryLine(record)}
-        </Text>
-      ) : null}
+      <Text style={styles.summary} numberOfLines={2}>
+        {getWorkoutRecordSummaryLine(record)}
+      </Text>
     </Pressable>
   );
 }

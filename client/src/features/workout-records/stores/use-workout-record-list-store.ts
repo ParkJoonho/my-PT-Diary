@@ -1,7 +1,7 @@
-import { create, type StateCreator } from 'zustand';
+import { type StateCreator, create } from 'zustand';
 import {
-  WORKOUT_RECORD_PAGE_SIZE,
   type DateRange,
+  WORKOUT_RECORD_PAGE_SIZE,
 } from '../lib/workout-record-list-metadata';
 
 export type WorkoutRecordListFilterSlice = {

@@ -22,14 +22,20 @@ export function ActiveTimerBar({
         <Pressable
           accessibilityRole="button"
           onPress={onPauseToggle}
-          style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
+          style={({ pressed }) => [
+            styles.iconButton,
+            pressed && styles.pressed,
+          ]}
         >
           <Text style={styles.iconText}>{isPaused ? '▶' : 'Ⅱ'}</Text>
         </Pressable>
         <Pressable
           accessibilityRole="button"
           onPress={onEnd}
-          style={({ pressed }) => [styles.closeButton, pressed && styles.pressed]}
+          style={({ pressed }) => [
+            styles.closeButton,
+            pressed && styles.pressed,
+          ]}
           testID="end-workout"
         >
           <Text style={styles.closeText}>×</Text>

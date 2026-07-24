@@ -1,6 +1,6 @@
 import { useNavigation } from '@granite-js/react-native';
-import { RoutineCard } from 'features/workout-routines/components/routine-card';
 import { useActiveWorkoutStore } from 'features/active-workout/stores/use-active-workout-store';
+import { RoutineCard } from 'features/workout-routines/components/routine-card';
 import { Component, type PropsWithChildren, Suspense } from 'react';
 import {
   ActivityIndicator,

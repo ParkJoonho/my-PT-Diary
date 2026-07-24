@@ -9,8 +9,8 @@ import {
   Text,
   View,
 } from 'react-native';
-import { SuspenseSection } from 'shared/components/async-state';
 import type { ConditionRecordDto } from 'shared/api/generated/models';
+import { SuspenseSection } from 'shared/components/async-state';
 import Colors from 'shared/constants/colors';
 import {
   useConditionRecords,
@@ -112,9 +112,14 @@ function ConditionRecordListContent() {
       return sortedRecords.filter((record) => record.date === dateRange.start);
     }
 
+    const { end, start } = dateRange;
+
+    if (!start || !end) {
+      return sortedRecords;
+    }
+
     return sortedRecords.filter(
-      (record) =>
-        record.date >= dateRange.start! && record.date <= dateRange.end!,
+      (record) => record.date >= start && record.date <= end,
     );
   }, [dateRange, sortedRecords]);
 
@@ -122,14 +127,14 @@ function ConditionRecordListContent() {
     const items: ListItem[] = [];
     let previousDate = '';
 
-    filteredRecords.slice(0, displayCount).forEach((record) => {
+    for (const record of filteredRecords.slice(0, displayCount)) {
       if (record.date !== previousDate) {
         items.push({ date: record.date, type: 'header' });
         previousDate = record.date;
       }
 
       items.push({ record, type: 'card' });
-    });
+    }
 
     return items;
   }, [displayCount, filteredRecords]);

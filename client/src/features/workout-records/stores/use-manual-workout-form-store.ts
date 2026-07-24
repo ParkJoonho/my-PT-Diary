@@ -1,5 +1,5 @@
 import type { WorkoutRecordDto } from 'shared/api/generated/models';
-import { create, type StateCreator } from 'zustand';
+import { type StateCreator, create } from 'zustand';
 import {
   type ManualWorkoutFormState,
   createEmptyManualStrengthExercise,
@@ -66,13 +66,14 @@ const createManualWorkoutFormDraftSlice: StateCreator<
     set((state) => ({
       form: {
         ...state.form,
-        strengthExercises: state.form.strengthExercises.map((exercise, index) =>
-          index === exerciseIndex
-            ? recalculateManualStrengthExercise({
-                ...exercise,
-                sets: [...exercise.sets, createEmptyManualWorkoutSet()],
-              })
-            : exercise,
+        strengthExercises: state.form.strengthExercises.map(
+          (exercise, index) =>
+            index === exerciseIndex
+              ? recalculateManualStrengthExercise({
+                  ...exercise,
+                  sets: [...exercise.sets, createEmptyManualWorkoutSet()],
+                })
+              : exercise,
         ),
       },
     }));
@@ -98,16 +99,19 @@ const createManualWorkoutFormDraftSlice: StateCreator<
     set((state) => ({
       form: {
         ...state.form,
-        strengthExercises: state.form.strengthExercises.map((exercise, index) =>
-          index === exerciseIndex
-            ? recalculateManualStrengthExercise({
-                ...exercise,
-                sets:
-                  exercise.sets.length > 1
-                    ? exercise.sets.filter((_, currentSetIndex) => currentSetIndex !== setIndex)
-                    : exercise.sets,
-              })
-            : exercise,
+        strengthExercises: state.form.strengthExercises.map(
+          (exercise, index) =>
+            index === exerciseIndex
+              ? recalculateManualStrengthExercise({
+                  ...exercise,
+                  sets:
+                    exercise.sets.length > 1
+                      ? exercise.sets.filter(
+                          (_, currentSetIndex) => currentSetIndex !== setIndex,
+                        )
+                      : exercise.sets,
+                })
+              : exercise,
         ),
       },
     }));
@@ -168,8 +172,9 @@ const createManualWorkoutFormDraftSlice: StateCreator<
     set((state) => ({
       form: {
         ...state.form,
-        strengthExercises: state.form.strengthExercises.map((exercise, index) =>
-          index === exerciseIndex ? { ...exercise, name: value } : exercise,
+        strengthExercises: state.form.strengthExercises.map(
+          (exercise, index) =>
+            index === exerciseIndex ? { ...exercise, name: value } : exercise,
         ),
       },
     }));
@@ -178,8 +183,11 @@ const createManualWorkoutFormDraftSlice: StateCreator<
     set((state) => ({
       form: {
         ...state.form,
-        strengthExercises: state.form.strengthExercises.map((exercise, index) =>
-          index === exerciseIndex ? { ...exercise, restTime: value } : exercise,
+        strengthExercises: state.form.strengthExercises.map(
+          (exercise, index) =>
+            index === exerciseIndex
+              ? { ...exercise, restTime: value }
+              : exercise,
         ),
       },
     }));
@@ -188,8 +196,9 @@ const createManualWorkoutFormDraftSlice: StateCreator<
     set((state) => ({
       form: {
         ...state.form,
-        strengthExercises: state.form.strengthExercises.map((exercise, index) =>
-          index === exerciseIndex ? { ...exercise, rir: value } : exercise,
+        strengthExercises: state.form.strengthExercises.map(
+          (exercise, index) =>
+            index === exerciseIndex ? { ...exercise, rir: value } : exercise,
         ),
       },
     }));
@@ -206,15 +215,18 @@ const createManualWorkoutFormDraftSlice: StateCreator<
     set((state) => ({
       form: {
         ...state.form,
-        strengthExercises: state.form.strengthExercises.map((exercise, index) =>
-          index === exerciseIndex
-            ? recalculateManualStrengthExercise({
-                ...exercise,
-                sets: exercise.sets.map((set, currentSetIndex) =>
-                  currentSetIndex === setIndex ? { ...set, [key]: value } : set,
-                ),
-              })
-            : exercise,
+        strengthExercises: state.form.strengthExercises.map(
+          (exercise, index) =>
+            index === exerciseIndex
+              ? recalculateManualStrengthExercise({
+                  ...exercise,
+                  sets: exercise.sets.map((set, currentSetIndex) =>
+                    currentSetIndex === setIndex
+                      ? { ...set, [key]: value }
+                      : set,
+                  ),
+                })
+              : exercise,
         ),
       },
     }));

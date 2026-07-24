@@ -61,14 +61,30 @@ export function ConditionCalendarModal({
   const cells = useMemo(() => {
     const firstDay = new Date(viewYear, viewMonth - 1, 1).getDay();
     const daysInMonth = new Date(viewYear, viewMonth, 0).getDate();
-    const result: Array<number | null> = Array(firstDay).fill(null);
+    const result: Array<{ day: number | null; key: string }> = [];
 
-    for (let day = 1; day <= daysInMonth; day += 1) {
-      result.push(day);
+    for (let emptyIndex = 0; emptyIndex < firstDay; emptyIndex += 1) {
+      result.push({
+        day: null,
+        key: `empty-leading-${viewYear}-${viewMonth}-${emptyIndex}`,
+      });
     }
 
+    for (let day = 1; day <= daysInMonth; day += 1) {
+      result.push({
+        day,
+        key: `day-${viewYear}-${viewMonth}-${day}`,
+      });
+    }
+
+    let trailingIndex = 0;
+
     while (result.length % 7 !== 0) {
-      result.push(null);
+      result.push({
+        day: null,
+        key: `empty-trailing-${viewYear}-${viewMonth}-${trailingIndex}`,
+      });
+      trailingIndex += 1;
     }
 
     return result;
@@ -135,8 +151,15 @@ export function ConditionCalendarModal({
       transparent
       visible={visible}
     >
-      <TouchableOpacity activeOpacity={1} onPress={onClose} style={styles.overlay}>
-        <TouchableOpacity activeOpacity={1} onPress={(event) => event.stopPropagation()}>
+      <TouchableOpacity
+        activeOpacity={1}
+        onPress={onClose}
+        style={styles.overlay}
+      >
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={(event) => event.stopPropagation()}
+        >
           <View style={[styles.sheet, { width: calendarWidth }]}>
             <View style={styles.monthRow}>
               <Pressable onPress={prevMonth} style={styles.navButton}>
@@ -169,17 +192,17 @@ export function ConditionCalendarModal({
             </View>
 
             <View style={styles.grid}>
-              {cells.map((day, index) => {
-                if (!day) {
+              {cells.map((cell) => {
+                if (!cell.day) {
                   return (
                     <View
-                      key={`empty-${index}`}
+                      key={cell.key}
                       style={{ height: cellWidth + 8, width: cellWidth }}
                     />
                   );
                 }
 
-                const date = toDateString(viewYear, viewMonth, day);
+                const date = toDateString(viewYear, viewMonth, cell.day);
                 const isStart = date === localRange.start;
                 const isEnd = date === localRange.end;
                 const isSelected = isStart || isEnd;
@@ -192,11 +215,13 @@ export function ConditionCalendarModal({
 
                 return (
                   <View
-                    key={date}
+                    key={cell.key}
                     style={{ height: cellWidth + 8, width: cellWidth }}
                   >
                     {isInRange ? (
-                      <View style={[styles.rangeBackground, { width: cellWidth }]} />
+                      <View
+                        style={[styles.rangeBackground, { width: cellWidth }]}
+                      />
                     ) : null}
                     <Pressable
                       onPress={() => handleDayPress(date)}
@@ -219,7 +244,7 @@ export function ConditionCalendarModal({
                           !isSelected && date === today && styles.dayTextToday,
                         ]}
                       >
-                        {day}
+                        {cell.day}
                       </Text>
                       {hasRecord ? (
                         <View

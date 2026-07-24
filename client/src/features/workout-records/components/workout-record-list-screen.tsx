@@ -15,6 +15,7 @@ import {
   useDeleteWorkoutRecord,
   useWorkoutRecords,
 } from '../api/workout-records';
+import { getWorkoutRecordRoute } from '../lib/get-workout-record-route';
 import {
   formatGroupDate,
   formatRangeLabel,
@@ -57,12 +58,18 @@ export function WorkoutRecordListScreen() {
 
 function WorkoutRecordListContent() {
   const navigation = useNavigation();
-  const { data, refetch } = useWorkoutRecords({ source: 'manual' });
+  const { data, refetch } = useWorkoutRecords();
   const deleteMutation = useDeleteWorkoutRecord();
   const [refreshing, setRefreshing] = useState(false);
-  const applyDateRange = useWorkoutRecordListStore((state) => state.applyDateRange);
-  const clearDateRange = useWorkoutRecordListStore((state) => state.clearDateRange);
-  const closeCalendar = useWorkoutRecordListStore((state) => state.closeCalendar);
+  const applyDateRange = useWorkoutRecordListStore(
+    (state) => state.applyDateRange,
+  );
+  const clearDateRange = useWorkoutRecordListStore(
+    (state) => state.clearDateRange,
+  );
+  const closeCalendar = useWorkoutRecordListStore(
+    (state) => state.closeCalendar,
+  );
   const dateRange = useWorkoutRecordListStore((state) => state.dateRange);
   const displayCount = useWorkoutRecordListStore((state) => state.displayCount);
   const expandDisplayCount = useWorkoutRecordListStore(
@@ -101,10 +108,14 @@ function WorkoutRecordListContent() {
       );
     }
 
+    const { end, start } = dateRange;
+
+    if (!start || !end) {
+      return sortedRecords;
+    }
+
     return sortedRecords.filter(
-      (record) =>
-        record.performedOn >= dateRange.start! &&
-        record.performedOn <= dateRange.end!,
+      (record) => record.performedOn >= start && record.performedOn <= end,
     );
   }, [dateRange, sortedRecords]);
 
@@ -112,14 +123,14 @@ function WorkoutRecordListContent() {
     const items: ListItem[] = [];
     let previousDate = '';
 
-    filteredRecords.slice(0, displayCount).forEach((record) => {
+    for (const record of filteredRecords.slice(0, displayCount)) {
       if (record.performedOn !== previousDate) {
         items.push({ date: record.performedOn, type: 'header' });
         previousDate = record.performedOn;
       }
 
       items.push({ record, type: 'card' });
-    });
+    }
 
     return items;
   }, [displayCount, filteredRecords]);
@@ -173,14 +184,7 @@ function WorkoutRecordListContent() {
     return (
       <WorkoutRecordCard
         onLongPress={() => handleDelete(item.record.id)}
-        onPress={() =>
-          navigation.navigate({
-            name: '/exercise-form',
-            params: {
-              recordId: item.record.id,
-            },
-          })
-        }
+        onPress={() => navigation.navigate(getWorkoutRecordRoute(item.record))}
         record={item.record}
       />
     );
