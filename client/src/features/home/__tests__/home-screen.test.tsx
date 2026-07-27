@@ -125,4 +125,19 @@ describe("홈 화면 주간 트래커 연동", () => {
       params: {},
     });
   });
+
+  it("야외운동 카드를 누르면 야외운동 화면으로 이동한다", () => {
+    mockedUseWeeklyTrackerSummary.mockReturnValue({
+      data: 기본주간요약,
+    } as ReturnType<typeof useWeeklyTrackerSummary>);
+
+    render(<HomeScreen />);
+
+    fireEvent.press(screen.getByText("야외운동"));
+
+    expect(mockNavigation.navigate).toHaveBeenCalledWith({
+      name: "/outdoor-workout",
+      params: {},
+    });
+  });
 });

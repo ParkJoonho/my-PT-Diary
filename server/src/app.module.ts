@@ -5,6 +5,7 @@ import { validateEnv } from './config/env.schema';
 import { DatabaseModule } from './database/database.module';
 import { ConditionRecordsModule } from './modules/condition-records/condition-records.module';
 import { ExerciseGuidesModule } from './modules/exercise-guides/exercise-guides.module';
+import { OutdoorWorkoutModule } from './modules/outdoor-workout/outdoor-workout.module';
 import { WeeklyTrackerModule } from './modules/weekly-tracker/weekly-tracker.module';
 import { WorkoutRecordsModule } from './modules/workout-records/workout-records.module';
 import { WorkoutReportsModule } from './modules/workout-reports/workout-reports.module';
@@ -22,6 +23,7 @@ import { WorkoutReportsModule } from './modules/workout-reports/workout-reports.
     ConditionRecordsModule,
     WorkoutReportsModule,
     ExerciseGuidesModule,
+    OutdoorWorkoutModule,
   ],
   controllers: [AppController],
 })

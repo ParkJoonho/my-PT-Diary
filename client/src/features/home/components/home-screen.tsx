@@ -78,7 +78,10 @@ export function HomeScreen() {
         />
         <QuickActionCard
           kind="outdoor"
-          onPress={() => undefined}
+          onPress={() =>
+            navigation.navigate({ name: '/outdoor-workout', params: {} })
+          }
+          showUnimplementedBadge={false}
           subtitle="러닝·등산 코스 추천"
           title="야외운동"
         />

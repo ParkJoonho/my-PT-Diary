@@ -11,6 +11,8 @@ import type { Route as _ExerciseFormRoute } from "../pages/exercise-form";
 import type { Route as _ExerciseListRoute } from "../pages/exercise-list";
 import type { Route as _ExerciseRecordDetailRoute } from "../pages/exercise-record-detail";
 import type { Route as _ExerciseVideoViewerRoute } from "../pages/exercise-video-viewer";
+import type { Route as _OutdoorWorkoutRoute } from "../pages/outdoor-workout";
+import type { Route as _OutdoorWorkoutResultRoute } from "../pages/outdoor-workout-result";
 import type { Route as _ProgressChartRoute } from "../pages/progress-chart";
 
 declare module "@granite-js/react-native" {
@@ -25,6 +27,8 @@ declare module "@granite-js/react-native" {
     "/exercise-list": (typeof _ExerciseListRoute)["_inputType"];
     "/exercise-record-detail": (typeof _ExerciseRecordDetailRoute)["_inputType"];
     "/exercise-video-viewer": (typeof _ExerciseVideoViewerRoute)["_inputType"];
+    "/outdoor-workout": (typeof _OutdoorWorkoutRoute)["_inputType"];
+    "/outdoor-workout-result": (typeof _OutdoorWorkoutResultRoute)["_inputType"];
     "/progress-chart": (typeof _ProgressChartRoute)["_inputType"];
     "/": (typeof _IndexRoute)["_inputType"];
   }
@@ -40,6 +44,8 @@ declare module "@granite-js/react-native" {
     "/exercise-list": (typeof _ExerciseListRoute)["_outputType"];
     "/exercise-record-detail": (typeof _ExerciseRecordDetailRoute)["_outputType"];
     "/exercise-video-viewer": (typeof _ExerciseVideoViewerRoute)["_outputType"];
+    "/outdoor-workout": (typeof _OutdoorWorkoutRoute)["_outputType"];
+    "/outdoor-workout-result": (typeof _OutdoorWorkoutResultRoute)["_outputType"];
     "/progress-chart": (typeof _ProgressChartRoute)["_outputType"];
     "/": (typeof _IndexRoute)["_outputType"];
   }
