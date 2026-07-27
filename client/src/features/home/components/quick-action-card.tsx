@@ -1,27 +1,31 @@
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
-import { UnimplementedBadge } from 'shared/components/unimplemented-badge';
-import Colors, { iosShadow } from 'shared/constants/colors';
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { UnimplementedBadge } from "shared/components/unimplemented-badge";
+import Colors, { iosShadow } from "shared/constants/colors";
 
 type QuickActionCardProps = {
-  kind: 'outdoor' | 'guide';
+  kind: "outdoor" | "guide";
+  onPress?: () => void;
+  showUnimplementedBadge?: boolean;
   subtitle: string;
   title: string;
 };
 
 const QUICK_IMAGES = {
-  outdoor: require('../../../assets/images/shoes.png'),
-  guide: require('../../../assets/images/video.png'),
+  outdoor: require("../../../assets/images/shoes.png"),
+  guide: require("../../../assets/images/video.png"),
 };
 
 export function QuickActionCard({
   kind,
+  onPress,
+  showUnimplementedBadge = true,
   subtitle,
   title,
 }: QuickActionCardProps) {
   return (
     <Pressable
       accessibilityRole="button"
-      onPress={() => undefined}
+      onPress={onPress ?? (() => undefined)}
       style={({ pressed }) => [styles.card, pressed && styles.pressed]}
     >
       <Image
@@ -32,7 +36,7 @@ export function QuickActionCard({
       <View style={styles.info}>
         <View style={styles.titleRow}>
           <Text style={styles.title}>{title}</Text>
-          <UnimplementedBadge compact />
+          {showUnimplementedBadge ? <UnimplementedBadge compact /> : null}
         </View>
         <Text style={styles.subtitle}>{subtitle}</Text>
       </View>
@@ -44,10 +48,10 @@ export function QuickActionCard({
 const styles = StyleSheet.create({
   card: {
     ...iosShadow,
-    alignItems: 'center',
+    alignItems: "center",
     backgroundColor: Colors.card,
     borderRadius: 16,
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 14,
     minHeight: 72,
     paddingHorizontal: 16,
@@ -55,7 +59,7 @@ const styles = StyleSheet.create({
   },
   chevron: {
     color: Colors.iconMuted,
-    fontFamily: 'Pretendard-SemiBold',
+    fontFamily: "Pretendard-SemiBold",
     fontSize: 24,
     lineHeight: 24,
   },
@@ -73,17 +77,17 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     color: Colors.textMuted,
-    fontFamily: 'Pretendard-Regular',
+    fontFamily: "Pretendard-Regular",
     fontSize: 13,
   },
   title: {
     color: Colors.text,
-    fontFamily: 'Pretendard-Medium',
+    fontFamily: "Pretendard-Medium",
     fontSize: 16,
   },
   titleRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
+    alignItems: "center",
+    flexDirection: "row",
     gap: 8,
   },
 });

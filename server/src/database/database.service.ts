@@ -186,6 +186,22 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         ON condition_records (user_key, checked_on DESC, created_at DESC)
       `);
 
+      // Guide IDs currently come from a server hardcoded catalog. Add a
+      // foreign key after the catalog moves into a DB table.
+      await this.pool.query(`
+        CREATE TABLE IF NOT EXISTS exercise_guide_likes (
+          guide_id TEXT NOT NULL,
+          user_key TEXT NOT NULL,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          PRIMARY KEY (guide_id, user_key)
+        )
+      `);
+
+      await this.pool.query(`
+        CREATE INDEX IF NOT EXISTS exercise_guide_likes_guide_id_idx
+        ON exercise_guide_likes (guide_id)
+      `);
+
       this.logger.log('Database schema is ready.');
     } finally {
       await this.pool.query('SELECT pg_advisory_unlock(2026072301)');
