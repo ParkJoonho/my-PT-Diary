@@ -7,6 +7,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { Pool, PoolClient, QueryResult, QueryResultRow } from 'pg';
 import { DEFAULT_DATABASE_URL } from './database.constants';
+import { EXERCISE_GUIDE_CATALOG } from '../modules/exercise-guides/exercise-guides.catalog';
 
 export type DatabaseQueryRunner = {
   query<T extends QueryResultRow>(
@@ -102,6 +103,80 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
 
     try {
       await this.pool.query(`
+        CREATE TABLE IF NOT EXISTS exercise_guides (
+          id TEXT PRIMARY KEY,
+          catalog_type TEXT NOT NULL,
+          title TEXT NOT NULL,
+          body_part TEXT NOT NULL,
+          equipment TEXT NOT NULL,
+          equipment_types JSONB NOT NULL,
+          duration TEXT NOT NULL,
+          initial_like_count INTEGER NOT NULL DEFAULT 0,
+          video_url TEXT NOT NULL,
+          description TEXT NOT NULL,
+          target_muscles TEXT,
+          display_order INTEGER NOT NULL,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+      `);
+
+      await this.pool.query(`
+        CREATE INDEX IF NOT EXISTS exercise_guides_catalog_type_display_order_idx
+        ON exercise_guides (catalog_type, display_order ASC, created_at ASC)
+      `);
+
+      const existingExerciseGuideCountResult = await this.pool.query<{
+        count: string;
+      }>(`
+        SELECT COUNT(*)::text AS count
+        FROM exercise_guides
+      `);
+      const existingExerciseGuideCount = Number(
+        existingExerciseGuideCountResult.rows[0]?.count ?? '0',
+      );
+
+      if (existingExerciseGuideCount === 0) {
+        for (const guide of EXERCISE_GUIDE_CATALOG) {
+          await this.pool.query(
+            `
+              INSERT INTO exercise_guides (
+                id,
+                catalog_type,
+                title,
+                body_part,
+                equipment,
+                equipment_types,
+                duration,
+                initial_like_count,
+                video_url,
+                description,
+                target_muscles,
+                display_order
+              )
+              VALUES (
+                $1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9, $10, $11, $12
+              )
+            `,
+            [
+              guide.id,
+              guide.catalogType,
+              guide.title,
+              guide.bodyPart,
+              guide.equipment,
+              JSON.stringify(guide.equipmentTypes),
+              guide.duration,
+              guide.initialLikeCount,
+              guide.videoUrl,
+              guide.description,
+              guide.targetMuscles,
+              guide.displayOrder,
+            ],
+          );
+        }
+      }
+
+      await this.pool.query(`
         CREATE TABLE IF NOT EXISTS workout_completions (
           id TEXT PRIMARY KEY,
           user_key TEXT NOT NULL,
@@ -187,7 +262,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       `);
 
       // Guide IDs currently come from a server hardcoded catalog. Add a
-      // foreign key after the catalog moves into a DB table.
+      // foreign key now that the catalog is DB-backed and seeded on boot.
       await this.pool.query(`
         CREATE TABLE IF NOT EXISTS exercise_guide_likes (
           guide_id TEXT NOT NULL,
@@ -195,6 +270,23 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
           PRIMARY KEY (guide_id, user_key)
         )
+      `);
+
+      await this.pool.query(`
+        DO $$
+        BEGIN
+          IF NOT EXISTS (
+            SELECT 1
+            FROM pg_constraint
+            WHERE conname = 'exercise_guide_likes_guide_id_fkey'
+          ) THEN
+            ALTER TABLE exercise_guide_likes
+              ADD CONSTRAINT exercise_guide_likes_guide_id_fkey
+              FOREIGN KEY (guide_id)
+              REFERENCES exercise_guides(id)
+              ON DELETE CASCADE;
+          END IF;
+        END $$;
       `);
 
       await this.pool.query(`

@@ -9,6 +9,7 @@ const envSchema = z.object({
     .default('https://api.openai.com/v1'),
   DATABASE_URL: z.string().url().default(DEFAULT_DATABASE_URL),
   PORT: z.coerce.number().int().positive().default(3000),
+  SERVICE_ROLE_KEY: z.string().min(1).optional(),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;

@@ -15,8 +15,8 @@ export type ExerciseGuideCatalogItem = {
   displayOrder: number;
 };
 
-// TODO: Move this hardcoded catalog into an exercise_guides table when
-// DB-backed content management becomes necessary.
+// Seed source for the exercise_guides table. Keep these values aligned with the
+// original app so first-boot seeding can reproduce the source catalog exactly.
 export const BODY_PART_EXERCISE_GUIDES: ExerciseGuideCatalogItem[] = [
   {
     bodyPart: '가슴',
