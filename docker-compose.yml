@@ -1,13 +1,13 @@
 services:
   postgres:
     image: postgres:18-alpine
-    container_name: at-pt-postgres
+    container_name: ai-pt-postgres-local
     environment:
       POSTGRES_DB: at_pt
       POSTGRES_USER: a2t
       POSTGRES_PASSWORD: a2t
     ports:
-      - '5432:5432'
+      - '5437:5432'
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U a2t -d at_pt']
       interval: 5s

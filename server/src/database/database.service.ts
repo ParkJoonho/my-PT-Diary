@@ -294,6 +294,29 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         ON exercise_guide_likes (guide_id)
       `);
 
+      await this.pool.query(`
+        CREATE TABLE IF NOT EXISTS analysis_records (
+          id TEXT PRIMARY KEY,
+          user_key TEXT NOT NULL,
+          analysis_type TEXT NOT NULL,
+          qualitative_data JSONB,
+          quantitative_data JSONB,
+          raw_result JSONB NOT NULL,
+          analyzed_at TIMESTAMPTZ NOT NULL,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+      `);
+
+      await this.pool.query(`
+        CREATE INDEX IF NOT EXISTS analysis_records_user_key_analyzed_at_idx
+        ON analysis_records (user_key, analyzed_at DESC, created_at DESC)
+      `);
+
+      await this.pool.query(`
+        CREATE INDEX IF NOT EXISTS analysis_records_user_key_type_analyzed_at_idx
+        ON analysis_records (user_key, analysis_type, analyzed_at DESC, created_at DESC)
+      `);
+
       this.logger.log('Database schema is ready.');
     } finally {
       await this.pool.query('SELECT pg_advisory_unlock(2026072301)');

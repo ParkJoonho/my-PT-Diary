@@ -15,7 +15,7 @@ DB 연결값 기본 예시는 `server/.env.example`에 있다.
 
 ```env
 PORT=3000
-DATABASE_URL=postgresql://a2t:a2t@localhost:5432/at_pt
+DATABASE_URL=postgresql://a2t:a2t@localhost:5437/at_pt
 ```
 
 서버 실행:
