@@ -78,7 +78,7 @@ describe('체형 분석 컨트롤러 통합', () => {
       .post('/api/body-analysis/analyze')
       .set('x-user-key', 'integration-user')
       .send({ imageBase64: 'a'.repeat(200) })
-      .expect(201);
+      .expect(200);
 
     const body = 체형분석응답스키마.parse(response.body);
 

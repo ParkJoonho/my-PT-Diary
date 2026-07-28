@@ -10,12 +10,12 @@ import {
 } from '@nestjs/swagger';
 import { UserKey } from '../../common/decorators/user-key.decorator';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
-import { BodyAnalysisService } from './body-analysis.service';
-import { createBodyAnalysisSchema } from './body-analysis.schemas';
-import { CreateBodyAnalysisDto } from './dto/create-body-analysis.dto';
-import { BodyAnalysisResponseDto } from './dto/body-analysis-response.dto';
+import { createBodyComparisonSchema } from './body-comparison.schemas';
+import { BodyComparisonService } from './body-comparison.service';
+import { BodyComparisonResponseDto } from './dto/body-comparison-response.dto';
+import { CreateBodyComparisonDto } from './dto/create-body-comparison.dto';
 
-@ApiTags('body-analysis')
+@ApiTags('body-comparison')
 @ApiHeader({
   name: 'x-user-key',
   required: true,
@@ -25,29 +25,31 @@ import { BodyAnalysisResponseDto } from './dto/body-analysis-response.dto';
 @ApiBadRequestResponse({
   description: 'x-user-key is missing or request data is invalid.',
 })
-@Controller('api/body-analysis')
-export class BodyAnalysisController {
-  constructor(private readonly bodyAnalysisService: BodyAnalysisService) {}
+@Controller('api/body-comparison')
+export class BodyComparisonController {
+  constructor(
+    private readonly bodyComparisonService: BodyComparisonService,
+  ) {}
 
   @ApiOperation({
-    summary: 'Analyze a full-body image for the current user key.',
+    summary: 'Analyze before/after full-body images for the current user key.',
   })
   @ApiOkResponse({
-    type: BodyAnalysisResponseDto,
+    type: BodyComparisonResponseDto,
   })
   @ApiBadGatewayResponse({
     description: 'AI provider returned an invalid response or upstream error.',
   })
   @ApiServiceUnavailableResponse({
-    description: 'Body analysis AI is not configured on the server.',
+    description: 'Body comparison AI is not configured on the server.',
   })
   @Post('analyze')
   @HttpCode(200)
-  analyzeBody(
+  analyzeBodyComparison(
     @UserKey() userKey: string,
-    @Body(new ZodValidationPipe(createBodyAnalysisSchema))
-    dto: CreateBodyAnalysisDto,
+    @Body(new ZodValidationPipe(createBodyComparisonSchema))
+    dto: CreateBodyComparisonDto,
   ) {
-    return this.bodyAnalysisService.analyzeBody(userKey, dto);
+    return this.bodyComparisonService.analyzeBodyComparison(userKey, dto);
   }
 }

@@ -55,7 +55,8 @@ AI Hub의 `AI 체형 분석` 기능 중 전신 사진 기반 체형 분석 본�
 | AI Hub 카드 진입 | 구현 |
 | 클라이언트 `/ai-analysis` 화면 | 구현 |
 | 분석 기록 화면 이동 버튼 | 구현 |
-| 전·후 비교 / 신발 추천 바로가기 | 미구현 배지로 유지 |
+| 전·후 비교 섹션 | 구현 |
+| 신발 추천 바로가기 | 미구현 배지로 유지 |
 | PT 수업 기록 컨텍스트 병합 | 미구현 |
 | 신발/보행 추천 | 이번 범위 제외 |
 
@@ -123,7 +124,7 @@ AI Hub의 `AI 체형 분석` 기능 중 전신 사진 기반 체형 분석 본�
 | 9 | `analysis_records`에 `analysis_type = 'body'`로 저장을 시도한다. |
 | 10 | 저장 성공 여부와 무관하게 분석 자체는 반환하되, `recordSave.status`로 결과를 분리한다. |
 | 11 | 클라이언트가 결과 카드, 자세/비율/다각도 분석/추천 섹션을 렌더링한다. |
-| 12 | 이번 배치에 없는 원본 파생 기능은 `미구현` 배지와 `준비 중입니다.` 안내로 남겨둔다. |
+| 12 | 이번 배치에 포함된 전·후 비교는 실제 섹션으로 연결하고, 아직 없는 원본 파생 기능만 `미구현` 배지로 남겨둔다. |
 
 ## 8. 요구사항 및 현재 구현 현황
 
@@ -143,7 +144,8 @@ AI Hub의 `AI 체형 분석` 기능 중 전신 사진 기반 체형 분석 본�
 | BA-012 | 원본 사진 raw base64를 기록 테이블에 남기지 않아야 한다. | `qualitative_data`, `quantitative_data`, `raw_result`만 저장한다. | 구현 | `server/src/modules/body-analysis/body-analysis.service.ts`, `server/src/modules/analysis-records/analysis-records.repository.ts` |
 | BA-013 | AI Hub에서 구현된 체형 분석 카드만 실제 진입 가능해야 한다. | `/ai-hub` 화면을 만들고 체형 분석 카드는 실제 라우트로 연결했다. | 구현 | `client/src/features/ai-hub/components/ai-hub-screen.tsx`, `client/src/pages/ai-hub.tsx` |
 | BA-014 | 원본 체형 분석 화면의 핵심 UI 블록을 유지해야 한다. | 정면 사진, 다각도 추가 사진, 키/증상 입력, 분석 결과 카드 구조를 원본 흐름에 맞춰 재구성했다. | 구현 | `client/src/features/body-analysis/components/body-analysis-screen.tsx`, `client/src/features/body-analysis/components/body-analysis-result.tsx` |
-| BA-015 | 아직 안 옮긴 파생 기능은 숨기지 말고 미구현 상태를 보여줘야 한다. | 전·후 비교, 신발 추천은 바로가기 카드와 미구현 배지로 남겨뒀다. | 구현 | `client/src/features/body-analysis/components/body-analysis-screen.tsx`, `client/src/features/ai-hub/components/ai-hub-screen.tsx` |
+| BA-015 | 원본 `/ai-analysis` 안의 전·후 비교 흐름을 같은 화면 안에 유지해야 한다. | 체형 분석 화면 안에 실제 전·후 비교 토글 섹션을 이식했다. | 구현 | `client/src/features/body-analysis/components/body-analysis-screen.tsx`, `client/src/features/body-analysis/components/body-comparison-section.tsx` |
+| BA-016 | 아직 안 옮긴 다른 파생 기능은 숨기지 말고 미구현 상태를 보여줘야 한다. | 신발 추천은 바로가기 카드와 미구현 배지로 남겨뒀다. | 구현 | `client/src/features/body-analysis/components/body-analysis-screen.tsx`, `client/src/features/ai-hub/components/ai-hub-screen.tsx` |
 
 ## 9. 현재 수정된 원본 결함
 
@@ -163,7 +165,7 @@ AI Hub의 `AI 체형 분석` 기능 중 전신 사진 기반 체형 분석 본�
 | BA-TODO-002 | `prediction`의 날짜 신뢰성 한계 | `photoDate` 필드는 서버에 있지만 현재 클라이언트 사진 선택 구현은 EXIF 촬영일 추출/보정 UI를 아직 제공하지 않는다. | `client/src/features/body-analysis/lib/pick-image.ts`, `server/src/modules/body-analysis/body-analysis.schemas.ts` |
 | BA-TODO-003 | 의료 증상 상세 섹션 축약 | 원본보다 간결하게 렌더링하고 있어 전체 위험/재활 리스트까지는 아직 안 풀어냈다. | `client/src/features/body-analysis/components/body-analysis-result.tsx` |
 | BA-TODO-004 | 신발/보행 분석 제외 | 원본 `gaitAnalysis`는 이번 범위에서 검증/반환 구조에 포함하지 않았다. | `server/src/modules/body-analysis/body-analysis.schemas.ts` |
-| BA-TODO-005 | 전·후 비교, 신발 추천, 몸매&스타일 미구현 | AI Hub와 체형 분석 화면에는 남겨두되 실제 라우트/연동은 아직 없다. | `client/src/features/ai-hub/components/ai-hub-screen.tsx`, `client/src/features/body-analysis/components/body-analysis-screen.tsx` |
+| BA-TODO-005 | 신발 추천, 몸매&스타일 미구현 | 체형 분석 화면과 AI Hub에는 남겨두되 실제 라우트/연동은 아직 없다. | `client/src/features/ai-hub/components/ai-hub-screen.tsx`, `client/src/features/body-analysis/components/body-analysis-screen.tsx` |
 
 ## 11. 테스트 근거
 

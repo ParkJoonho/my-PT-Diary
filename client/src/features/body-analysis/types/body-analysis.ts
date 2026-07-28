@@ -122,13 +122,54 @@ export type BodyAnalysisResult = {
   };
 };
 
+export type BodyComparisonResult = {
+  bodyChanges?: {
+    core?: {
+      change?: string;
+      description?: string;
+      details?: string[];
+    };
+    lowerBody?: {
+      change?: string;
+      description?: string;
+      details?: string[];
+    };
+    upperBody?: {
+      change?: string;
+      description?: string;
+      details?: string[];
+    };
+  };
+  bodyComposition?: {
+    fatChange?: string;
+    muscleChange?: string;
+    proportionChange?: string;
+  };
+  motivationalMessage?: string;
+  overallChange?: {
+    grade?: string;
+    score?: number;
+    summary?: string;
+  };
+  postureChanges?: {
+    improvements?: string[];
+    overallPosture?: string;
+    remaining?: string[];
+  };
+  recommendations?: {
+    improve?: string[];
+    keepDoing?: string[];
+    nextGoal?: string;
+  };
+};
+
 export type AnalysisRecordSummary = {
   analysisType: string;
   analyzedAt: string;
   createdAt: string;
   id: string;
-  qualitativeData: Record<string, unknown>;
-  quantitativeData: Record<string, unknown>;
+  qualitativeData?: Record<string, unknown>;
+  quantitativeData?: Record<string, unknown>;
 };
 
 export type AnalysisRecordDetail = AnalysisRecordSummary & {

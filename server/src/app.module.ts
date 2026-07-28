@@ -5,6 +5,7 @@ import { validateEnv } from './config/env.schema';
 import { DatabaseModule } from './database/database.module';
 import { AnalysisRecordsModule } from './modules/analysis-records/analysis-records.module';
 import { BodyAnalysisModule } from './modules/body-analysis/body-analysis.module';
+import { BodyComparisonModule } from './modules/body-comparison/body-comparison.module';
 import { ConditionRecordsModule } from './modules/condition-records/condition-records.module';
 import { ExerciseGuidesModule } from './modules/exercise-guides/exercise-guides.module';
 import { OutdoorWorkoutModule } from './modules/outdoor-workout/outdoor-workout.module';
@@ -28,6 +29,7 @@ import { WorkoutReportsModule } from './modules/workout-reports/workout-reports.
     OutdoorWorkoutModule,
     AnalysisRecordsModule,
     BodyAnalysisModule,
+    BodyComparisonModule,
   ],
   controllers: [AppController],
 })

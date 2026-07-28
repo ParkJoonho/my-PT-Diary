@@ -28,10 +28,17 @@ import {
   useCompareAnalysisRecords,
 } from '../api/analysis-records';
 import {
+  getAnalysisRecordCardMeta,
+  getAnalysisRecordTypeLabel,
+  isComparableAnalysisRecordType,
+} from '../lib/analysis-record-presentation';
+import {
   toAnalysisRecordComparison,
   toBodyAnalysisResult,
+  toBodyComparisonResult,
 } from '../lib/object-access';
 import { BodyAnalysisResultView } from './body-analysis-result';
+import { BodyComparisonResultView } from './body-comparison-result';
 
 function DetailModal({
   onClose,
@@ -60,7 +67,9 @@ function DetailModalContent({
 }) {
   const insets = useSafeAreaInsets();
   const { data } = useAnalysisRecord(recordId);
-  const result = toBodyAnalysisResult(data.rawResult);
+  const typeLabel = getAnalysisRecordTypeLabel(data.analysisType);
+  const isBodyAnalysis = data.analysisType === 'body';
+  const isBodyComparison = data.analysisType === 'body-comparison';
 
   return (
     <View style={styles.screenContainer}>
@@ -82,7 +91,7 @@ function DetailModalContent({
 
         <View style={[styles.card, iosShadow]}>
           <Text style={styles.cardTitle}>기록 정보</Text>
-          <Text style={styles.metaText}>타입 {data.analysisType}</Text>
+          <Text style={styles.metaText}>타입 {typeLabel}</Text>
           <Text style={styles.metaText}>
             분석 시각 {new Date(data.analyzedAt).toLocaleString('ko-KR')}
           </Text>
@@ -91,7 +100,21 @@ function DetailModalContent({
           </Text>
         </View>
 
-        <BodyAnalysisResultView result={result} />
+        {isBodyAnalysis ? (
+          <BodyAnalysisResultView result={toBodyAnalysisResult(data.rawResult)} />
+        ) : null}
+        {isBodyComparison ? (
+          <BodyComparisonResultView
+            result={toBodyComparisonResult(data.rawResult)}
+          />
+        ) : null}
+        {!isBodyAnalysis && !isBodyComparison ? (
+          <View style={[styles.card, iosShadow]}>
+            <Text style={styles.metaText}>
+              이 분석 타입의 상세 렌더링은 아직 준비 중이에요.
+            </Text>
+          </View>
+        ) : null}
       </ScrollView>
     </View>
   );
@@ -100,7 +123,9 @@ function DetailModalContent({
 function HistoryContent() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
-  const [filterType, setFilterType] = useState<'all' | 'body'>('body');
+  const [filterType, setFilterType] = useState<
+    'all' | 'body' | 'body-comparison'
+  >('body');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [detailRecordId, setDetailRecordId] = useState<string | null>(null);
   const compareRecords = useCompareAnalysisRecords();
@@ -117,6 +142,7 @@ function HistoryContent() {
   }, [compareRecords.data]);
 
   const handleToggleSelect = (recordId: string) => {
+    compareRecords.reset();
     setSelectedIds((previous) => {
       if (previous.includes(recordId)) {
         return previous.filter((item) => item !== recordId);
@@ -169,6 +195,7 @@ function HistoryContent() {
             onPress={() => {
               setFilterType('body');
               setSelectedIds([]);
+              compareRecords.reset();
             }}
             style={[
               styles.filterButton,
@@ -186,8 +213,29 @@ function HistoryContent() {
           </Pressable>
           <Pressable
             onPress={() => {
+              setFilterType('body-comparison');
+              setSelectedIds([]);
+              compareRecords.reset();
+            }}
+            style={[
+              styles.filterButton,
+              filterType === 'body-comparison' && styles.filterButtonActive,
+            ]}
+          >
+            <Text
+              style={[
+                styles.filterButtonText,
+                filterType === 'body-comparison' && styles.filterButtonTextActive,
+              ]}
+            >
+              전·후
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={() => {
               setFilterType('all');
               setSelectedIds([]);
+              compareRecords.reset();
             }}
             style={[
               styles.filterButton,
@@ -252,24 +300,27 @@ function HistoryContent() {
         ) : null}
 
         {records.length === 0 ? (
-          <EmptyState message="아직 저장된 체형 분석 기록이 없어요." />
+          <EmptyState
+            message={
+              filterType === 'body-comparison'
+                ? '아직 저장된 전·후 비교 기록이 없어요.'
+                : '아직 저장된 체형 분석 기록이 없어요.'
+            }
+          />
         ) : (
           records.map((record) => {
-            const qualitativeData = record.qualitativeData ?? {};
-            const bodyType =
-              typeof qualitativeData.bodyType === 'string'
-                ? qualitativeData.bodyType
-                : '-';
-            const summary =
-              typeof qualitativeData.summary === 'string'
-                ? qualitativeData.summary
-                : '요약 정보가 아직 없어요.';
-            const selected = selectedIds.includes(record.id);
+            const meta = getAnalysisRecordCardMeta(record);
+            const selected =
+              isComparableAnalysisRecordType(record.analysisType) &&
+              selectedIds.includes(record.id);
+            const comparable = isComparableAnalysisRecordType(record.analysisType);
 
             return (
               <Pressable
                 key={record.id}
-                onPress={() => handleToggleSelect(record.id)}
+                onPress={() =>
+                  comparable ? handleToggleSelect(record.id) : undefined
+                }
                 style={[
                   styles.recordCard,
                   iosShadow,
@@ -278,31 +329,35 @@ function HistoryContent() {
               >
                 <View style={styles.recordHeader}>
                   <View style={styles.bodyTypeBadge}>
-                    <Text style={styles.bodyTypeBadgeText}>{bodyType}</Text>
+                    <Text style={styles.bodyTypeBadgeText}>{meta.badgeText}</Text>
                   </View>
                   <View style={styles.recordHeaderTextWrap}>
-                    <Text style={styles.recordTypeTitle}>체형 분석</Text>
+                    <Text style={styles.recordTypeTitle}>{meta.title}</Text>
                     <Text style={styles.recordDateText}>
                       {new Date(record.analyzedAt).toLocaleDateString('ko-KR')}
                     </Text>
                   </View>
-                  {selected ? (
-                    <CheckCircle2
-                      color={Colors.accent}
-                      size={18}
-                      strokeWidth={2.1}
-                    />
+                  {comparable ? (
+                    selected ? (
+                      <CheckCircle2
+                        color={Colors.accent}
+                        size={18}
+                        strokeWidth={2.1}
+                      />
+                    ) : (
+                      <Circle
+                        color={Colors.textMuted}
+                        size={18}
+                        strokeWidth={2.1}
+                      />
+                    )
                   ) : (
-                    <Circle
-                      color={Colors.textMuted}
-                      size={18}
-                      strokeWidth={2.1}
-                    />
+                    <Text style={styles.nonComparableText}>상세 전용</Text>
                   )}
                 </View>
 
                 <Text numberOfLines={3} style={styles.recordSummary}>
-                  {summary}
+                  {meta.summary}
                 </Text>
 
                 <View style={styles.recordFooter}>
@@ -458,6 +513,11 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     fontFamily: 'Pretendard-Regular',
     fontSize: 13,
+  },
+  nonComparableText: {
+    color: Colors.textMuted,
+    fontFamily: 'Pretendard-Medium',
+    fontSize: 11,
   },
   recommendationWrap: {
     gap: 8,

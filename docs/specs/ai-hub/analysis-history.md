@@ -19,7 +19,7 @@
 | 서버 모듈 | `server/src/modules/analysis-records` |
 | 사용자 구분 | `x-user-key` |
 | 저장 위치 | PostgreSQL `analysis_records` |
-| 현재 활성 기록 타입 | `body` |
+| 현재 활성 기록 타입 | `body`, `body-comparison` |
 | 비교 AI provider | OpenAI 호환 `chat/completions` |
 | 비교 기본 모델 | `gpt-4o-mini` |
 | raw image 저장 여부 | 저장하지 않음 |
@@ -48,7 +48,7 @@
 | `/analysis-history` 클라이언트 화면 | 구현 |
 | body 기록 카드 선택 | 구현 |
 | body 기록 상세 모달 | 구현 |
-| `body-comparison` 기록 UI 연결 | 미구현 |
+| `body-comparison` 기록 카드/상세 | 구현 |
 
 ## 5. DB 구현 현황
 
@@ -137,11 +137,11 @@
 
 | 단계 | 처리 |
 | --- | --- |
-| 1 | `body-analysis`가 검증된 결과를 `AnalysisRecordsService.createAnalysisRecord()`로 넘긴다. |
+| 1 | `body-analysis`와 `body-comparison`이 각각 검증된 결과를 `AnalysisRecordsService.createAnalysisRecord()`로 넘긴다. |
 | 2 | repository가 `analysis_records`에 `user_key`, `analysis_type`, 요약 데이터와 raw result를 insert한다. |
 | 3 | AI Hub 또는 체형 분석 화면에서 `/analysis-history`로 이동한다. |
-| 4 | 클라이언트가 `GET /api/analysis-records?type=body`를 호출해 최신순 목록을 렌더링한다. |
-| 5 | 카드의 `상세 보기`를 누르면 `GET /api/analysis-records/:recordId`를 호출해 raw result를 모달에서 재사용한다. |
+| 4 | 클라이언트가 `GET /api/analysis-records?type=body` 또는 `type=body-comparison`를 호출해 최신순 목록을 렌더링한다. |
+| 5 | 카드의 `상세 보기`를 누르면 `GET /api/analysis-records/:recordId`를 호출해 타입별 raw result 렌더러를 재사용한다. |
 | 6 | 비교 요청 시 두 기록을 같은 `user_key` 기준으로 각각 조회한다. |
 | 7 | 둘 중 하나라도 없으면 404를 반환한다. |
 | 8 | 둘 중 하나라도 `analysis_type !== 'body'`면 400을 반환한다. |
@@ -164,6 +164,8 @@
 | AH-009 | 사용자는 AI Hub에서 실제 기록 화면으로 진입할 수 있어야 한다. | `/ai-hub` 카드와 `/ai-analysis` 상단 버튼에서 `/analysis-history`로 연결한다. | 구현 | `client/src/features/ai-hub/components/ai-hub-screen.tsx`, `client/src/features/body-analysis/components/body-analysis-screen.tsx` |
 | AH-010 | 사용자는 기록 상세를 다시 열어 body 결과를 재열람할 수 있어야 한다. | 상세 모달에서 raw result를 `BodyAnalysisResultView`로 다시 그린다. | 구현 | `client/src/features/body-analysis/components/analysis-history-screen.tsx`, `client/src/features/body-analysis/components/body-analysis-result.tsx` |
 | AH-011 | 사용자는 2개 기록을 선택했을 때만 비교를 실행해야 한다. | 선택이 2개일 때만 비교 버튼이 노출된다. | 구현 | `client/src/features/body-analysis/components/analysis-history-screen.tsx` |
+| AH-012 | `body-comparison` 기록은 목록과 상세에서 다시 열 수 있어야 한다. | 전용 카드 제목/배지와 `BodyComparisonResultView` 상세 렌더러를 추가했다. | 구현 | `client/src/features/body-analysis/components/analysis-history-screen.tsx`, `client/src/features/body-analysis/components/body-comparison-result.tsx` |
+| AH-013 | `body-comparison` 기록은 body 비교 선택과 섞이지 않아야 한다. | 카드 선택은 `body` 타입에서만 활성화하고, `body-comparison`은 상세 전용으로 처리한다. | 구현 | `client/src/features/body-analysis/components/analysis-history-screen.tsx`, `client/src/features/body-analysis/lib/analysis-record-presentation.ts` |
 
 ## 9. 현재 수정된 원본 결함
 
@@ -178,10 +180,9 @@
 
 | ID | 항목 | 현재 영향 | 근거 파일 |
 | --- | --- | --- | --- |
-| AH-TODO-001 | `body-comparison` 기록 표시 미연동 | 테이블과 타입은 수용 가능하지만 현재 실제 저장/조회 UI는 body 위주다. | `server/src/modules/analysis-records/analysis-records.schemas.ts` |
-| AH-TODO-002 | posture/state-vector 상세 렌더링 정책 미정 | 공용 기록 저장소는 준비됐지만 각 타입별 상세 화면 정책은 아직 없다. | `server/src/modules/analysis-records/dto/analysis-record-response.dto.ts` |
-| AH-TODO-003 | 삭제/수정 API 없음 | 현재 이력은 생성, 목록, 상세, 비교까지만 지원한다. | `server/src/modules/analysis-records/analysis-records.controller.ts` |
-| AH-TODO-004 | 비교 결과 섹션 축약 | 현재 클라이언트는 변화 요약, 개선점, 추천사항 위주로만 보여주고 자세 변화/정량 변화 전체는 아직 다 펼치지 않는다. | `client/src/features/body-analysis/components/analysis-history-screen.tsx` |
+| AH-TODO-001 | posture/state-vector 상세 렌더링 정책 미정 | 공용 기록 저장소는 준비됐지만 각 타입별 상세 화면 정책은 아직 없다. | `server/src/modules/analysis-records/dto/analysis-record-response.dto.ts` |
+| AH-TODO-002 | 삭제/수정 API 없음 | 현재 이력은 생성, 목록, 상세, 비교까지만 지원한다. | `server/src/modules/analysis-records/analysis-records.controller.ts` |
+| AH-TODO-003 | 비교 결과 섹션 축약 | 현재 클라이언트는 변화 요약, 개선점, 추천사항 위주로만 보여주고 자세 변화/정량 변화 전체는 아직 다 펼치지 않는다. | `client/src/features/body-analysis/components/analysis-history-screen.tsx` |
 
 ## 11. 테스트 근거
 

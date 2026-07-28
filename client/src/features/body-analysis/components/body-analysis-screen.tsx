@@ -1,19 +1,15 @@
 import { useNavigation } from '@granite-js/react-native';
 import {
   ArrowLeft,
-  Camera,
-  FolderOpen,
   Footprints,
   GitCompareArrows,
   History,
   ScanFace,
   Sparkles,
-  X,
 } from 'lucide-react-native';
 import { useState, type ReactNode } from 'react';
 import {
   Alert,
-  Image,
   Platform,
   Pressable,
   ScrollView,
@@ -28,7 +24,10 @@ import Colors, { iosShadow } from 'shared/constants/colors';
 import { useAnalyzeBody } from '../api/body-analysis';
 import { pickSingleImage, type PickedImage } from '../lib/pick-image';
 import { toBodyAnalysisResult } from '../lib/object-access';
+import { AnalysisRecordSaveBanner } from './analysis-record-save-banner';
 import { BodyAnalysisResultView } from './body-analysis-result';
+import { BodyComparisonSection } from './body-comparison-section';
+import { PhotoCard } from './photo-card';
 
 type ImageTarget = 'back' | 'front' | 'side' | 'squat';
 type PickedImages = Partial<Record<ImageTarget, PickedImage>>;
@@ -54,62 +53,6 @@ function CircleIcon({
   );
 }
 
-function PhotoCard({
-  image,
-  onPickAlbum,
-  onPickCamera,
-  onRemove,
-  required = false,
-  title,
-}: {
-  image?: PickedImage;
-  onPickAlbum: () => void;
-  onPickCamera: () => void;
-  onRemove?: () => void;
-  required?: boolean;
-  title: string;
-}) {
-  return (
-    <View style={[styles.photoCard, iosShadow]}>
-      <View style={styles.sectionHeaderRow}>
-        <View style={styles.sectionHeaderTitleRow}>
-          <Text style={styles.sectionTitle}>{title}</Text>
-          {required ? (
-            <View style={styles.requiredBadge}>
-              <Text style={styles.requiredBadgeText}>필수</Text>
-            </View>
-          ) : null}
-        </View>
-        {image && onRemove ? (
-          <Pressable hitSlop={8} onPress={onRemove}>
-            <X color={Colors.textMuted} size={18} strokeWidth={2.2} />
-          </Pressable>
-        ) : null}
-      </View>
-
-      {image ? (
-        <Image source={{ uri: image.uri }} style={styles.previewImage} />
-      ) : (
-        <View style={styles.photoPlaceholder}>
-          <FolderOpen color={Colors.textMuted} size={26} strokeWidth={2} />
-          <Text style={styles.photoPlaceholderText}>아직 선택한 사진이 없어요</Text>
-        </View>
-      )}
-
-      <View style={styles.photoActionRow}>
-        <Pressable style={styles.photoActionButton} onPress={onPickCamera}>
-          <Camera color={Colors.accent} size={18} strokeWidth={2.1} />
-          <Text style={styles.photoActionText}>카메라</Text>
-        </Pressable>
-        <Pressable style={styles.photoActionButton} onPress={onPickAlbum}>
-          <FolderOpen color={Colors.accent} size={18} strokeWidth={2.1} />
-          <Text style={styles.photoActionText}>앨범</Text>
-        </Pressable>
-      </View>
-    </View>
-  );
-}
-
 export function BodyAnalysisScreen() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
@@ -126,6 +69,7 @@ export function BodyAnalysisScreen() {
     recordId?: string;
     status: 'failed' | 'saved';
   } | null>(null);
+  const [comparisonOpen, setComparisonOpen] = useState(false);
 
   const handlePickImage = async ({
     target,
@@ -237,20 +181,17 @@ export function BodyAnalysisScreen() {
             <Text style={styles.featureShortcutLabel}>분석 기록</Text>
           </Pressable>
           <Pressable
-            onPress={() => Alert.alert('전·후 비교', '준비 중입니다.')}
+            onPress={() => setComparisonOpen((previous) => !previous)}
             style={styles.featureShortcut}
           >
-            <CircleIcon>
+            <CircleIcon backgroundColor="#ECFDF5">
               <GitCompareArrows
-                color={Colors.textMuted}
+                color="#10B981"
                 size={16}
                 strokeWidth={2.1}
               />
             </CircleIcon>
-            <View style={styles.featureShortcutBadgeLabel}>
-              <Text style={styles.featureShortcutLabel}>전·후 비교</Text>
-              <UnimplementedBadge compact />
-            </View>
+            <Text style={styles.featureShortcutLabel}>전·후 비교</Text>
           </Pressable>
           <Pressable
             onPress={() => Alert.alert('AI 신발 추천', '준비 중입니다.')}
@@ -265,6 +206,12 @@ export function BodyAnalysisScreen() {
             </View>
           </Pressable>
         </View>
+
+        <BodyComparisonSection
+          heightValue={height}
+          onOpenChange={setComparisonOpen}
+          open={comparisonOpen}
+        />
 
         <PhotoCard
           image={images.front}
@@ -380,33 +327,11 @@ export function BodyAnalysisScreen() {
           </Text>
         </Pressable>
 
-        {recordSave ? (
-          <View
-            style={[
-              styles.recordSaveCard,
-              recordSave.status === 'saved'
-                ? styles.recordSaveCardSuccess
-                : styles.recordSaveCardWarning,
-            ]}
-          >
-            <Text
-              style={[
-                styles.recordSaveIconText,
-                {
-                  color:
-                    recordSave.status === 'saved' ? Colors.success : Colors.warning,
-                },
-              ]}
-            >
-              {recordSave.status === 'saved' ? '●' : '!'}
-            </Text>
-            <Text style={styles.recordSaveText}>
-              {recordSave.status === 'saved'
-                ? '분석 결과를 기록에 저장했어요.'
-                : recordSave.message ?? '분석 결과는 생성됐지만 기록 저장에 실패했어요.'}
-            </Text>
-          </View>
-        ) : null}
+        <AnalysisRecordSaveBanner
+          failedFallbackMessage="분석 결과는 생성됐지만 기록 저장에 실패했어요."
+          successMessage="분석 결과를 기록에 저장했어요."
+          value={recordSave}
+        />
 
         {analyzedAt ? (
           <Text style={styles.analyzedAtText}>
@@ -553,77 +478,6 @@ const styles = StyleSheet.create({
   },
   optionalPhotoGrid: {
     gap: 12,
-  },
-  photoActionButton: {
-    alignItems: 'center',
-    backgroundColor: Colors.surfaceMuted,
-    borderRadius: 12,
-    flex: 1,
-    gap: 6,
-    justifyContent: 'center',
-    minHeight: 52,
-  },
-  photoActionRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  photoActionText: {
-    color: Colors.text,
-    fontFamily: 'Pretendard-Medium',
-    fontSize: 13,
-  },
-  photoCard: {
-    backgroundColor: Colors.card,
-    borderRadius: 16,
-    gap: 12,
-    padding: 16,
-  },
-  photoPlaceholder: {
-    alignItems: 'center',
-    backgroundColor: Colors.surfaceMuted,
-    borderColor: Colors.cardBorder,
-    borderRadius: 12,
-    borderStyle: 'dashed',
-    borderWidth: 1,
-    gap: 6,
-    height: 180,
-    justifyContent: 'center',
-  },
-  photoPlaceholderText: {
-    color: Colors.textMuted,
-    fontFamily: 'Pretendard-Regular',
-    fontSize: 12,
-  },
-  previewImage: {
-    backgroundColor: Colors.surfaceMuted,
-    borderRadius: 12,
-    height: 220,
-    width: '100%',
-  },
-  recordSaveCard: {
-    alignItems: 'center',
-    borderRadius: 12,
-    flexDirection: 'row',
-    gap: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  recordSaveCardSuccess: {
-    backgroundColor: '#E8F8EE',
-  },
-  recordSaveCardWarning: {
-    backgroundColor: '#FFF3E0',
-  },
-  recordSaveIconText: {
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 16,
-  },
-  recordSaveText: {
-    color: Colors.text,
-    flex: 1,
-    fontFamily: 'Pretendard-Regular',
-    fontSize: 13,
-    lineHeight: 18,
   },
   requiredBadge: {
     backgroundColor: Colors.accentLight,

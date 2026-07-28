@@ -14,7 +14,7 @@
 | --- | --- | --- | --- | --- |
 | [body-analysis.md](body-analysis.md) | 전신 사진 기반 체형 분석 본체 | `/ai-analysis`, `POST /api/ai/body-analysis` | 구현됨(결함 다수) | 1 |
 | [analysis-history.md](analysis-history.md) | 분석 기록 저장, 이력 조회, 기록 비교 | `/analysis-history`, `GET /api/analysis-records`, `POST /api/analysis-records/compare` | 부분 구현 | 2 |
-| [body-comparison.md](body-comparison.md) | 전·후 사진 직접 비교 | `/ai-analysis`, `POST /api/ai/body-comparison` | 부분 구현 | 3 |
+| [body-comparison.md](body-comparison.md) | 전·후 사진 직접 비교 | `/ai-analysis`, `POST /api/ai/body-comparison` | 구현됨(결함 일부 잔존) | 3 |
 | [shoe-recommendation.md](shoe-recommendation.md) | 신발 밑창 기반 보행 분석·신발 추천 | `/ai-analysis` 내 선택 기능, AI Hub 카드 `/shoe-recommendation` | 부분 구현 | 4 |
 | [my-body-style.md](my-body-style.md) | 나의 몸매 & 스타일, 몸매 예측, 스타일 추천 | `/my-body-style`, `POST /api/ai/predict-body`, `POST /api/ai/style-recommendation` | 구현됨(결함 다수) | 5 |
 
@@ -40,7 +40,6 @@
 
 | ID | 항목 | 현재 판단 | 사용자 결정 필요 여부 |
 | --- | --- | --- | --- |
-| AIBODY-DEC-001 | 이번 배치에 `body-comparison`까지 포함할지 | 원본 구현 기능이라 본체 직후 포함 권장 | 필요 |
+| AIBODY-DEC-001 | 이번 배치에 `body-comparison`까지 포함할지 | 포함 완료 | 해소 |
 | AIBODY-DEC-002 | `shoe-recommendation`를 체형 분석 배치에 같이 넣을지 | 원본 구현이지만 화면/라우트 구조가 뒤엉켜 후속 권장 | 필요 |
 | AIBODY-DEC-003 | `my-body-style`를 체형 분석 묶음에 포함할지 | 원본 구현이지만 프로필/사진 저장 의존성 때문에 후속 권장 | 필요 |
-

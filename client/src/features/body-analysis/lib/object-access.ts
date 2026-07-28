@@ -3,6 +3,7 @@ import type {
   AnalysisRecordDetail,
   AnalysisRecordSummary,
   BodyAnalysisResult,
+  BodyComparisonResult,
 } from '../types/body-analysis';
 
 export function asRecord(value: unknown): Record<string, unknown> {
@@ -29,6 +30,10 @@ export function asStringArray(value: unknown): string[] | undefined {
 
 export function toBodyAnalysisResult(value: unknown): BodyAnalysisResult {
   return asRecord(value) as unknown as BodyAnalysisResult;
+}
+
+export function toBodyComparisonResult(value: unknown): BodyComparisonResult {
+  return asRecord(value) as unknown as BodyComparisonResult;
 }
 
 export function toAnalysisRecordSummary(value: unknown): AnalysisRecordSummary {
