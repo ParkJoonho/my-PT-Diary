@@ -54,6 +54,7 @@ export class OpenAiBodyAnalysisClient
     medicalSymptoms?: string;
     photoDate?: string;
     recentWorkoutContext: BodyAnalysisPromptWorkoutContext[];
+    shoeImageBase64?: string;
     sideImageBase64?: string;
     squatImageBase64?: string;
   }): Promise<string> {
@@ -139,6 +140,7 @@ export class OpenAiBodyAnalysisClient
     medicalSymptoms?: string;
     photoDate?: string;
     recentWorkoutContext: BodyAnalysisPromptWorkoutContext[];
+    shoeImageBase64?: string;
     sideImageBase64?: string;
     squatImageBase64?: string;
   }) {
@@ -155,6 +157,16 @@ export class OpenAiBodyAnalysisClient
         },
       },
     ];
+
+    if (params.shoeImageBase64) {
+      images.push({
+        type: 'image_url',
+        image_url: {
+          detail: 'high',
+          url: `data:image/jpeg;base64,${params.shoeImageBase64}`,
+        },
+      });
+    }
 
     if (params.sideImageBase64) {
       images.push({
@@ -195,12 +207,14 @@ export class OpenAiBodyAnalysisClient
     medicalSymptoms?: string;
     photoDate?: string;
     recentWorkoutContext: BodyAnalysisPromptWorkoutContext[];
+    shoeImageBase64?: string;
     sideImageBase64?: string;
     squatImageBase64?: string;
   }) {
     const hasMultiView = Boolean(
       params.sideImageBase64 || params.backImageBase64 || params.squatImageBase64,
     );
+    const hasShoeImage = Boolean(params.shoeImageBase64);
     const dateContext = params.photoDate
       ? `사진 촬영일은 ${params.photoDate}예요. 현재 날짜는 2026-07-28이에요. 촬영 후 경과 기간을 참고해 현재 추정과 향후 예측을 작성해 주세요.`
       : '사진 촬영일은 알 수 없어요. 현재 날짜 2026-07-28 기준으로 분석해 주세요.';
@@ -245,6 +259,105 @@ ${this.buildWorkoutContext(params.recentWorkoutContext)}
     "shoulderBalance": { "score": 1-5, "note": "설명" },
     "hipBalance": { "score": 1-5, "note": "설명" },
     "spinalCurvature": { "score": 1-5, "note": "설명" }
+  },
+  "gaitAnalysis": ${
+    hasShoeImage
+      ? `{
+    "wearPattern": {
+      "type": "정상/내측마모/외측마모/뒤꿈치마모/앞꿈치마모/불균형마모",
+      "description": "마모 패턴 설명",
+      "leftRight": "좌우 대칭/좌측 더 마모/우측 더 마모"
+    },
+    "gaitType": {
+      "type": "정상보행/내전보행(오버프로네이션)/외전보행(서피네이션)/끌기보행/팔자보행/안짱걸음",
+      "description": "보행 유형 설명"
+    },
+    "footAlignment": {
+      "archType": "정상아치/평발(편평족)/요족(높은아치)",
+      "ankleAlignment": { "score": 1-5, "note": "설명" },
+      "toeAlignment": { "value": "정상/외반모지경향/내반소지경향", "note": "설명" }
+    },
+    "bodyImpact": {
+      "kneeImpact": { "score": 1-5, "note": "설명" },
+      "hipImpact": { "score": 1-5, "note": "설명" },
+      "spineImpact": { "score": 1-5, "note": "설명" }
+    },
+    "gaitRecommendations": ["추천 1", "추천 2", "추천 3"],
+    "shoeSizeEstimate": {
+      "estimatedSize": 265,
+      "sizeRange": "260~270",
+      "width": "보통/넓음(E~EE)/좁음(A~B)/매우넓음(EEE~EEEE)",
+      "widthDescription": "발볼 설명",
+      "ageGroup": "성인/청소년",
+      "gender": "남성/여성/판단불가",
+      "genderReason": "성별 추정 근거",
+      "footLength": "약 26.5cm",
+      "footWidthCm": "약 10.2cm",
+      "sizeSystem": "한국(mm) 기준, US/EU 환산 포함"
+    },
+    "shoeRecommendations": {
+      "matchingLogic": "보행 패턴과 신발 속성 매칭 근거 설명",
+      "current": {
+        "daily": [
+          {
+            "brand": "브랜드명",
+            "model": "모델명",
+            "type": "워킹화/캐주얼운동화/컴포트슈즈",
+            "reason": "추천 이유",
+            "features": ["특징1", "특징2", "특징3"],
+            "priceRange": "가격대",
+            "archSupport": "높음/보통/낮음",
+            "cushioning": "높음/보통/낮음",
+            "stability": "높음/보통/낮음"
+          }
+        ],
+        "workout": [
+          {
+            "brand": "브랜드명",
+            "model": "모델명",
+            "type": "러닝화/크로스핏화/헬스화/트레이닝화",
+            "reason": "추천 이유",
+            "features": ["특징1", "특징2", "특징3"],
+            "priceRange": "가격대",
+            "archSupport": "높음/보통/낮음",
+            "cushioning": "높음/보통/낮음",
+            "stability": "높음/보통/낮음"
+          }
+        ]
+      },
+      "afterCorrection": {
+        "timeline": "예상 교정 기간",
+        "correctedGaitType": "교정 후 예상 보행 유형",
+        "daily": [
+          {
+            "brand": "브랜드명",
+            "model": "모델명",
+            "type": "워킹화/캐주얼운동화/컴포트슈즈",
+            "reason": "추천 이유",
+            "features": ["특징1", "특징2", "특징3"],
+            "priceRange": "가격대",
+            "archSupport": "높음/보통/낮음",
+            "cushioning": "높음/보통/낮음",
+            "stability": "높음/보통/낮음"
+          }
+        ],
+        "workout": [
+          {
+            "brand": "브랜드명",
+            "model": "모델명",
+            "type": "러닝화/크로스핏화/헬스화/트레이닝화",
+            "reason": "추천 이유",
+            "features": ["특징1", "특징2", "특징3"],
+            "priceRange": "가격대",
+            "archSupport": "높음/보통/낮음",
+            "cushioning": "높음/보통/낮음",
+            "stability": "높음/보통/낮음"
+          }
+        ]
+      }
+    }
+  }`
+      : 'null'
   },
   "multiViewAnalysis": ${
     hasMultiView
@@ -335,7 +448,10 @@ ${this.buildWorkoutContext(params.recentWorkoutContext)}
 주의사항:
 - 실제 사진에서 확인 가능한 범위만 설명해 주세요.
 - 다중 각도 사진이 없는 뷰는 null로 유지해 주세요.
-- 신발/보행 추천은 이번 응답에 포함하지 말아 주세요.
+- 신발 사진이 없으면 gaitAnalysis는 null로 반환해 주세요.
+- 신발 사진이 있으면 gaitAnalysis, shoeSizeEstimate, shoeRecommendations를 반드시 채워 주세요.
+- 신발 추천은 원본 구조대로 현재 보행/교정 후, 일상/운동화 분기를 유지해 주세요.
+- 성별/연령대 추정 필드는 원본 구조대로 그대로 포함해 주세요.
 - 최신 연구 소개 같은 부가 섹션은 넣지 말아 주세요.
 - workout_records 기반 최근 운동 기록은 참고만 하고, 데이터가 부족하면 과도하게 단정하지 말아 주세요.
 

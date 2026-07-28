@@ -1,15 +1,21 @@
 import { useNavigation } from '@granite-js/react-native';
 import {
   ArrowLeft,
+  Camera,
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  FolderOpen,
   Footprints,
-  GitCompareArrows,
   History,
   ScanFace,
   Sparkles,
+  X,
 } from 'lucide-react-native';
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import {
   Alert,
+  Image,
   Platform,
   Pressable,
   ScrollView,
@@ -19,7 +25,6 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { UnimplementedBadge } from 'shared/components/unimplemented-badge';
 import Colors, { iosShadow } from 'shared/constants/colors';
 import { useAnalyzeBody } from '../api/body-analysis';
 import { pickSingleImage, type PickedImage } from '../lib/pick-image';
@@ -27,28 +32,150 @@ import { toBodyAnalysisResult } from '../lib/object-access';
 import { AnalysisRecordSaveBanner } from './analysis-record-save-banner';
 import { BodyAnalysisResultView } from './body-analysis-result';
 import { BodyComparisonSection } from './body-comparison-section';
-import { PhotoCard } from './photo-card';
 
-type ImageTarget = 'back' | 'front' | 'side' | 'squat';
+type ImageTarget = 'back' | 'front' | 'shoe' | 'side' | 'squat';
 type PickedImages = Partial<Record<ImageTarget, PickedImage>>;
 
-function CircleIcon({
-  backgroundColor = Colors.surfaceMuted,
-  children,
-  size = 36,
+function TipRow({
+  text,
+  tone = 'success',
 }: {
-  backgroundColor?: string;
-  children: ReactNode;
-  size?: number;
+  text: string;
+  tone?: 'muted' | 'success';
+}) {
+  const color = tone === 'success' ? Colors.success : Colors.textMuted;
+
+  return (
+    <View style={styles.tipItem}>
+      <CheckCircle2 color={color} size={15} strokeWidth={2.1} />
+      <Text
+        style={[
+          styles.tipText,
+          tone === 'muted' ? styles.tipTextMuted : undefined,
+        ]}
+      >
+        {text}
+      </Text>
+    </View>
+  );
+}
+
+function SectionActionRow({
+  accentColor,
+  onPickAlbum,
+  onPickCamera,
+}: {
+  accentColor: string;
+  onPickAlbum: () => void;
+  onPickCamera: () => void;
 }) {
   return (
-    <View
-      style={[
-        styles.circleIcon,
-        { backgroundColor, borderRadius: size / 2, height: size, width: size },
-      ]}
-    >
-      {children}
+    <View style={styles.actionRow}>
+      <Pressable
+        onPress={onPickCamera}
+        style={[
+          styles.pickButton,
+          { backgroundColor: accentColor, borderColor: accentColor },
+        ]}
+      >
+        <Camera color={Colors.white} size={20} strokeWidth={2.1} />
+        <Text style={styles.pickButtonText}>카메라</Text>
+      </Pressable>
+      <Pressable
+        onPress={onPickAlbum}
+        style={[
+          styles.pickButton,
+          styles.pickButtonSecondary,
+          { borderColor: accentColor },
+        ]}
+      >
+        <FolderOpen color={accentColor} size={20} strokeWidth={2.1} />
+        <Text style={[styles.pickButtonText, { color: accentColor }]}>
+          갤러리
+        </Text>
+      </Pressable>
+    </View>
+  );
+}
+
+function ImagePreview({
+  image,
+  onRemove,
+  small = false,
+}: {
+  image?: PickedImage;
+  onRemove: () => void;
+  small?: boolean;
+}) {
+  if (!image) {
+    return null;
+  }
+
+  return (
+    <View style={styles.previewCard}>
+      <Image
+        resizeMode="contain"
+        source={{ uri: image.uri }}
+        style={small ? styles.previewImageSmall : styles.previewImage}
+      />
+      <Pressable hitSlop={8} onPress={onRemove} style={styles.removeImageButton}>
+        <X color={Colors.danger} size={24} strokeWidth={2.2} />
+      </Pressable>
+    </View>
+  );
+}
+
+function OptionalPhotoItem({
+  description,
+  image,
+  onPickAlbum,
+  onPickCamera,
+  onRemove,
+  title,
+}: {
+  description: string;
+  image?: PickedImage;
+  onPickAlbum: () => void;
+  onPickCamera: () => void;
+  onRemove: () => void;
+  title: string;
+}) {
+  return (
+    <View style={styles.optionalItem}>
+      <View style={styles.optionalItemHeader}>
+        <Text style={styles.optionalItemTitle}>{title} 사진</Text>
+        {image ? (
+          <CheckCircle2 color={Colors.success} size={16} strokeWidth={2.1} />
+        ) : null}
+      </View>
+
+      {image ? (
+        <View style={styles.optionalPreviewWrap}>
+          <Image
+            resizeMode="cover"
+            source={{ uri: image.uri }}
+            style={styles.optionalPreviewImage}
+          />
+          <Pressable hitSlop={8} onPress={onRemove} style={styles.optionalRemove}>
+            <X color={Colors.danger} size={20} strokeWidth={2.1} />
+          </Pressable>
+        </View>
+      ) : (
+        <>
+          <Text style={styles.optionalDescription}>{description}</Text>
+          <View style={styles.optionalActionRow}>
+            <Pressable onPress={onPickCamera} style={styles.optionalActionButton}>
+              <Camera color={Colors.white} size={15} strokeWidth={2.1} />
+            </Pressable>
+            <Pressable
+              onPress={onPickAlbum}
+              style={[styles.optionalActionButton, styles.optionalActionButtonOutline]}
+            >
+              <FolderOpen color="#8B5CF6" size={15} strokeWidth={2.1} />
+            </Pressable>
+          </View>
+        </>
+      )}
     </View>
   );
 }
@@ -60,6 +187,8 @@ export function BodyAnalysisScreen() {
   const [images, setImages] = useState<PickedImages>({});
   const [height, setHeight] = useState('');
   const [medicalSymptoms, setMedicalSymptoms] = useState('');
+  const [multiViewOpen, setMultiViewOpen] = useState(false);
+  const [comparisonOpen, setComparisonOpen] = useState(false);
   const [result, setResult] = useState<ReturnType<typeof toBodyAnalysisResult> | null>(
     null,
   );
@@ -69,7 +198,6 @@ export function BodyAnalysisScreen() {
     recordId?: string;
     status: 'failed' | 'saved';
   } | null>(null);
-  const [comparisonOpen, setComparisonOpen] = useState(false);
 
   const handlePickImage = async ({
     target,
@@ -101,7 +229,7 @@ export function BodyAnalysisScreen() {
 
   const handleAnalyze = async () => {
     if (!images.front?.base64) {
-      Alert.alert('전신 사진 필요', '정면 전신 사진을 먼저 선택해 주세요.');
+      Alert.alert('전신 사진 필요', '먼저 전신 사진을 선택해 주세요.');
       return;
     }
 
@@ -111,6 +239,10 @@ export function BodyAnalysisScreen() {
         height: height.trim() ? Number(height.trim()) : undefined,
         imageBase64: images.front.base64,
         medicalSymptoms: medicalSymptoms.trim() || undefined,
+        // TODO(body-analysis-migration): photoDate 필드는 서버에서 이미 지원하지만
+        // 현재 Granite 사진 선택 래퍼는 EXIF 촬영일을 노출하지 않아요. 원본의 촬영일
+        // 배지/UI를 완전히 복원하려면 native/web picker 레이어부터 확장해야 해요.
+        shoeImageBase64: images.shoe?.base64,
         sideImageBase64: images.side?.base64,
         squatImageBase64: images.squat?.base64,
       });
@@ -125,23 +257,36 @@ export function BodyAnalysisScreen() {
     }
   };
 
-  const multiViewCount = ['side', 'back', 'squat'].filter(
-    (key) => images[key as ImageTarget],
-  ).length;
+  const resetAnalysis = () => {
+    setImages({});
+    setMultiViewOpen(false);
+    setComparisonOpen(false);
+    setResult(null);
+    setAnalyzedAt(null);
+    setRecordSave(null);
+  };
+
+  const multiViewCount = Number(Boolean(images.side))
+    + Number(Boolean(images.back))
+    + Number(Boolean(images.squat));
+  const analyzeButtonLabel = multiViewCount > 0
+    ? `AI 다중 각도 분석 (${multiViewCount + 1}장)`
+    : images.shoe?.base64
+      ? 'AI 체형 + 걸음걸이 분석'
+      : 'AI 분석 시작';
 
   return (
     <View style={styles.container}>
       <ScrollView
         contentContainerStyle={{
-          gap: 12,
           paddingBottom: 24 + insets.bottom,
-          paddingHorizontal: 16,
-          paddingTop: Platform.OS === 'web' ? 24 : insets.top + 12,
+          paddingTop: Platform.OS === 'web' ? 24 : insets.top + 14,
         }}
         showsVerticalScrollIndicator={false}
+        style={styles.scrollView}
       >
-        <View style={styles.topBar}>
-          <Pressable onPress={() => navigation.goBack()} style={styles.iconButton}>
+        <View style={styles.header}>
+          <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
             <ArrowLeft color={Colors.text} size={22} strokeWidth={2.1} />
           </Pressable>
           <Text style={styles.headerTitle}>AI 체형 분석</Text>
@@ -149,208 +294,262 @@ export function BodyAnalysisScreen() {
             onPress={() =>
               navigation.navigate({ name: '/analysis-history', params: {} })
             }
-            style={styles.iconButton}
+            style={styles.backButton}
+            testID="history-btn"
           >
-            <History color={Colors.accent} size={18} strokeWidth={2.1} />
+            <History color={Colors.accent} size={22} strokeWidth={2.1} />
           </Pressable>
         </View>
 
-        <View style={[styles.heroCard, iosShadow]}>
-          <CircleIcon backgroundColor={Colors.accentLight} size={56}>
-            <ScanFace color={Colors.accent} size={24} strokeWidth={2.1} />
-          </CircleIcon>
-          <View style={styles.heroTextWrap}>
-            <Text style={styles.heroTitle}>체형 타입 분석 및 체형 변화 예측</Text>
-            <Text style={styles.heroDescription}>
-              원본 앱처럼 전신 사진을 기반으로 체형 타입, 비율, 자세를 함께
-              분석해요.
-            </Text>
-          </View>
-        </View>
+        {!result ? (
+          <>
+            <View style={[styles.infoCard, iosShadow]}>
+              <View style={styles.infoIconWrap}>
+                <ScanFace color={Colors.accent} size={28} strokeWidth={2.1} />
+              </View>
+              <Text style={styles.infoTitle}>AI 체형 분석</Text>
+              <Text style={styles.infoDescription}>
+                전신 사진을 촬영하거나 선택하면{'\n'}AI가 체형, 자세, 비율을
+                분석하고{'\n'}미래 변화를 예측합니다
+              </Text>
+              <View style={styles.tipList}>
+                <TipRow text="전신이 보이는 정면 사진" />
+                <TipRow text="몸에 맞는 옷 착용 권장" />
+                <TipRow text="밝고 균일한 조명" />
+                <TipRow text="단색 배경 권장" />
+              </View>
+            </View>
 
-        <View style={[styles.featureRowCard, iosShadow]}>
-          <Pressable
-            onPress={() =>
-              navigation.navigate({ name: '/analysis-history', params: {} })
-            }
-            style={styles.featureShortcut}
-          >
-            <CircleIcon backgroundColor="#EAF0FF">
-              <History color={Colors.info} size={16} strokeWidth={2.1} />
-            </CircleIcon>
-            <Text style={styles.featureShortcutLabel}>분석 기록</Text>
-          </Pressable>
-          <Pressable
-            onPress={() => setComparisonOpen((previous) => !previous)}
-            style={styles.featureShortcut}
-          >
-            <CircleIcon backgroundColor="#ECFDF5">
-              <GitCompareArrows
-                color="#10B981"
-                size={16}
-                strokeWidth={2.1}
+            <View style={styles.contextBanner}>
+              <CheckCircle2 color={Colors.success} size={17} strokeWidth={2.1} />
+              <Text style={styles.contextBannerText}>
+                최근 운동 기록을 함께 참고해 분석해요
+              </Text>
+            </View>
+
+            <View style={[styles.photoSection, iosShadow]}>
+              <Text style={styles.photoSectionTitle}>전신 사진 (필수)</Text>
+              <ImagePreview
+                image={images.front}
+                onRemove={() =>
+                  setImages((previous) => ({ ...previous, front: undefined }))
+                }
               />
-            </CircleIcon>
-            <Text style={styles.featureShortcutLabel}>전·후 비교</Text>
-          </Pressable>
-          <Pressable
-            onPress={() => Alert.alert('AI 신발 추천', '준비 중입니다.')}
-            style={styles.featureShortcut}
-          >
-            <CircleIcon>
-              <Footprints color={Colors.textMuted} size={16} strokeWidth={2.1} />
-            </CircleIcon>
-            <View style={styles.featureShortcutBadgeLabel}>
-              <Text style={styles.featureShortcutLabel}>신발 추천</Text>
-              <UnimplementedBadge compact />
+              <SectionActionRow
+                accentColor={Colors.accent}
+                onPickAlbum={() =>
+                  void handlePickImage({ target: 'front', useCamera: false })
+                }
+                onPickCamera={() =>
+                  void handlePickImage({ target: 'front', useCamera: true })
+                }
+              />
             </View>
-          </Pressable>
-        </View>
 
-        <BodyComparisonSection
-          heightValue={height}
-          onOpenChange={setComparisonOpen}
-          open={comparisonOpen}
-        />
+            <View style={[styles.photoSection, iosShadow]}>
+              <Pressable
+                onPress={() => setMultiViewOpen((previous) => !previous)}
+                style={styles.expandableHeader}
+              >
+                <View style={styles.expandableHeaderLeft}>
+                  <Text style={styles.photoSectionTitle}>다중 각도 촬영 (선택)</Text>
+                  {multiViewCount > 0 ? (
+                    <View style={styles.multiViewBadge}>
+                      <Text style={styles.multiViewBadgeText}>{multiViewCount}</Text>
+                    </View>
+                  ) : null}
+                </View>
+                {multiViewOpen ? (
+                  <ChevronUp color={Colors.textMuted} size={20} strokeWidth={2.1} />
+                ) : (
+                  <ChevronDown color={Colors.textMuted} size={20} strokeWidth={2.1} />
+                )}
+              </Pressable>
 
-        <PhotoCard
-          image={images.front}
-          onPickAlbum={() =>
-            void handlePickImage({ target: 'front', useCamera: false })
-          }
-          onPickCamera={() =>
-            void handlePickImage({ target: 'front', useCamera: true })
-          }
-          onRemove={() =>
-            setImages((previous) => ({ ...previous, front: undefined }))
-          }
-          required
-          title="정면 전신 사진"
-        />
+              {!multiViewOpen && multiViewCount === 0 ? (
+                <Text style={styles.photoSectionDescription}>
+                  측면/후면/스쿼트 사진을 추가하면 더 정확한 자세 분석이 가능합니다
+                </Text>
+              ) : null}
 
-        <View style={[styles.card, iosShadow]}>
-          <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionTitle}>다각도 추가 사진</Text>
-            <Text style={styles.sectionSubtitle}>{multiViewCount}/3 선택됨</Text>
-          </View>
-          <Text style={styles.helperText}>
-            원본처럼 측면, 후면, 스쿼트 사진을 추가하면 자세 분석 정확도를 더
-            높일 수 있어요.
-          </Text>
-          <View style={styles.optionalPhotoGrid}>
-            <PhotoCard
-              image={images.side}
-              onPickAlbum={() =>
-                void handlePickImage({ target: 'side', useCamera: false })
-              }
-              onPickCamera={() =>
-                void handlePickImage({ target: 'side', useCamera: true })
-              }
-              onRemove={() =>
-                setImages((previous) => ({ ...previous, side: undefined }))
-              }
-              title="측면"
-            />
-            <PhotoCard
-              image={images.back}
-              onPickAlbum={() =>
-                void handlePickImage({ target: 'back', useCamera: false })
-              }
-              onPickCamera={() =>
-                void handlePickImage({ target: 'back', useCamera: true })
-              }
-              onRemove={() =>
-                setImages((previous) => ({ ...previous, back: undefined }))
-              }
-              title="후면"
-            />
-            <PhotoCard
-              image={images.squat}
-              onPickAlbum={() =>
-                void handlePickImage({ target: 'squat', useCamera: false })
-              }
-              onPickCamera={() =>
-                void handlePickImage({ target: 'squat', useCamera: true })
-              }
-              onRemove={() =>
-                setImages((previous) => ({ ...previous, squat: undefined }))
-              }
-              title="스쿼트"
-            />
-          </View>
-        </View>
-
-        <View style={[styles.card, iosShadow]}>
-          <Text style={styles.sectionTitle}>추가 입력</Text>
-          <View style={styles.inputBlock}>
-            <Text style={styles.inputLabel}>키 (cm)</Text>
-            <TextInput
-              inputMode="numeric"
-              onChangeText={setHeight}
-              placeholder="예: 175"
-              placeholderTextColor={Colors.textMuted}
-              style={styles.input}
-              value={height}
-            />
-          </View>
-          <View style={styles.inputBlock}>
-            <View style={styles.sectionHeaderRow}>
-              <Text style={styles.inputLabel}>증상 / 불편감</Text>
-              <UnimplementedBadge compact />
+              {multiViewOpen ? (
+                <View style={styles.optionalGrid}>
+                  <OptionalPhotoItem
+                    description="옆에서 전신이 보이도록"
+                    image={images.side}
+                    onPickAlbum={() =>
+                      void handlePickImage({ target: 'side', useCamera: false })
+                    }
+                    onPickCamera={() =>
+                      void handlePickImage({ target: 'side', useCamera: true })
+                    }
+                    onRemove={() =>
+                      setImages((previous) => ({ ...previous, side: undefined }))
+                    }
+                    title="측면"
+                  />
+                  <OptionalPhotoItem
+                    description="등이 보이도록 뒤에서"
+                    image={images.back}
+                    onPickAlbum={() =>
+                      void handlePickImage({ target: 'back', useCamera: false })
+                    }
+                    onPickCamera={() =>
+                      void handlePickImage({ target: 'back', useCamera: true })
+                    }
+                    onRemove={() =>
+                      setImages((previous) => ({ ...previous, back: undefined }))
+                    }
+                    title="후면"
+                  />
+                  <OptionalPhotoItem
+                    description="스쿼트 자세로 정면에서"
+                    image={images.squat}
+                    onPickAlbum={() =>
+                      void handlePickImage({ target: 'squat', useCamera: false })
+                    }
+                    onPickCamera={() =>
+                      void handlePickImage({ target: 'squat', useCamera: true })
+                    }
+                    onRemove={() =>
+                      setImages((previous) => ({ ...previous, squat: undefined }))
+                    }
+                    title="스쿼트"
+                  />
+                </View>
+              ) : null}
             </View>
-            <TextInput
-              multiline
-              onChangeText={setMedicalSymptoms}
-              placeholder="예: 허리가 자주 뻐근해요, 어깨가 말려 보여요"
-              placeholderTextColor={Colors.textMuted}
-              style={[styles.input, styles.textArea]}
-              value={medicalSymptoms}
+
+            <View style={[styles.photoSection, iosShadow]}>
+              <View style={styles.sectionTitleRow}>
+                <Footprints color={Colors.info} size={18} strokeWidth={2.1} />
+                <Text style={styles.photoSectionTitle}>신발 밑창 사진 (선택)</Text>
+              </View>
+              <Text style={styles.photoSectionDescription}>
+                신발 뒷면/밑창 사진을 추가하면 걸음걸이 분석이 포함돼요
+              </Text>
+              <ImagePreview
+                image={images.shoe}
+                onRemove={() =>
+                  setImages((previous) => ({ ...previous, shoe: undefined }))
+                }
+                small
+              />
+              <SectionActionRow
+                accentColor={Colors.info}
+                onPickAlbum={() =>
+                  void handlePickImage({ target: 'shoe', useCamera: false })
+                }
+                onPickCamera={() =>
+                  void handlePickImage({ target: 'shoe', useCamera: true })
+                }
+              />
+              {!images.shoe ? (
+                <View style={styles.tipListMuted}>
+                  <TipRow text="자주 신는 신발의 밑창을 촬영하세요" tone="muted" />
+                  <TipRow
+                    text="뒤꿈치 마모 부분이 잘 보이도록 촬영"
+                    tone="muted"
+                  />
+                </View>
+              ) : null}
+            </View>
+
+            <BodyComparisonSection
+              heightValue={height}
+              onOpenChange={setComparisonOpen}
+              open={comparisonOpen}
             />
-            <Text style={styles.helperText}>
-              원본처럼 참고용 의료 분석 입력은 남겨두되, 현재 앱에서도 진단이
-              아니라 참고 정보로만 다뤄요.
-            </Text>
-          </View>
-        </View>
 
-        <Pressable
-          disabled={!images.front || analyzeBody.isPending}
-          onPress={() => void handleAnalyze()}
-          style={[
-            styles.analyzeButton,
-            (!images.front || analyzeBody.isPending) && styles.analyzeButtonDisabled,
-          ]}
-        >
-          <Sparkles color={Colors.white} size={16} strokeWidth={2.1} />
-          <Text style={styles.analyzeButtonText}>
-            {analyzeBody.isPending ? 'AI가 체형을 분석 중이에요...' : 'AI 체형 분석 시작'}
-          </Text>
-        </Pressable>
+            <View style={[styles.photoSection, iosShadow]}>
+              <Text style={styles.photoSectionTitle}>추가 입력</Text>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>키 (cm)</Text>
+                <TextInput
+                  inputMode="numeric"
+                  onChangeText={setHeight}
+                  placeholder="예: 175"
+                  placeholderTextColor={Colors.textMuted}
+                  style={styles.input}
+                  value={height}
+                />
+              </View>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>의료 증상 입력 (선택사항)</Text>
+                <Text style={styles.inputHelperText}>
+                  현재 겪고 있는 통증, 질환, 부상 이력 등을 입력하면 의료적
+                  관점의 분석이 추가돼요
+                </Text>
+                <TextInput
+                  multiline
+                  onChangeText={setMedicalSymptoms}
+                  placeholder="예: 허리디스크, 오른쪽 무릎 통증, 거북목, 라운드숄더, 족저근막염 등"
+                  placeholderTextColor={Colors.textMuted}
+                  style={[styles.input, styles.textArea]}
+                  value={medicalSymptoms}
+                />
+                {medicalSymptoms.trim().length > 0 ? (
+                  <View style={styles.medicalWarning}>
+                    <Text style={styles.medicalWarningText}>
+                      AI 분석은 참고용이며 전문 의료 진단을 대체할 수 없어요
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
+            </View>
 
-        <AnalysisRecordSaveBanner
-          failedFallbackMessage="분석 결과는 생성됐지만 기록 저장에 실패했어요."
-          successMessage="분석 결과를 기록에 저장했어요."
-          value={recordSave}
-        />
+            <Pressable
+              disabled={!images.front?.base64 || analyzeBody.isPending}
+              onPress={() => void handleAnalyze()}
+              style={[
+                styles.analyzeButton,
+                (!images.front?.base64 || analyzeBody.isPending) &&
+                  styles.analyzeButtonDisabled,
+              ]}
+            >
+              <Sparkles color={Colors.white} size={18} strokeWidth={2.1} />
+              <Text style={styles.analyzeButtonText}>
+                {analyzeBody.isPending
+                  ? 'AI가 체형을 분석 중이에요...'
+                  : analyzeButtonLabel}
+              </Text>
+            </Pressable>
+          </>
+        ) : (
+          <>
+            <AnalysisRecordSaveBanner
+              failedFallbackMessage="분석 결과는 생성됐지만 기록 저장에 실패했어요."
+              successMessage="분석 결과를 기록에 저장했어요."
+              value={recordSave}
+            />
 
-        {analyzedAt ? (
-          <Text style={styles.analyzedAtText}>
-            분석 시각 {new Date(analyzedAt).toLocaleString('ko-KR')}
-          </Text>
-        ) : null}
+            {analyzedAt ? (
+              <Text style={styles.analyzedAtText}>
+                분석 시각 {new Date(analyzedAt).toLocaleString('ko-KR')}
+              </Text>
+            ) : null}
 
-        {result ? (
-          <BodyAnalysisResultView
-            result={result}
-            showFutureAsUnimplemented={false}
-          />
-        ) : null}
+            <BodyAnalysisResultView
+              result={result}
+              showFutureAsUnimplemented={false}
+            />
+
+            <Pressable onPress={resetAnalysis} style={styles.retryButton}>
+              <Sparkles color={Colors.accent} size={18} strokeWidth={2.1} />
+              <Text style={styles.retryButtonText}>새로운 분석 시작</Text>
+            </Pressable>
+          </>
+        )}
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  actionRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
   analyzeButton: {
     alignItems: 'center',
     backgroundColor: Colors.accent,
@@ -358,6 +557,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
     justifyContent: 'center',
+    marginHorizontal: 16,
+    marginTop: 16,
     minHeight: 56,
     paddingHorizontal: 16,
   },
@@ -373,93 +574,94 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     fontFamily: 'Pretendard-Regular',
     fontSize: 12,
+    marginHorizontal: 16,
+    marginTop: 12,
     textAlign: 'right',
   },
-  card: {
-    backgroundColor: Colors.card,
-    borderRadius: 16,
-    gap: 12,
-    padding: 16,
-  },
-  circleIcon: {
+  backButton: {
     alignItems: 'center',
+    height: 40,
     justifyContent: 'center',
+    width: 40,
   },
   container: {
     backgroundColor: Colors.background,
     flex: 1,
   },
-  featureRowCard: {
-    backgroundColor: Colors.card,
-    borderRadius: 16,
+  contextBanner: {
+    alignItems: 'center',
+    backgroundColor: '#E8F8EE',
+    borderRadius: 12,
     flexDirection: 'row',
     gap: 8,
-    padding: 12,
+    marginHorizontal: 16,
+    marginTop: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
   },
-  featureShortcut: {
-    alignItems: 'center',
-    backgroundColor: Colors.surfaceMuted,
-    borderRadius: 12,
-    flex: 1,
-    gap: 8,
-    justifyContent: 'center',
-    minHeight: 72,
-    padding: 10,
-  },
-  featureShortcutBadgeLabel: {
-    alignItems: 'center',
-    gap: 4,
-  },
-  featureShortcutLabel: {
+  contextBannerText: {
     color: Colors.text,
-    fontFamily: 'Pretendard-Medium',
-    fontSize: 12,
-    textAlign: 'center',
+    flex: 1,
+    fontFamily: 'Pretendard-Regular',
+    fontSize: 13,
+  },
+  expandableHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  expandableHeaderLeft: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+  },
+  header: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
   },
   headerTitle: {
     color: Colors.text,
-    flex: 1,
-    fontFamily: 'Pretendard-SemiBold',
+    fontFamily: 'Pretendard-Medium',
     fontSize: 18,
-    textAlign: 'center',
   },
-  helperText: {
-    color: Colors.textMuted,
-    fontFamily: 'Pretendard-Regular',
-    fontSize: 12,
-    lineHeight: 18,
-  },
-  heroCard: {
+  infoCard: {
+    alignItems: 'center',
     backgroundColor: Colors.card,
+    borderColor: Colors.cardBorder,
     borderRadius: 16,
-    flexDirection: 'row',
-    gap: 14,
-    padding: 16,
+    borderWidth: StyleSheet.hairlineWidth,
+    marginHorizontal: 16,
+    marginTop: 8,
+    padding: 24,
   },
-  heroDescription: {
+  infoDescription: {
     color: Colors.textSecondary,
     fontFamily: 'Pretendard-Regular',
-    fontSize: 13,
-    lineHeight: 20,
+    fontSize: 14,
+    lineHeight: 22,
+    marginTop: 8,
+    textAlign: 'center',
   },
-  heroTextWrap: {
-    flex: 1,
-    gap: 6,
-  },
-  heroTitle: {
-    color: Colors.text,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 17,
-  },
-  iconButton: {
+  infoIconWrap: {
     alignItems: 'center',
-    height: 36,
+    backgroundColor: Colors.accentLight,
+    borderRadius: 18,
+    height: 56,
     justifyContent: 'center',
-    width: 36,
+    width: 56,
+  },
+  infoTitle: {
+    color: Colors.text,
+    fontFamily: 'Pretendard-Medium',
+    fontSize: 20,
+    marginTop: 12,
   },
   input: {
-    backgroundColor: Colors.surfaceMuted,
-    borderColor: Colors.cardBorder,
+    backgroundColor: Colors.inputBg,
+    borderColor: Colors.inputBorder,
     borderRadius: 12,
     borderWidth: StyleSheet.hairlineWidth,
     color: Colors.text,
@@ -468,55 +670,214 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
-  inputBlock: {
+  inputGroup: {
     gap: 8,
+  },
+  inputHelperText: {
+    color: Colors.textMuted,
+    fontFamily: 'Pretendard-Regular',
+    fontSize: 12,
+    lineHeight: 18,
   },
   inputLabel: {
     color: Colors.text,
     fontFamily: 'Pretendard-Medium',
     fontSize: 14,
   },
-  optionalPhotoGrid: {
+  medicalWarning: {
+    backgroundColor: '#FFF3E0',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  medicalWarningText: {
+    color: Colors.warning,
+    fontFamily: 'Pretendard-Regular',
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  multiViewBadge: {
+    alignItems: 'center',
+    backgroundColor: '#8B5CF6',
+    borderRadius: 999,
+    height: 20,
+    justifyContent: 'center',
+    minWidth: 20,
+    paddingHorizontal: 6,
+  },
+  multiViewBadgeText: {
+    color: Colors.white,
+    fontFamily: 'Pretendard-SemiBold',
+    fontSize: 11,
+  },
+  optionalActionButton: {
+    alignItems: 'center',
+    backgroundColor: '#8B5CF6',
+    borderRadius: 10,
+    height: 34,
+    justifyContent: 'center',
+    width: 46,
+  },
+  optionalActionButtonOutline: {
+    backgroundColor: Colors.white,
+    borderColor: '#8B5CF6',
+    borderWidth: 1,
+  },
+  optionalActionRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 10,
+  },
+  optionalDescription: {
+    color: Colors.textSecondary,
+    fontFamily: 'Pretendard-Regular',
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  optionalGrid: {
     gap: 12,
   },
-  requiredBadge: {
-    backgroundColor: Colors.accentLight,
-    borderRadius: 999,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+  optionalItem: {
+    backgroundColor: Colors.card,
+    borderColor: Colors.cardBorder,
+    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: 14,
   },
-  requiredBadgeText: {
-    color: Colors.accent,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 10,
-  },
-  sectionHeaderRow: {
+  optionalItemHeader: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginBottom: 8,
   },
-  sectionHeaderTitleRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 8,
+  optionalItemTitle: {
+    color: Colors.text,
+    fontFamily: 'Pretendard-Medium',
+    fontSize: 14,
   },
-  sectionSubtitle: {
+  optionalPreviewImage: {
+    borderRadius: 12,
+    height: 132,
+    width: '100%',
+  },
+  optionalPreviewWrap: {
+    position: 'relative',
+  },
+  optionalRemove: {
+    position: 'absolute',
+    right: 8,
+    top: 8,
+  },
+  photoSection: {
+    backgroundColor: Colors.card,
+    borderRadius: 16,
+    marginHorizontal: 16,
+    marginTop: 12,
+    padding: 16,
+  },
+  photoSectionDescription: {
     color: Colors.textMuted,
     fontFamily: 'Pretendard-Regular',
-    fontSize: 12,
+    fontSize: 13,
+    lineHeight: 19,
+    marginTop: 6,
   },
-  sectionTitle: {
+  photoSectionTitle: {
     color: Colors.text,
     fontFamily: 'Pretendard-SemiBold',
     fontSize: 16,
+  },
+  pickButton: {
+    alignItems: 'center',
+    borderRadius: 14,
+    borderWidth: 1,
+    flex: 1,
+    flexDirection: 'row',
+    gap: 8,
+    justifyContent: 'center',
+    minHeight: 52,
+  },
+  pickButtonSecondary: {
+    backgroundColor: Colors.white,
+  },
+  pickButtonText: {
+    color: Colors.white,
+    fontFamily: 'Pretendard-SemiBold',
+    fontSize: 14,
+  },
+  previewCard: {
+    marginBottom: 12,
+    marginTop: 10,
+    position: 'relative',
+  },
+  previewImage: {
+    backgroundColor: Colors.surfaceMuted,
+    borderRadius: 14,
+    height: 230,
+    width: '100%',
+  },
+  previewImageSmall: {
+    backgroundColor: Colors.surfaceMuted,
+    borderRadius: 14,
+    height: 180,
+    width: '100%',
+  },
+  removeImageButton: {
+    position: 'absolute',
+    right: 10,
+    top: 10,
+  },
+  retryButton: {
+    alignItems: 'center',
+    alignSelf: 'stretch',
+    backgroundColor: Colors.card,
+    borderColor: Colors.accent,
+    borderRadius: 16,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 8,
+    justifyContent: 'center',
+    marginHorizontal: 16,
+    marginTop: 14,
+    minHeight: 54,
+  },
+  retryButtonText: {
+    color: Colors.accent,
+    fontFamily: 'Pretendard-SemiBold',
+    fontSize: 15,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  sectionTitleRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
   },
   textArea: {
     minHeight: 112,
     textAlignVertical: 'top',
   },
-  topBar: {
+  tipItem: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 10,
+    gap: 8,
+    paddingVertical: 4,
+  },
+  tipList: {
+    alignSelf: 'stretch',
+    marginTop: 16,
+  },
+  tipListMuted: {
+    marginTop: 10,
+  },
+  tipText: {
+    color: Colors.textSecondary,
+    flex: 1,
+    fontFamily: 'Pretendard-Regular',
+    fontSize: 13,
+  },
+  tipTextMuted: {
+    color: Colors.textMuted,
   },
 });

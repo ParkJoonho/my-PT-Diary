@@ -21,6 +21,12 @@ export class CreateBodyAnalysisDto {
   squatImageBase64?: string;
 
   @ApiPropertyOptional({
+    description: 'Optional shoe sole/heel image base64 payload for gait and shoe recommendation analysis.',
+  })
+  @Allow()
+  shoeImageBase64?: string;
+
+  @ApiPropertyOptional({
     example: 175,
   })
   @Allow()

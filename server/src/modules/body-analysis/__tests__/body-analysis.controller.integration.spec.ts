@@ -77,13 +77,17 @@ describe('체형 분석 컨트롤러 통합', () => {
     const response = await request(app.getHttpServer())
       .post('/api/body-analysis/analyze')
       .set('x-user-key', 'integration-user')
-      .send({ imageBase64: 'a'.repeat(200) })
+      .send({
+        imageBase64: 'a'.repeat(200),
+        shoeImageBase64: 'b'.repeat(200),
+      })
       .expect(200);
 
     const body = 체형분석응답스키마.parse(response.body);
 
     expect(service.analyzeBody).toHaveBeenCalledWith('integration-user', {
       imageBase64: 'a'.repeat(200),
+      shoeImageBase64: 'b'.repeat(200),
     });
     expect(body.recordSave.status).toBe('saved');
   });

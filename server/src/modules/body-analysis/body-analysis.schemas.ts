@@ -20,6 +20,83 @@ const postureDetailSchema = z.object({
   score: z.number().min(1).max(5),
 });
 
+const gaitWearPatternSchema = z.object({
+  description: z.string().trim().min(1).max(1000),
+  leftRight: z.string().trim().min(1).max(100),
+  type: z.string().trim().min(1).max(100),
+});
+
+const gaitTypeSchema = z.object({
+  description: z.string().trim().min(1).max(1000),
+  type: z.string().trim().min(1).max(150),
+});
+
+const gaitFootAlignmentSchema = z.object({
+  ankleAlignment: postureDetailSchema,
+  archType: z.string().trim().min(1).max(100),
+  toeAlignment: bodyPartDetailSchema,
+});
+
+const gaitBodyImpactSchema = z.object({
+  hipImpact: postureDetailSchema,
+  kneeImpact: postureDetailSchema,
+  spineImpact: postureDetailSchema,
+});
+
+const shoeSizeEstimateSchema = z.object({
+  ageGroup: z.string().trim().min(1).max(50),
+  estimatedSize: z.number().int().min(0).max(500),
+  footLength: z.string().trim().min(1).max(100),
+  footWidthCm: z.string().trim().min(1).max(100),
+  gender: z.string().trim().min(1).max(50),
+  genderReason: z.string().trim().min(1).max(1000),
+  sizeRange: z.string().trim().min(1).max(100),
+  sizeSystem: z.string().trim().min(1).max(200),
+  width: z.string().trim().min(1).max(100),
+  widthDescription: z.string().trim().min(1).max(1000),
+});
+
+const shoeRecommendationItemSchema = z.object({
+  archSupport: z.string().trim().min(1).max(50),
+  brand: z.string().trim().min(1).max(100),
+  cushioning: z.string().trim().min(1).max(50),
+  features: z.array(z.string().trim().min(1).max(200)).min(1).max(10),
+  model: z.string().trim().min(1).max(150),
+  priceRange: z.string().trim().min(1).max(100),
+  reason: z.string().trim().min(1).max(1000),
+  stability: z.string().trim().min(1).max(50),
+  type: z.string().trim().min(1).max(100),
+});
+
+const shoeRecommendationBucketSchema = z.object({
+  daily: z.array(shoeRecommendationItemSchema).min(1).max(5),
+  workout: z.array(shoeRecommendationItemSchema).min(1).max(5),
+});
+
+const shoeRecommendationsSchema = z.object({
+  afterCorrection: z.object({
+    correctedGaitType: z.string().trim().min(1).max(200),
+    daily: z.array(shoeRecommendationItemSchema).min(1).max(5),
+    timeline: z.string().trim().min(1).max(100),
+    workout: z.array(shoeRecommendationItemSchema).min(1).max(5),
+  }),
+  current: shoeRecommendationBucketSchema,
+  matchingLogic: z.string().trim().min(1).max(3000),
+});
+
+const gaitAnalysisSchema = z.object({
+  bodyImpact: gaitBodyImpactSchema,
+  footAlignment: gaitFootAlignmentSchema,
+  gaitRecommendations: z
+    .array(z.string().trim().min(1).max(500))
+    .min(1)
+    .max(10),
+  gaitType: gaitTypeSchema,
+  shoeRecommendations: shoeRecommendationsSchema.optional(),
+  shoeSizeEstimate: shoeSizeEstimateSchema.optional(),
+  wearPattern: gaitWearPatternSchema,
+});
+
 const severityDetailSchema = z.object({
   angle: z.string().trim().min(1).max(100).optional(),
   areas: z.array(z.string().trim().min(1).max(100)).max(10).optional(),
@@ -132,6 +209,7 @@ const medicalAnalysisSchema = z.object({
 export const bodyAnalysisResultSchema = z.object({
   bodyType: z.enum(['I', 'V', 'A', 'H', 'X', 'O']),
   bodyTypeDescription: z.string().trim().min(1).max(2000),
+  gaitAnalysis: gaitAnalysisSchema.nullable(),
   lowerBody: z.object({
     hipWidth: bodyPartDetailSchema,
     kneeAlignment: bodyPartDetailSchema,
@@ -176,6 +254,7 @@ export const createBodyAnalysisSchema = z.object({
     .max(1000, 'medicalSymptoms must be 1000 characters or fewer.')
     .optional(),
   photoDate: isoDateStringSchema.optional(),
+  shoeImageBase64: base64ImageSchema.optional(),
   sideImageBase64: base64ImageSchema.optional(),
   squatImageBase64: base64ImageSchema.optional(),
 });

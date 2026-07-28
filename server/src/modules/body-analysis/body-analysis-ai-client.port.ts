@@ -17,6 +17,7 @@ export abstract class BodyAnalysisAiClientPort {
     medicalSymptoms?: string;
     photoDate?: string;
     recentWorkoutContext: BodyAnalysisPromptWorkoutContext[];
+    shoeImageBase64?: string;
     sideImageBase64?: string;
     squatImageBase64?: string;
   }): Promise<string>;

@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Allow } from 'class-validator';
+import type { BodyAnalysisOutput } from '../body-analysis.schemas';
 
 export class BodyAnalysisRecordSaveDto {
   @ApiProperty({
@@ -44,7 +45,7 @@ export class BodyAnalysisResponseDto {
     },
   })
   @Allow()
-  analysis!: Record<string, unknown>;
+  analysis!: BodyAnalysisOutput;
 
   @ApiProperty({
     type: BodyAnalysisRecordSaveDto,

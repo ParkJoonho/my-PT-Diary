@@ -46,6 +46,7 @@ export class BodyAnalysisService {
         summary: record.summary,
         title: record.title,
       })),
+      shoeImageBase64: dto.shoeImageBase64,
       sideImageBase64: dto.sideImageBase64,
       squatImageBase64: dto.squatImageBase64,
     });

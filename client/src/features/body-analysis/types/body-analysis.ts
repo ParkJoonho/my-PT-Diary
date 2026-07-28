@@ -22,9 +22,82 @@ export type MobilityDetail = {
   score?: number;
 };
 
+export type GaitWearPattern = {
+  description?: string;
+  leftRight?: string;
+  type?: string;
+};
+
+export type GaitTypeDetail = {
+  description?: string;
+  type?: string;
+};
+
+export type GaitFootAlignment = {
+  ankleAlignment?: PostureDetail;
+  archType?: string;
+  toeAlignment?: BodyPartDetail;
+};
+
+export type GaitBodyImpact = {
+  hipImpact?: PostureDetail;
+  kneeImpact?: PostureDetail;
+  spineImpact?: PostureDetail;
+};
+
+export type ShoeSizeEstimate = {
+  ageGroup?: string;
+  estimatedSize?: number;
+  footLength?: string;
+  footWidthCm?: string;
+  gender?: string;
+  genderReason?: string;
+  sizeRange?: string;
+  sizeSystem?: string;
+  width?: string;
+  widthDescription?: string;
+};
+
+export type ShoeRecommendationItem = {
+  archSupport?: string;
+  brand?: string;
+  cushioning?: string;
+  features?: string[];
+  model?: string;
+  priceRange?: string;
+  reason?: string;
+  stability?: string;
+  type?: string;
+};
+
+export type ShoeRecommendations = {
+  afterCorrection?: {
+    correctedGaitType?: string;
+    daily?: ShoeRecommendationItem[];
+    timeline?: string;
+    workout?: ShoeRecommendationItem[];
+  };
+  current?: {
+    daily?: ShoeRecommendationItem[];
+    workout?: ShoeRecommendationItem[];
+  };
+  matchingLogic?: string;
+};
+
+export type GaitAnalysisResult = {
+  bodyImpact?: GaitBodyImpact;
+  footAlignment?: GaitFootAlignment;
+  gaitRecommendations?: string[];
+  gaitType?: GaitTypeDetail;
+  shoeRecommendations?: ShoeRecommendations;
+  shoeSizeEstimate?: ShoeSizeEstimate;
+  wearPattern?: GaitWearPattern;
+};
+
 export type BodyAnalysisResult = {
   bodyType?: string;
   bodyTypeDescription?: string;
+  gaitAnalysis?: GaitAnalysisResult | null;
   lowerBody?: {
     hipWidth?: BodyPartDetail;
     kneeAlignment?: BodyPartDetail;
@@ -101,9 +174,13 @@ export type BodyAnalysisResult = {
     spinalCurvature?: PostureDetail;
   };
   prediction?: {
+    currentDate?: string;
     currentEstimate?: string;
+    daysSincePhoto?: number;
+    exerciseImpact?: string | null;
     milestones?: string[];
     oneYearPrediction?: string;
+    photoDate?: string;
     riskFactors?: string[];
     sixMonthPrediction?: string;
     threeMonthPrediction?: string;

@@ -1,20 +1,15 @@
 import { useNavigation } from '@granite-js/react-native';
 import {
-  Brain,
+  Accessibility,
+  ChartColumnBig,
   ChevronRight,
   Footprints,
-  History,
+  MessageCircleMore,
   ScanFace,
   Shirt,
+  Utensils,
 } from 'lucide-react-native';
-import {
-  Alert,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HomeTabBar } from 'features/home/components/home-tab-bar';
 import { UnimplementedBadge } from 'shared/components/unimplemented-badge';
@@ -24,29 +19,40 @@ const AI_FEATURES = [
   {
     accent: Colors.accent,
     icon: ScanFace,
+    iconBackground: '#FFF0EA',
     implemented: true,
     route: '/ai-analysis',
-    subtitle: '체형 타입 분석 및 체형 변화 예측',
+    subtitle: '체형 타입 분석 및 체성분 예측',
     title: 'AI 체형 분석',
   },
   {
-    accent: Colors.info,
-    icon: History,
-    implemented: true,
-    route: '/analysis-history',
-    subtitle: '저장된 분석 기록 조회 및 체형 변화 비교',
-    title: 'AI 분석 기록',
+    accent: '#D4AF37',
+    icon: MessageCircleMore,
+    iconBackground: '#FFF8E1',
+    implemented: false,
+    subtitle: '맞춤형 운동·식단·동기부여 코칭',
+    title: 'AI 트레이너 아테나',
   },
   {
-    accent: '#007AFF',
-    icon: Brain,
+    accent: Colors.success,
+    icon: Utensils,
+    iconBackground: '#E8F8EE',
+    implemented: false,
+    subtitle: '사진으로 칼로리·영양소 분석',
+    title: 'AI 식단 분석',
+  },
+  {
+    accent: Colors.info,
+    icon: Accessibility,
+    iconBackground: '#E5F0FF',
     implemented: false,
     subtitle: '운동 자세 교정 및 피드백',
     title: 'AI 자세 분석',
   },
   {
-    accent: '#FF9500',
+    accent: Colors.warning,
     icon: Footprints,
+    iconBackground: '#FFF3E0',
     implemented: false,
     subtitle: '보행 분석 기반 맞춤 신발 추천',
     title: 'AI 신발 추천',
@@ -54,9 +60,18 @@ const AI_FEATURES = [
   {
     accent: '#8B5CF6',
     icon: Shirt,
+    iconBackground: '#F3E8FF',
     implemented: false,
     subtitle: '몸매 예측 및 스타일 추천',
     title: '나의 몸매 & 스타일',
+  },
+  {
+    accent: Colors.accent,
+    icon: ChartColumnBig,
+    iconBackground: '#FFF0EA',
+    implemented: false,
+    subtitle: '종합 점수·부상 위험도·체형 예측',
+    title: 'AI 통합 피트니스 분석',
   },
 ] as const;
 
@@ -66,23 +81,27 @@ export function AiHubScreen() {
 
   return (
     <View style={styles.container}>
+      <View
+        style={[
+          styles.header,
+          {
+            paddingTop: insets.top + 10,
+          },
+        ]}
+      >
+        <Text style={styles.headerTitle}>AI Hub</Text>
+      </View>
+
       <ScrollView
         contentContainerStyle={{
-          gap: 12,
+          gap: 10,
           paddingBottom: 110 + insets.bottom,
           paddingHorizontal: 16,
-          paddingTop: 16 + insets.top,
+          paddingTop: 16,
         }}
         showsVerticalScrollIndicator={false}
+        style={styles.scrollView}
       >
-        <View style={styles.headerCard}>
-          <Text style={styles.headerTitle}>AI Hub</Text>
-          <Text style={styles.headerSubtitle}>
-            원본 앱처럼 AI 기능 카드를 한곳에 모아두고, 구현된 기능은 바로
-            진입하고 나머지는 미구현 배지로 남겨둬요.
-          </Text>
-        </View>
-
         {AI_FEATURES.map((feature) => (
           <Pressable
             key={feature.title}
@@ -94,12 +113,16 @@ export function AiHubScreen() {
 
               navigation.navigate({ name: feature.route, params: {} });
             }}
-            style={[styles.featureCard, iosShadow]}
+            style={({ pressed }) => [
+              styles.featureCard,
+              iosShadow,
+              pressed && styles.featureCardPressed,
+            ]}
           >
             <View
               style={[
                 styles.featureCircle,
-                { backgroundColor: `${feature.accent}18` },
+                { backgroundColor: feature.iconBackground },
               ]}
             >
               <feature.icon color={feature.accent} size={20} strokeWidth={2.1} />
@@ -129,19 +152,23 @@ const styles = StyleSheet.create({
   featureCard: {
     alignItems: 'center',
     backgroundColor: Colors.card,
-    borderRadius: 16,
+    borderRadius: 14,
     flexDirection: 'row',
     gap: 14,
-    minHeight: 76,
+    minHeight: 72,
     paddingHorizontal: 16,
-    paddingVertical: 18,
+    paddingVertical: 19,
+  },
+  featureCardPressed: {
+    opacity: 0.78,
   },
   featureCircle: {
     alignItems: 'center',
     borderRadius: 999,
-    height: 40,
+    flexShrink: 0,
+    height: 34,
     justifyContent: 'center',
-    width: 40,
+    width: 34,
   },
   featureSubtitle: {
     color: Colors.textMuted,
@@ -151,7 +178,7 @@ const styles = StyleSheet.create({
   },
   featureTextWrap: {
     flex: 1,
-    gap: 4,
+    gap: 2,
   },
   featureTitle: {
     color: Colors.text,
@@ -163,21 +190,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 6,
   },
-  headerCard: {
+  header: {
     backgroundColor: Colors.card,
-    borderRadius: 16,
-    gap: 8,
-    padding: 16,
-  },
-  headerSubtitle: {
-    color: Colors.textSecondary,
-    fontFamily: 'Pretendard-Regular',
-    fontSize: 13,
-    lineHeight: 20,
+    borderBottomColor: Colors.cardBorder,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
   headerTitle: {
     color: Colors.text,
     fontFamily: 'Pretendard-SemiBold',
-    fontSize: 20,
+    fontSize: 17,
+  },
+  scrollView: {
+    flex: 1,
   },
 });

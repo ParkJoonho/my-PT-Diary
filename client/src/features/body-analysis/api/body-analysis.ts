@@ -25,14 +25,18 @@ export function selectBodyAnalysisResponse(
   return response.data;
 }
 
+export type AnalyzeBodyInput = CreateBodyAnalysisDto & {
+  shoeImageBase64?: string;
+};
+
 export function useAnalyzeBody() {
   const queryClient = useQueryClient();
   const userKey = useTrackerUserKey();
 
   return useMutation({
-    mutationFn: async (dto: CreateBodyAnalysisDto) =>
+    mutationFn: async (dto: AnalyzeBodyInput) =>
       selectBodyAnalysisResponse(
-        await bodyAnalysisControllerAnalyzeBody(dto, {
+        await bodyAnalysisControllerAnalyzeBody(dto as CreateBodyAnalysisDto, {
           headers: {
             'x-user-key': userKey,
           },
