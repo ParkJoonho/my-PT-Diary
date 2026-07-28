@@ -48,4 +48,10 @@ describe('AI Hub 화면', () => {
     expect(screen.queryByText('나의 몸매 & 스타일')).toBeNull();
     expect(screen.getByText('Accessibility')).toBeTruthy();
   });
+
+  it('미구현 카드에 뱃지를 표시한다', () => {
+    render(<AiHubScreen />);
+
+    expect(screen.getAllByText('미구현')).toHaveLength(4);
+  });
 });

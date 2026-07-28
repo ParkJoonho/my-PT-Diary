@@ -10,15 +10,9 @@ import {
   ScanFace,
   Utensils,
 } from 'lucide-react-native';
-import {
-  Alert,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { UnimplementedBadge } from 'shared/components/unimplemented-badge';
 import Colors, { iosShadow } from 'shared/constants/colors';
 
 const AI_FEATURES = [
@@ -35,6 +29,7 @@ const AI_FEATURES = [
     accent: '#D4AF37',
     icon: MessageCircleMore,
     iconBackground: '#FFF8E1',
+    implemented: false,
     route: null,
     subtitle: '맞춤형 운동·식단·동기부여 코칭',
     title: 'AI 트레이너 아테나',
@@ -43,6 +38,7 @@ const AI_FEATURES = [
     accent: Colors.success,
     icon: Utensils,
     iconBackground: '#E8F8EE',
+    implemented: false,
     route: null,
     subtitle: '사진으로 칼로리·영양소 분석',
     title: 'AI 식단 분석',
@@ -51,6 +47,7 @@ const AI_FEATURES = [
     accent: Colors.info,
     icon: Accessibility,
     iconBackground: '#E5F0FF',
+    implemented: false,
     route: null,
     subtitle: '운동 자세 교정 및 피드백',
     title: 'AI 자세 분석',
@@ -59,6 +56,7 @@ const AI_FEATURES = [
     accent: Colors.warning,
     icon: Footprints,
     iconBackground: '#FFF3E0',
+    implemented: true,
     route: '/ai-analysis',
     subtitle: '보행 분석 기반 맞춤 신발 추천',
     title: 'AI 신발 추천',
@@ -67,6 +65,7 @@ const AI_FEATURES = [
     accent: Colors.accent,
     icon: ChartColumnBig,
     iconBackground: '#FFF0EA',
+    implemented: false,
     route: null,
     subtitle: '종합 점수·부상 위험도·체형 예측',
     title: 'AI 통합 피트니스 분석',
@@ -108,7 +107,6 @@ export function AiHubScreen() {
             key={feature.title}
             onPress={() => {
               if (!feature.route) {
-                Alert.alert(feature.title, '준비 중입니다.');
                 return;
               }
 
@@ -136,7 +134,10 @@ export function AiHubScreen() {
               />
             </View>
             <View style={styles.featureTextWrap}>
-              <Text style={styles.featureTitle}>{feature.title}</Text>
+              <View style={styles.featureTitleRow}>
+                <Text style={styles.featureTitle}>{feature.title}</Text>
+                {!feature.implemented ? <UnimplementedBadge compact /> : null}
+              </View>
               <Text style={styles.featureSubtitle}>{feature.subtitle}</Text>
             </View>
             <ChevronRight
@@ -193,6 +194,11 @@ const styles = StyleSheet.create({
     color: Colors.text,
     fontFamily: 'Pretendard-SemiBold',
     fontSize: 16,
+  },
+  featureTitleRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
   },
   header: {
     backgroundColor: Colors.card,
