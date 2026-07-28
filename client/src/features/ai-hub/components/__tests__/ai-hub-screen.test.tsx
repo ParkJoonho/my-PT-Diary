@@ -1,11 +1,13 @@
 import { describe, expect, it, jest } from '@jest/globals';
-import { render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { AiHubScreen } from '../ai-hub-screen';
 
+const mockNavigate = jest.fn();
+
 jest.mock('@granite-js/react-native', () => ({
   useNavigation: () => ({
-    navigate: jest.fn(),
+    navigate: mockNavigate,
   }),
 }));
 
@@ -52,6 +54,17 @@ describe('AI Hub 화면', () => {
   it('미구현 카드에 뱃지를 표시한다', () => {
     render(<AiHubScreen />);
 
-    expect(screen.getAllByText('미구현')).toHaveLength(4);
+    expect(screen.getAllByText('미구현')).toHaveLength(3);
+  });
+
+  it('식단 분석 카드에서 실제 식단 화면으로 이동한다', () => {
+    render(<AiHubScreen />);
+
+    fireEvent.press(screen.getByText('AI 식단 분석'));
+
+    expect(mockNavigate).toHaveBeenCalledWith({
+      name: '/meal-analysis',
+      params: {},
+    });
   });
 });
