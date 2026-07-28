@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { renderHook } from '@testing-library/react-native';
 import {
   analysisRecordsControllerCompareAnalysisRecords,
+  analysisRecordsControllerCreateAnalysisRecord,
   analysisRecordsControllerGetAnalysisRecord,
   analysisRecordsControllerListAnalysisRecords,
 } from 'shared/api/generated/endpoints/analysis-records/analysis-records';
@@ -10,12 +11,14 @@ import {
   selectAnalysisComparison,
   selectAnalysisRecord,
   useAnalysisRecords,
+  useCreateAnalysisRecord,
 } from '../analysis-records';
 
 jest.mock(
   'shared/api/generated/endpoints/analysis-records/analysis-records',
   () => ({
     analysisRecordsControllerCompareAnalysisRecords: jest.fn(),
+    analysisRecordsControllerCreateAnalysisRecord: jest.fn(),
     analysisRecordsControllerGetAnalysisRecord: jest.fn(),
     analysisRecordsControllerListAnalysisRecords: jest.fn(),
   }),
@@ -33,8 +36,13 @@ jest.mock('@tanstack/react-query', () => {
 
   return {
     ...actual,
-    useMutation: jest.fn((options: { mutationFn: (variables: unknown) => unknown }) => ({
-      mutateAsync: options.mutationFn,
+    useMutation: jest.fn(
+      (options: { mutationFn: (variables: unknown) => unknown }) => ({
+        mutateAsync: options.mutationFn,
+      }),
+    ),
+    useQueryClient: jest.fn(() => ({
+      invalidateQueries: jest.fn(),
     })),
     useSuspenseQuery: jest.fn((options: { queryFn: () => unknown }) => ({
       data: options.queryFn(),
@@ -47,7 +55,12 @@ describe('분석 기록 API 래퍼', () => {
   const mockedListRecords = jest.mocked(
     analysisRecordsControllerListAnalysisRecords,
   );
-  const mockedGetRecord = jest.mocked(analysisRecordsControllerGetAnalysisRecord);
+  const mockedGetRecord = jest.mocked(
+    analysisRecordsControllerGetAnalysisRecord,
+  );
+  const mockedCreateRecord = jest.mocked(
+    analysisRecordsControllerCreateAnalysisRecord,
+  );
   const mockedCompareRecords = jest.mocked(
     analysisRecordsControllerCompareAnalysisRecords,
   );
@@ -104,6 +117,43 @@ describe('분석 기록 API 래퍼', () => {
         status: 400,
       }),
     ).toThrow('지금은 체형 분석 기록끼리만 비교할 수 있어요.');
+  });
+
+  it('저장 재시도는 생성된 POST 함수에 멱등 키와 사용자 키를 전달한다', async () => {
+    mockedUseTrackerUserKey.mockReturnValue('테스트-사용자');
+    mockedCreateRecord.mockResolvedValue({
+      data: {
+        analysisType: 'body',
+        analyzedAt: '2026-07-28T01:23:45.000Z',
+        createdAt: '2026-07-28T01:23:46.000Z',
+        id: 'record_a',
+        qualitativeData: {},
+        quantitativeData: {},
+        rawResult: { bodyType: 'V' },
+      },
+      headers: new Headers(),
+      status: 201,
+    });
+
+    const { result } = renderHook(() => useCreateAnalysisRecord());
+
+    await result.current.mutateAsync({
+      analysisType: 'body',
+      analyzedAt: '2026-07-28T01:23:45.000Z',
+      idempotencyKey: 'body-analysis:2026-07-28T01:23:45.000Z',
+      rawResult: { bodyType: 'V' },
+    });
+
+    expect(mockedCreateRecord).toHaveBeenCalledWith(
+      expect.objectContaining({
+        idempotencyKey: 'body-analysis:2026-07-28T01:23:45.000Z',
+      }),
+      {
+        headers: {
+          'x-user-key': '테스트-사용자',
+        },
+      },
+    );
   });
 
   it('생성된 엔드포인트 함수 시그니처가 유지된다', async () => {

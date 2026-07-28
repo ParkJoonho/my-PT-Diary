@@ -51,8 +51,9 @@ async function pickWebImage({
         return;
       }
 
-      const reader = new (globalThis as unknown as { FileReader: typeof FileReader })
-        .FileReader();
+      const reader = new (
+        globalThis as unknown as { FileReader: typeof FileReader }
+      ).FileReader();
       reader.onload = () => {
         const result = typeof reader.result === 'string' ? reader.result : '';
         const base64 = result.split(',')[1];
@@ -67,7 +68,8 @@ async function pickWebImage({
           uri: result,
         });
       };
-      reader.onerror = () => reject(new Error('이미지 데이터를 읽지 못했어요.'));
+      reader.onerror = () =>
+        reject(new Error('이미지 데이터를 읽지 못했어요.'));
       reader.readAsDataURL(file);
     };
 

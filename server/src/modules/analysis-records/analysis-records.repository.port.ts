@@ -1,7 +1,4 @@
-import {
-  AnalysisRecordComparisonOutput,
-  AnalysisTypeInput,
-} from './analysis-records.schemas';
+import { AnalysisTypeInput } from './analysis-records.schemas';
 
 export type AnalysisRecordRow = {
   analyzed_at: string;
@@ -17,6 +14,7 @@ export type AnalysisRecordRow = {
 export type AnalysisRecordWriteModel = {
   analyzedAt: string;
   analysisType: AnalysisTypeInput;
+  idempotencyKey?: string;
   qualitativeData?: Record<string, unknown>;
   quantitativeData?: Record<string, unknown>;
   rawResult: Record<string, unknown>;

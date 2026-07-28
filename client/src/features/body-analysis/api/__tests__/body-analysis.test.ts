@@ -1,13 +1,8 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { renderHook } from '@testing-library/react-native';
-import {
-  bodyAnalysisControllerAnalyzeBody,
-} from 'shared/api/generated/endpoints/body-analysis/body-analysis';
+import { bodyAnalysisControllerAnalyzeBody } from 'shared/api/generated/endpoints/body-analysis/body-analysis';
 import { useTrackerUserKey } from 'shared/api/user-key';
-import {
-  selectBodyAnalysisResponse,
-  useAnalyzeBody,
-} from '../body-analysis';
+import { selectBodyAnalysisResponse, useAnalyzeBody } from '../body-analysis';
 
 jest.mock('shared/api/generated/endpoints/body-analysis/body-analysis', () => ({
   bodyAnalysisControllerAnalyzeBody: jest.fn(),
@@ -25,9 +20,11 @@ jest.mock('@tanstack/react-query', () => {
 
   return {
     ...actual,
-    useMutation: jest.fn((options: { mutationFn: (variables: unknown) => unknown }) => ({
-      mutateAsync: options.mutationFn,
-    })),
+    useMutation: jest.fn(
+      (options: { mutationFn: (variables: unknown) => unknown }) => ({
+        mutateAsync: options.mutationFn,
+      }),
+    ),
     useQueryClient: jest.fn(() => ({
       invalidateQueries: jest.fn(),
     })),

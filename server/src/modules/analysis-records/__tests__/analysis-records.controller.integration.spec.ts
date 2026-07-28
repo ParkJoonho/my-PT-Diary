@@ -1,4 +1,4 @@
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { App } from 'supertest/types';
@@ -38,6 +38,13 @@ describe('분석 이력 컨트롤러 통합', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.useGlobalPipes(
+      new ValidationPipe({
+        forbidNonWhitelisted: true,
+        transform: true,
+        whitelist: true,
+      }),
+    );
     await app.init();
   });
 
@@ -46,9 +53,7 @@ describe('분석 이력 컨트롤러 통합', () => {
   });
 
   it('목록 조회는 x-user-key가 없으면 400을 반환한다', async () => {
-    await request(app.getHttpServer())
-      .get('/api/analysis-records')
-      .expect(400);
+    await request(app.getHttpServer()).get('/api/analysis-records').expect(400);
   });
 
   it('목록 조회는 올바른 응답을 반환한다', async () => {
@@ -71,10 +76,10 @@ describe('분석 이력 컨트롤러 통합', () => {
 
     const body = z.array(분석기록응답스키마).parse(response.body);
 
-    expect(service.listAnalysisRecords).toHaveBeenCalledWith(
+    expect(service.listAnalysisRecords.mock.calls[0]).toEqual([
       'integration-user',
       { type: 'body' },
-    );
+    ]);
     expect(body[0]?.id).toBe('record_a');
   });
 
@@ -95,20 +100,23 @@ describe('분석 이력 컨트롤러 통합', () => {
       .send({
         analysisType: 'body',
         analyzedAt: '2026-07-28T01:23:45.000Z',
+        idempotencyKey: 'body-analysis:2026-07-28T01:23:45.000Z',
         qualitativeData: { bodyType: 'V' },
         quantitativeData: { overallAlignment: 3 },
         rawResult: { summary: 'saved' },
       })
       .expect(201);
 
-    expect(service.createAnalysisRecord).toHaveBeenCalledWith(
+    expect(service.createAnalysisRecord.mock.calls[0]).toEqual([
       'integration-user',
       expect.objectContaining({
         analysisType: 'body',
         analyzedAt: '2026-07-28T01:23:45.000Z',
+        idempotencyKey: 'body-analysis:2026-07-28T01:23:45.000Z',
       }),
-    );
-    expect(response.body.id).toBe('record_created');
+    ]);
+    const responseBody = z.object({ id: z.string() }).parse(response.body);
+    expect(responseBody.id).toBe('record_created');
   });
 
   it('비교 요청 본문이 잘못되면 400을 반환한다', async () => {

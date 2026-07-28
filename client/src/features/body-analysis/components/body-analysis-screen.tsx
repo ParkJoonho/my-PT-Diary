@@ -26,11 +26,11 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Colors, { iosShadow } from 'shared/constants/colors';
-import { useAnalyzeBody } from '../api/body-analysis';
 import { useCreateAnalysisRecord } from '../api/analysis-records';
+import { useAnalyzeBody } from '../api/body-analysis';
 import { buildBodyAnalysisRecordPayload } from '../lib/analysis-record-payload';
-import { pickSingleImage, type PickedImage } from '../lib/pick-image';
 import { toBodyAnalysisResult } from '../lib/object-access';
+import { type PickedImage, pickSingleImage } from '../lib/pick-image';
 import { useBodyAnalysisEntryStore } from '../stores/use-body-analysis-entry-store';
 import { AnalysisRecordSaveBanner } from './analysis-record-save-banner';
 import { BodyAnalysisResultView } from './body-analysis-result';
@@ -121,7 +121,11 @@ function ImagePreview({
         source={{ uri: image.uri }}
         style={small ? styles.previewImageSmall : styles.previewImage}
       />
-      <Pressable hitSlop={8} onPress={onRemove} style={styles.removeImageButton}>
+      <Pressable
+        hitSlop={8}
+        onPress={onRemove}
+        style={styles.removeImageButton}
+      >
         <X color={Colors.danger} size={24} strokeWidth={2.2} />
       </Pressable>
     </View>
@@ -159,7 +163,11 @@ function OptionalPhotoItem({
             source={{ uri: image.uri }}
             style={styles.optionalPreviewImage}
           />
-          <Pressable hitSlop={8} onPress={onRemove} style={styles.optionalRemove}>
+          <Pressable
+            hitSlop={8}
+            onPress={onRemove}
+            style={styles.optionalRemove}
+          >
             <X color={Colors.danger} size={20} strokeWidth={2.1} />
           </Pressable>
         </View>
@@ -167,12 +175,18 @@ function OptionalPhotoItem({
         <>
           <Text style={styles.optionalDescription}>{description}</Text>
           <View style={styles.optionalActionRow}>
-            <Pressable onPress={onPickCamera} style={styles.optionalActionButton}>
+            <Pressable
+              onPress={onPickCamera}
+              style={styles.optionalActionButton}
+            >
               <Camera color={Colors.white} size={15} strokeWidth={2.1} />
             </Pressable>
             <Pressable
               onPress={onPickAlbum}
-              style={[styles.optionalActionButton, styles.optionalActionButtonOutline]}
+              style={[
+                styles.optionalActionButton,
+                styles.optionalActionButtonOutline,
+              ]}
             >
               <FolderOpen color="#8B5CF6" size={15} strokeWidth={2.1} />
             </Pressable>
@@ -199,10 +213,12 @@ export function BodyAnalysisScreen() {
   const [multiViewOpen, setMultiViewOpen] = useState(false);
   const [comparisonOpen, setComparisonOpen] = useState(false);
   const [screenMode, setScreenMode] = useState<'default' | 'shoe'>('default');
-  const [shoeSectionOffset, setShoeSectionOffset] = useState<number | null>(null);
-  const [result, setResult] = useState<ReturnType<typeof toBodyAnalysisResult> | null>(
+  const [shoeSectionOffset, setShoeSectionOffset] = useState<number | null>(
     null,
   );
+  const [result, setResult] = useState<ReturnType<
+    typeof toBodyAnalysisResult
+  > | null>(null);
   const [analyzedAt, setAnalyzedAt] = useState<string | null>(null);
   const [recordSave, setRecordSave] = useState<{
     message?: string;
@@ -318,14 +334,16 @@ export function BodyAnalysisScreen() {
     setRecordSave(null);
   };
 
-  const multiViewCount = Number(Boolean(images.side))
-    + Number(Boolean(images.back))
-    + Number(Boolean(images.squat));
-  const analyzeButtonLabel = multiViewCount > 0
-    ? `AI 다중 각도 분석 (${multiViewCount + 1}장)`
-    : images.shoe?.base64
-      ? 'AI 체형 + 걸음걸이 분석'
-      : 'AI 분석 시작';
+  const multiViewCount =
+    Number(Boolean(images.side)) +
+    Number(Boolean(images.back)) +
+    Number(Boolean(images.squat));
+  const analyzeButtonLabel =
+    multiViewCount > 0
+      ? `AI 다중 각도 분석 (${multiViewCount + 1}장)`
+      : images.shoe?.base64
+        ? 'AI 체형 + 걸음걸이 분석'
+        : 'AI 분석 시작';
 
   return (
     <View style={styles.container}>
@@ -339,7 +357,10 @@ export function BodyAnalysisScreen() {
         style={styles.scrollView}
       >
         <View style={styles.header}>
-          <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Pressable
+            onPress={() => navigation.goBack()}
+            style={styles.backButton}
+          >
             <ArrowLeft color={Colors.text} size={22} strokeWidth={2.1} />
           </Pressable>
           <Text style={styles.headerTitle}>
@@ -383,7 +404,11 @@ export function BodyAnalysisScreen() {
             </View>
 
             <View style={styles.contextBanner}>
-              <CheckCircle2 color={Colors.success} size={17} strokeWidth={2.1} />
+              <CheckCircle2
+                color={Colors.success}
+                size={17}
+                strokeWidth={2.1}
+              />
               <Text style={styles.contextBannerText}>
                 최근 운동 기록을 함께 참고해 분석해요
               </Text>
@@ -414,23 +439,36 @@ export function BodyAnalysisScreen() {
                 style={styles.expandableHeader}
               >
                 <View style={styles.expandableHeaderLeft}>
-                  <Text style={styles.photoSectionTitle}>다중 각도 촬영 (선택)</Text>
+                  <Text style={styles.photoSectionTitle}>
+                    다중 각도 촬영 (선택)
+                  </Text>
                   {multiViewCount > 0 ? (
                     <View style={styles.multiViewBadge}>
-                      <Text style={styles.multiViewBadgeText}>{multiViewCount}</Text>
+                      <Text style={styles.multiViewBadgeText}>
+                        {multiViewCount}
+                      </Text>
                     </View>
                   ) : null}
                 </View>
                 {multiViewOpen ? (
-                  <ChevronUp color={Colors.textMuted} size={20} strokeWidth={2.1} />
+                  <ChevronUp
+                    color={Colors.textMuted}
+                    size={20}
+                    strokeWidth={2.1}
+                  />
                 ) : (
-                  <ChevronDown color={Colors.textMuted} size={20} strokeWidth={2.1} />
+                  <ChevronDown
+                    color={Colors.textMuted}
+                    size={20}
+                    strokeWidth={2.1}
+                  />
                 )}
               </Pressable>
 
               {!multiViewOpen && multiViewCount === 0 ? (
                 <Text style={styles.photoSectionDescription}>
-                  측면/후면/스쿼트 사진을 추가하면 더 정확한 자세 분석이 가능합니다
+                  측면/후면/스쿼트 사진을 추가하면 더 정확한 자세 분석이
+                  가능합니다
                 </Text>
               ) : null}
 
@@ -446,7 +484,10 @@ export function BodyAnalysisScreen() {
                       void handlePickImage({ target: 'side', useCamera: true })
                     }
                     onRemove={() =>
-                      setImages((previous) => ({ ...previous, side: undefined }))
+                      setImages((previous) => ({
+                        ...previous,
+                        side: undefined,
+                      }))
                     }
                     title="측면"
                   />
@@ -460,7 +501,10 @@ export function BodyAnalysisScreen() {
                       void handlePickImage({ target: 'back', useCamera: true })
                     }
                     onRemove={() =>
-                      setImages((previous) => ({ ...previous, back: undefined }))
+                      setImages((previous) => ({
+                        ...previous,
+                        back: undefined,
+                      }))
                     }
                     title="후면"
                   />
@@ -468,13 +512,19 @@ export function BodyAnalysisScreen() {
                     description="스쿼트 자세로 정면에서"
                     image={images.squat}
                     onPickAlbum={() =>
-                      void handlePickImage({ target: 'squat', useCamera: false })
+                      void handlePickImage({
+                        target: 'squat',
+                        useCamera: false,
+                      })
                     }
                     onPickCamera={() =>
                       void handlePickImage({ target: 'squat', useCamera: true })
                     }
                     onRemove={() =>
-                      setImages((previous) => ({ ...previous, squat: undefined }))
+                      setImages((previous) => ({
+                        ...previous,
+                        squat: undefined,
+                      }))
                     }
                     title="스쿼트"
                   />
@@ -490,7 +540,9 @@ export function BodyAnalysisScreen() {
             >
               <View style={styles.sectionTitleRow}>
                 <Footprints color={Colors.info} size={18} strokeWidth={2.1} />
-                <Text style={styles.photoSectionTitle}>신발 밑창 사진 (선택)</Text>
+                <Text style={styles.photoSectionTitle}>
+                  신발 밑창 사진 (선택)
+                </Text>
               </View>
               <Text style={styles.photoSectionDescription}>
                 신발 뒷면/밑창 사진을 추가하면 걸음걸이 분석이 포함돼요
@@ -513,7 +565,10 @@ export function BodyAnalysisScreen() {
               />
               {!images.shoe ? (
                 <View style={styles.tipListMuted}>
-                  <TipRow text="자주 신는 신발의 밑창을 촬영하세요" tone="muted" />
+                  <TipRow
+                    text="자주 신는 신발의 밑창을 촬영하세요"
+                    tone="muted"
+                  />
                   <TipRow
                     text="뒤꿈치 마모 부분이 잘 보이도록 촬영"
                     tone="muted"
@@ -543,10 +598,12 @@ export function BodyAnalysisScreen() {
             </View>
 
             <View style={[styles.photoSection, iosShadow]}>
-              <Text style={styles.photoSectionTitle}>의료 증상 입력 (선택사항)</Text>
+              <Text style={styles.photoSectionTitle}>
+                의료 증상 입력 (선택사항)
+              </Text>
               <Text style={styles.inputHelperText}>
-                현재 겪고 있는 통증, 질환, 부상 이력 등을 입력하면 의료적
-                관점의 분석이 추가돼요
+                현재 겪고 있는 통증, 질환, 부상 이력 등을 입력하면 의료적 관점의
+                분석이 추가돼요
               </Text>
               <TextInput
                 multiline

@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
+  ApiCreatedResponse,
   ApiHeader,
   ApiNotFoundResponse,
   ApiOkResponse,
@@ -44,7 +45,7 @@ export class AnalysisRecordsController {
   @ApiOperation({
     summary: 'Create one analysis record for the current user key.',
   })
-  @ApiOkResponse({
+  @ApiCreatedResponse({
     type: AnalysisRecordDetailDto,
   })
   @Post()

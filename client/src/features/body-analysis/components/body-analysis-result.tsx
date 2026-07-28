@@ -27,10 +27,10 @@ const BODY_TYPE_NAMES: Record<string, string> = {
 };
 
 const WEAR_PATTERN_COLORS: Record<string, string> = {
-  '내측마모': Colors.warning,
-  '뒤꿈치마모': Colors.info,
-  '불균형마모': Colors.danger,
-  '앞꿈치마모': Colors.info,
+  내측마모: Colors.warning,
+  뒤꿈치마모: Colors.info,
+  불균형마모: Colors.danger,
+  앞꿈치마모: Colors.info,
   외측마모: Colors.warning,
   정상: Colors.success,
 };
@@ -128,10 +128,14 @@ function ScoreBar({
 
 function RatioItem({
   labels,
+  markerMultiplier = 100,
+  markerTestId,
   title,
   value,
 }: {
   labels: [string, string, string];
+  markerMultiplier?: number;
+  markerTestId?: string;
   title: string;
   value?: number;
 }) {
@@ -148,8 +152,14 @@ function RatioItem({
           <View
             style={[
               styles.ratioMarker,
-              { left: `${Math.max(0, Math.min(safeValue * 100, 100))}%` },
+              {
+                left: `${Math.max(
+                  0,
+                  Math.min(safeValue * markerMultiplier, 100),
+                )}%`,
+              },
             ]}
+            testID={markerTestId}
           />
         </View>
         <View style={styles.ratioLabelsRow}>
@@ -222,7 +232,8 @@ function SeverityRow({
     return null;
   }
 
-  const badgeText = value.detected === false ? fallbackWhenFalse : value.severity ?? '감지';
+  const badgeText =
+    value.detected === false ? fallbackWhenFalse : (value.severity ?? '감지');
 
   return (
     <View style={styles.viewDetailRow}>
@@ -237,7 +248,9 @@ function SeverityRow({
         <Text style={styles.severityBadgeText}>{badgeText}</Text>
       </View>
       <Text style={styles.viewDetailLabel}>{label}</Text>
-      {value.note ? <Text style={styles.viewDetailNote}>{value.note}</Text> : null}
+      {value.note ? (
+        <Text style={styles.viewDetailNote}>{value.note}</Text>
+      ) : null}
     </View>
   );
 }
@@ -256,7 +269,9 @@ function MobilityCard({
   return (
     <View style={styles.mobilityItem}>
       <Text style={styles.mobilityLabel}>{label}</Text>
-      <Text style={[styles.mobilityScore, { color: getScoreColor(value.score) }]}>
+      <Text
+        style={[styles.mobilityScore, { color: getScoreColor(value.score) }]}
+      >
         {value.score ?? 0}/5
       </Text>
     </View>
@@ -278,7 +293,9 @@ function ShoeRecommendationCard({ item }: { item: ShoeRecommendationItem }) {
         </View>
         <Text style={styles.shoePriceText}>{item.priceRange ?? '-'}</Text>
       </View>
-      {item.reason ? <Text style={styles.shoeReasonText}>{item.reason}</Text> : null}
+      {item.reason ? (
+        <Text style={styles.shoeReasonText}>{item.reason}</Text>
+      ) : null}
       <View style={styles.shoeSpecRow}>
         {[
           { label: '아치 지지', value: item.archSupport },
@@ -293,8 +310,8 @@ function ShoeRecommendationCard({ item }: { item: ShoeRecommendationItem }) {
       </View>
       {item.features?.length ? (
         <View style={styles.featureWrap}>
-          {item.features.map((feature, index) => (
-            <View key={`${feature}-${index}`} style={styles.featureBadge}>
+          {item.features.map((feature) => (
+            <View key={feature} style={styles.featureBadge}>
               <Text style={styles.featureBadgeText}>{feature}</Text>
             </View>
           ))}
@@ -306,13 +323,17 @@ function ShoeRecommendationCard({ item }: { item: ShoeRecommendationItem }) {
 
 export function BodyAnalysisResultView({
   result,
+  shoeOnly = false,
 }: {
   result: BodyAnalysisResult;
+  shoeOnly?: boolean;
   showFutureAsUnimplemented?: boolean;
 }) {
   const bodyTypeColor = BODY_TYPE_COLORS[result.bodyType ?? ''] ?? Colors.info;
   const [shoeTab, setShoeTab] = useState<'after' | 'current'>('current');
-  const [shoeCategory, setShoeCategory] = useState<'daily' | 'workout'>('daily');
+  const [shoeCategory, setShoeCategory] = useState<'daily' | 'workout'>(
+    'daily',
+  );
 
   const shoeRecommendations = result.gaitAnalysis?.shoeRecommendations;
   const visibleShoes =
@@ -326,291 +347,314 @@ export function BodyAnalysisResultView({
 
   return (
     <View style={styles.container}>
-      <View style={[styles.bodyTypeCard, iosShadow]}>
-        <View style={[styles.bodyTypeBadge, { backgroundColor: bodyTypeColor }]}>
-          <Text style={styles.bodyTypeLetter}>{result.bodyType ?? '?'}</Text>
-        </View>
-        <Text style={styles.bodyTypeTitle}>BODY MBTI</Text>
-        <Text style={styles.bodyTypeName}>
-          {BODY_TYPE_NAMES[result.bodyType ?? ''] ?? (result.bodyType ?? '-')}
-        </Text>
-        {result.bodyTypeDescription ? (
-          <Text style={styles.bodyTypeDescription}>{result.bodyTypeDescription}</Text>
-        ) : null}
-      </View>
-
-      <View style={[styles.card, iosShadow]}>
-        <Text style={styles.sectionTitle}>신체 비율</Text>
-        <RatioItem
-          labels={['짧은편', '평균 1.00', '긴편']}
-          title="팔 / 키"
-          value={result.ratios?.armToHeight}
-        />
-        <RatioItem
-          labels={['하체↑', '평균 1.0', '상체↑']}
-          title="상하체"
-          value={result.ratios?.upperToLower}
-        />
-      </View>
-
-      <View style={[styles.card, iosShadow]}>
-        <Text style={styles.sectionTitle}>상체</Text>
-        <MeasureRow
-          label="어깨너비"
-          note={result.upperBody?.shoulderWidth?.note}
-          value={result.upperBody?.shoulderWidth?.value}
-        />
-        <MeasureRow
-          label="팔길이"
-          note={result.upperBody?.armLength?.note}
-          value={result.upperBody?.armLength?.value}
-        />
-        <MeasureRow
-          label="목길이"
-          note={result.upperBody?.neckLength?.note}
-          value={result.upperBody?.neckLength?.value}
-        />
-        <MeasureRow
-          label="척추정렬"
-          note={result.upperBody?.spineAlignment?.note}
-          value={result.upperBody?.spineAlignment?.value}
-        />
-      </View>
-
-      <View style={[styles.card, iosShadow]}>
-        <Text style={styles.sectionTitle}>하체</Text>
-        <MeasureRow
-          label="허리너비"
-          note={result.lowerBody?.hipWidth?.note}
-          value={result.lowerBody?.hipWidth?.value}
-        />
-        <MeasureRow
-          label="다리길이"
-          note={result.lowerBody?.legLength?.note}
-          value={result.lowerBody?.legLength?.value}
-        />
-        <MeasureRow
-          label="무릎정렬"
-          note={result.lowerBody?.kneeAlignment?.note}
-          value={result.lowerBody?.kneeAlignment?.value}
-        />
-      </View>
-
-      <View style={[styles.card, iosShadow]}>
-        <Text style={styles.sectionTitle}>자세 분석</Text>
-        <ScoreBar
-          label="전체 정렬"
-          note={result.posture?.overallAlignment?.note}
-          score={result.posture?.overallAlignment?.score}
-        />
-        <ScoreBar
-          label="어깨 균형"
-          note={result.posture?.shoulderBalance?.note}
-          score={result.posture?.shoulderBalance?.score}
-        />
-        <ScoreBar
-          label="골반 균형"
-          note={result.posture?.hipBalance?.note}
-          score={result.posture?.hipBalance?.score}
-        />
-        <ScoreBar
-          label="척추 곡선"
-          note={result.posture?.spinalCurvature?.note}
-          score={result.posture?.spinalCurvature?.score}
-        />
-      </View>
-
-      {result.multiViewAnalysis ? (
-        <View style={[styles.card, iosShadow]}>
-          <View style={styles.multiViewHeader}>
-            <Text style={styles.sectionTitle}>다중 각도 종합 분석</Text>
+      {shoeOnly ? null : (
+        <>
+          <View style={[styles.bodyTypeCard, iosShadow]}>
             <View
-              style={[
-                styles.gradeBadge,
-                {
-                  backgroundColor: getGradeColor(
-                    result.multiViewAnalysis.compositeGrade,
-                  ),
-                },
-              ]}
+              style={[styles.bodyTypeBadge, { backgroundColor: bodyTypeColor }]}
             >
-              <Text style={styles.gradeBadgeText}>
-                {result.multiViewAnalysis.compositeGrade ?? '-'}
+              <Text style={styles.bodyTypeLetter}>
+                {result.bodyType ?? '?'}
               </Text>
             </View>
-          </View>
-          <View style={styles.compositeScoreCard}>
-            <Text style={styles.compositeScoreValue}>
-              {result.multiViewAnalysis.compositePostureScore ?? 0}점
+            <Text style={styles.bodyTypeTitle}>BODY MBTI</Text>
+            <Text style={styles.bodyTypeName}>
+              {BODY_TYPE_NAMES[result.bodyType ?? ''] ?? result.bodyType ?? '-'}
             </Text>
-            <Text style={styles.compositeScoreLabel}>종합 자세 점수 (100점 만점)</Text>
-            <View style={styles.compositeScoreBar}>
-              <View
-                style={[
-                  styles.compositeScoreFill,
-                  {
-                    backgroundColor: getGradeColor(
-                      result.multiViewAnalysis.compositeGrade,
-                    ),
-                    width: `${result.multiViewAnalysis.compositePostureScore ?? 0}%`,
-                  },
-                ]}
-              />
-            </View>
+            {result.bodyTypeDescription ? (
+              <Text style={styles.bodyTypeDescription}>
+                {result.bodyTypeDescription}
+              </Text>
+            ) : null}
           </View>
 
-          {result.multiViewAnalysis.sideView ? (
-            <View style={styles.viewSection}>
-              <Text style={styles.viewSectionTitle}>측면 분석</Text>
-              <SeverityRow
-                label="거북목"
-                value={result.multiViewAnalysis.sideView.forwardHeadPosture}
-              />
-              <SeverityRow
-                label="라운드숄더"
-                value={result.multiViewAnalysis.sideView.roundedShoulders}
-              />
-              <SeverityRow
-                label="골반 전방경사"
-                value={result.multiViewAnalysis.sideView.anteriorPelvicTilt}
-              />
-              {result.multiViewAnalysis.sideView.spinalCurve ? (
-                <View style={styles.viewDetailRow}>
-                  <View
-                    style={[
-                      styles.severityBadge,
-                      { backgroundColor: Colors.info },
-                    ]}
-                  >
-                    <Text style={styles.severityBadgeText}>
-                      {result.multiViewAnalysis.sideView.spinalCurve.type ?? '-'}
-                    </Text>
-                  </View>
-                  <Text style={styles.viewDetailLabel}>척추 곡선</Text>
-                  <Text style={styles.viewDetailNote}>
-                    {result.multiViewAnalysis.sideView.spinalCurve.note}
+          <View style={[styles.card, iosShadow]}>
+            <Text style={styles.sectionTitle}>신체 비율</Text>
+            <RatioItem
+              labels={['짧은편', '평균 1.00', '긴편']}
+              title="팔 / 키"
+              value={result.ratios?.armToHeight}
+            />
+            <RatioItem
+              labels={['하체↑', '평균 1.0', '상체↑']}
+              markerMultiplier={50}
+              markerTestId="upper-to-lower-ratio-marker"
+              title="상하체"
+              value={result.ratios?.upperToLower}
+            />
+          </View>
+
+          <View style={[styles.card, iosShadow]}>
+            <Text style={styles.sectionTitle}>상체</Text>
+            <MeasureRow
+              label="어깨너비"
+              note={result.upperBody?.shoulderWidth?.note}
+              value={result.upperBody?.shoulderWidth?.value}
+            />
+            <MeasureRow
+              label="팔길이"
+              note={result.upperBody?.armLength?.note}
+              value={result.upperBody?.armLength?.value}
+            />
+            <MeasureRow
+              label="목길이"
+              note={result.upperBody?.neckLength?.note}
+              value={result.upperBody?.neckLength?.value}
+            />
+            <MeasureRow
+              label="척추정렬"
+              note={result.upperBody?.spineAlignment?.note}
+              value={result.upperBody?.spineAlignment?.value}
+            />
+          </View>
+
+          <View style={[styles.card, iosShadow]}>
+            <Text style={styles.sectionTitle}>하체</Text>
+            <MeasureRow
+              label="허리너비"
+              note={result.lowerBody?.hipWidth?.note}
+              value={result.lowerBody?.hipWidth?.value}
+            />
+            <MeasureRow
+              label="다리길이"
+              note={result.lowerBody?.legLength?.note}
+              value={result.lowerBody?.legLength?.value}
+            />
+            <MeasureRow
+              label="무릎정렬"
+              note={result.lowerBody?.kneeAlignment?.note}
+              value={result.lowerBody?.kneeAlignment?.value}
+            />
+          </View>
+
+          <View style={[styles.card, iosShadow]}>
+            <Text style={styles.sectionTitle}>자세 분석</Text>
+            <ScoreBar
+              label="전체 정렬"
+              note={result.posture?.overallAlignment?.note}
+              score={result.posture?.overallAlignment?.score}
+            />
+            <ScoreBar
+              label="어깨 균형"
+              note={result.posture?.shoulderBalance?.note}
+              score={result.posture?.shoulderBalance?.score}
+            />
+            <ScoreBar
+              label="골반 균형"
+              note={result.posture?.hipBalance?.note}
+              score={result.posture?.hipBalance?.score}
+            />
+            <ScoreBar
+              label="척추 곡선"
+              note={result.posture?.spinalCurvature?.note}
+              score={result.posture?.spinalCurvature?.score}
+            />
+          </View>
+
+          {result.multiViewAnalysis ? (
+            <View style={[styles.card, iosShadow]}>
+              <View style={styles.multiViewHeader}>
+                <Text style={styles.sectionTitle}>다중 각도 종합 분석</Text>
+                <View
+                  style={[
+                    styles.gradeBadge,
+                    {
+                      backgroundColor: getGradeColor(
+                        result.multiViewAnalysis.compositeGrade,
+                      ),
+                    },
+                  ]}
+                >
+                  <Text style={styles.gradeBadgeText}>
+                    {result.multiViewAnalysis.compositeGrade ?? '-'}
                   </Text>
                 </View>
-              ) : null}
-            </View>
-          ) : null}
-
-          {result.multiViewAnalysis.backView ? (
-            <View style={styles.viewSection}>
-              <Text style={styles.viewSectionTitle}>후면 분석</Text>
-              <SeverityRow
-                fallbackWhenFalse="정상"
-                label="척추 측만"
-                value={result.multiViewAnalysis.backView.scoliosis}
-              />
-              <SeverityRow
-                fallbackWhenFalse="정상"
-                label="견갑골 날개"
-                value={result.multiViewAnalysis.backView.scapularWinging}
-              />
-              <SeverityRow
-                fallbackWhenFalse="정상"
-                label="어깨 비대칭"
-                value={result.multiViewAnalysis.backView.shoulderAsymmetry}
-              />
-              <SeverityRow
-                fallbackWhenFalse="정상"
-                label="골반 비대칭"
-                value={result.multiViewAnalysis.backView.pelvicAsymmetry}
-              />
-              <SeverityRow
-                fallbackWhenFalse="정상"
-                label="근육 불균형"
-                value={result.multiViewAnalysis.backView.muscleImbalance}
-              />
-            </View>
-          ) : null}
-
-          {result.multiViewAnalysis.squatView ? (
-            <View style={styles.viewSection}>
-              <Text style={styles.viewSectionTitle}>스쿼트 분석</Text>
-              <SeverityRow
-                label="무릎 내전"
-                value={result.multiViewAnalysis.squatView.kneeValgus}
-              />
-              {result.multiViewAnalysis.squatView.squatDepth ? (
-                <View style={styles.viewDetailRow}>
-                  <View
-                    style={[
-                      styles.severityBadge,
-                      { backgroundColor: Colors.info },
-                    ]}
-                  >
-                    <Text style={styles.severityBadgeText}>
-                      {result.multiViewAnalysis.squatView.squatDepth.value ?? '-'}
-                    </Text>
-                  </View>
-                  <Text style={styles.viewDetailLabel}>스쿼트 깊이</Text>
-                  <Text style={styles.viewDetailNote}>
-                    {result.multiViewAnalysis.squatView.squatDepth.note}
-                  </Text>
-                </View>
-              ) : null}
-              <SeverityRow
-                label="상체 기울기"
-                value={result.multiViewAnalysis.squatView.trunkLean}
-              />
-              <View style={styles.mobilityRow}>
-                <MobilityCard
-                  label="고관절"
-                  value={result.multiViewAnalysis.squatView.hipMobility}
-                />
-                <MobilityCard
-                  label="발목"
-                  value={result.multiViewAnalysis.squatView.ankleMobility}
-                />
-                <MobilityCard
-                  label="균형"
-                  value={result.multiViewAnalysis.squatView.balance}
-                />
               </View>
-            </View>
-          ) : null}
+              <View style={styles.compositeScoreCard}>
+                <Text style={styles.compositeScoreValue}>
+                  {result.multiViewAnalysis.compositePostureScore ?? 0}점
+                </Text>
+                <Text style={styles.compositeScoreLabel}>
+                  종합 자세 점수 (100점 만점)
+                </Text>
+                <View style={styles.compositeScoreBar}>
+                  <View
+                    style={[
+                      styles.compositeScoreFill,
+                      {
+                        backgroundColor: getGradeColor(
+                          result.multiViewAnalysis.compositeGrade,
+                        ),
+                        width: `${result.multiViewAnalysis.compositePostureScore ?? 0}%`,
+                      },
+                    ]}
+                  />
+                </View>
+              </View>
 
-          {result.multiViewAnalysis.priorityCorrections?.length ? (
-            <View style={styles.viewSection}>
-              <Text style={styles.viewSectionTitle}>우선 교정 사항</Text>
-              {result.multiViewAnalysis.priorityCorrections.map((item, index) => (
-                <View key={`${item.issue}-${index}`} style={styles.priorityCard}>
-                  <View style={styles.priorityHeader}>
-                    <View
-                      style={[
-                        styles.priorityBadge,
-                        {
-                          backgroundColor:
-                            item.priority === '높음'
-                              ? Colors.danger
-                              : item.priority === '중간'
-                                ? Colors.warning
-                                : Colors.info,
-                        },
-                      ]}
-                    >
-                      <Text style={styles.priorityBadgeText}>
-                        {item.priority ?? '-'}
+              {result.multiViewAnalysis.sideView ? (
+                <View style={styles.viewSection}>
+                  <Text style={styles.viewSectionTitle}>측면 분석</Text>
+                  <SeverityRow
+                    label="거북목"
+                    value={result.multiViewAnalysis.sideView.forwardHeadPosture}
+                  />
+                  <SeverityRow
+                    label="라운드숄더"
+                    value={result.multiViewAnalysis.sideView.roundedShoulders}
+                  />
+                  <SeverityRow
+                    label="골반 전방경사"
+                    value={result.multiViewAnalysis.sideView.anteriorPelvicTilt}
+                  />
+                  {result.multiViewAnalysis.sideView.spinalCurve ? (
+                    <View style={styles.viewDetailRow}>
+                      <View
+                        style={[
+                          styles.severityBadge,
+                          { backgroundColor: Colors.info },
+                        ]}
+                      >
+                        <Text style={styles.severityBadgeText}>
+                          {result.multiViewAnalysis.sideView.spinalCurve.type ??
+                            '-'}
+                        </Text>
+                      </View>
+                      <Text style={styles.viewDetailLabel}>척추 곡선</Text>
+                      <Text style={styles.viewDetailNote}>
+                        {result.multiViewAnalysis.sideView.spinalCurve.note}
                       </Text>
                     </View>
-                    <Text style={styles.priorityTitle}>{item.issue ?? '-'}</Text>
-                  </View>
-                  <Text style={styles.priorityExercise}>
-                    교정 운동: {item.exercise ?? '-'}
-                  </Text>
-                  {item.description ? (
-                    <Text style={styles.priorityDescription}>
-                      {item.description}
-                    </Text>
                   ) : null}
                 </View>
-              ))}
+              ) : null}
+
+              {result.multiViewAnalysis.backView ? (
+                <View style={styles.viewSection}>
+                  <Text style={styles.viewSectionTitle}>후면 분석</Text>
+                  <SeverityRow
+                    fallbackWhenFalse="정상"
+                    label="척추 측만"
+                    value={result.multiViewAnalysis.backView.scoliosis}
+                  />
+                  <SeverityRow
+                    fallbackWhenFalse="정상"
+                    label="견갑골 날개"
+                    value={result.multiViewAnalysis.backView.scapularWinging}
+                  />
+                  <SeverityRow
+                    fallbackWhenFalse="정상"
+                    label="어깨 비대칭"
+                    value={result.multiViewAnalysis.backView.shoulderAsymmetry}
+                  />
+                  <SeverityRow
+                    fallbackWhenFalse="정상"
+                    label="골반 비대칭"
+                    value={result.multiViewAnalysis.backView.pelvicAsymmetry}
+                  />
+                  <SeverityRow
+                    fallbackWhenFalse="정상"
+                    label="근육 불균형"
+                    value={result.multiViewAnalysis.backView.muscleImbalance}
+                  />
+                </View>
+              ) : null}
+
+              {result.multiViewAnalysis.squatView ? (
+                <View style={styles.viewSection}>
+                  <Text style={styles.viewSectionTitle}>스쿼트 분석</Text>
+                  <SeverityRow
+                    label="무릎 내전"
+                    value={result.multiViewAnalysis.squatView.kneeValgus}
+                  />
+                  {result.multiViewAnalysis.squatView.squatDepth ? (
+                    <View style={styles.viewDetailRow}>
+                      <View
+                        style={[
+                          styles.severityBadge,
+                          { backgroundColor: Colors.info },
+                        ]}
+                      >
+                        <Text style={styles.severityBadgeText}>
+                          {result.multiViewAnalysis.squatView.squatDepth
+                            .value ?? '-'}
+                        </Text>
+                      </View>
+                      <Text style={styles.viewDetailLabel}>스쿼트 깊이</Text>
+                      <Text style={styles.viewDetailNote}>
+                        {result.multiViewAnalysis.squatView.squatDepth.note}
+                      </Text>
+                    </View>
+                  ) : null}
+                  <SeverityRow
+                    label="상체 기울기"
+                    value={result.multiViewAnalysis.squatView.trunkLean}
+                  />
+                  <View style={styles.mobilityRow}>
+                    <MobilityCard
+                      label="고관절"
+                      value={result.multiViewAnalysis.squatView.hipMobility}
+                    />
+                    <MobilityCard
+                      label="발목"
+                      value={result.multiViewAnalysis.squatView.ankleMobility}
+                    />
+                    <MobilityCard
+                      label="균형"
+                      value={result.multiViewAnalysis.squatView.balance}
+                    />
+                  </View>
+                </View>
+              ) : null}
+
+              {result.multiViewAnalysis.priorityCorrections?.length ? (
+                <View style={styles.viewSection}>
+                  <Text style={styles.viewSectionTitle}>우선 교정 사항</Text>
+                  {result.multiViewAnalysis.priorityCorrections.map(
+                    (item, index) => (
+                      <View
+                        key={`${item.issue}-${index}`}
+                        style={styles.priorityCard}
+                      >
+                        <View style={styles.priorityHeader}>
+                          <View
+                            style={[
+                              styles.priorityBadge,
+                              {
+                                backgroundColor:
+                                  item.priority === '높음'
+                                    ? Colors.danger
+                                    : item.priority === '중간'
+                                      ? Colors.warning
+                                      : Colors.info,
+                              },
+                            ]}
+                          >
+                            <Text style={styles.priorityBadgeText}>
+                              {item.priority ?? '-'}
+                            </Text>
+                          </View>
+                          <Text style={styles.priorityTitle}>
+                            {item.issue ?? '-'}
+                          </Text>
+                        </View>
+                        <Text style={styles.priorityExercise}>
+                          교정 운동: {item.exercise ?? '-'}
+                        </Text>
+                        {item.description ? (
+                          <Text style={styles.priorityDescription}>
+                            {item.description}
+                          </Text>
+                        ) : null}
+                      </View>
+                    ),
+                  )}
+                </View>
+              ) : null}
             </View>
           ) : null}
-        </View>
-      ) : null}
+        </>
+      )}
 
       {result.gaitAnalysis ? (
         <>
@@ -689,7 +733,9 @@ export function BodyAnalysisResultView({
           </View>
 
           <View style={[styles.card, iosShadow]}>
-            <Text style={styles.sectionTitle}>걸음걸이가 신체에 미치는 영향</Text>
+            <Text style={styles.sectionTitle}>
+              걸음걸이가 신체에 미치는 영향
+            </Text>
             <ScoreBar
               label="무릎 영향"
               note={result.gaitAnalysis.bodyImpact?.kneeImpact?.note}
@@ -713,7 +759,7 @@ export function BodyAnalysisResultView({
               {result.gaitAnalysis.gaitRecommendations.map((item, index) => (
                 <RecommendationRow
                   index={index}
-                  key={`${item}-${index}`}
+                  key={item}
                   text={item}
                   tone="info"
                 />
@@ -741,7 +787,8 @@ export function BodyAnalysisResultView({
                       </View>
                     ) : null}
                     {result.gaitAnalysis.shoeSizeEstimate.gender &&
-                    result.gaitAnalysis.shoeSizeEstimate.gender !== '판단불가' ? (
+                    result.gaitAnalysis.shoeSizeEstimate.gender !==
+                      '판단불가' ? (
                       <View style={styles.shoeSizeTag}>
                         <Text style={styles.shoeSizeTagText}>
                           {result.gaitAnalysis.shoeSizeEstimate.gender}
@@ -757,7 +804,8 @@ export function BodyAnalysisResultView({
                     ) : null}
                   </View>
                   <Text style={styles.shoeSizeMeta}>
-                    범위: {result.gaitAnalysis.shoeSizeEstimate.sizeRange ?? '-'}
+                    범위:{' '}
+                    {result.gaitAnalysis.shoeSizeEstimate.sizeRange ?? '-'}
                   </Text>
                   <Text style={styles.shoeSizeMeta}>
                     {result.gaitAnalysis.shoeSizeEstimate.sizeSystem ?? '-'}
@@ -848,10 +896,13 @@ export function BodyAnalysisResultView({
               {shoeTab === 'after' && shoeRecommendations.afterCorrection ? (
                 <View style={[styles.inlineInfoCard, iosShadow]}>
                   <Text style={styles.inlineInfoStrong}>
-                    예상 교정 기간: {shoeRecommendations.afterCorrection.timeline ?? '-'}
+                    예상 교정 기간:{' '}
+                    {shoeRecommendations.afterCorrection.timeline ?? '-'}
                   </Text>
                   <Text style={styles.inlineInfoText}>
-                    교정 후 보행: {shoeRecommendations.afterCorrection.correctedGaitType ?? '-'}
+                    교정 후 보행:{' '}
+                    {shoeRecommendations.afterCorrection.correctedGaitType ??
+                      '-'}
                   </Text>
                 </View>
               ) : null}
@@ -861,7 +912,8 @@ export function BodyAnalysisResultView({
                   onPress={() => setShoeCategory('daily')}
                   style={[
                     styles.segmentedButtonLight,
-                    shoeCategory === 'daily' && styles.segmentedButtonLightActive,
+                    shoeCategory === 'daily' &&
+                      styles.segmentedButtonLightActive,
                   ]}
                 >
                   <Text
@@ -913,231 +965,287 @@ export function BodyAnalysisResultView({
         </>
       ) : null}
 
-      {result.prediction ? (
+      {shoeOnly ? null : (
         <>
-          <View style={[styles.headerCard, iosShadow]}>
-            <Text style={styles.headerCardTitle}>미래 예측</Text>
-            {result.prediction.daysSincePhoto ? (
-              <Text style={styles.headerCardDescription}>
-                촬영일: {result.prediction.photoDate} ({result.prediction.daysSincePhoto}일 전)
-              </Text>
-            ) : null}
-          </View>
-
-          {result.prediction.daysSincePhoto ? (
-            <View style={[styles.card, iosShadow]}>
-              <Text style={styles.sectionTitle}>현재 추정</Text>
-              <Text style={styles.bodyText}>
-                {result.prediction.currentEstimate ?? '-'}
-              </Text>
-            </View>
-          ) : null}
-
-          {result.prediction.exerciseImpact ? (
-            <View style={[styles.card, iosShadow]}>
-              <Text style={styles.sectionTitle}>운동 효과 분석</Text>
-              <Text style={styles.bodyText}>{result.prediction.exerciseImpact}</Text>
-            </View>
-          ) : null}
-
-          <View style={[styles.card, iosShadow]}>
-            <Text style={styles.sectionTitle}>기간별 예측</Text>
-            {[
-              { label: '3개월 후', marker: '3', value: result.prediction.threeMonthPrediction },
-              { label: '6개월 후', marker: '6', value: result.prediction.sixMonthPrediction },
-              { label: '1년 후', marker: '12', value: result.prediction.oneYearPrediction },
-            ].map((item, index) => (
-              <View key={item.label} style={styles.timelineItem}>
-                <View style={styles.timelineMarker}>
-                  <Text style={styles.timelineMarkerText}>{item.marker}</Text>
-                </View>
-                <View style={styles.timelineContent}>
-                  <Text style={styles.timelineLabel}>{item.label}</Text>
-                  <Text style={styles.timelineText}>{item.value ?? '-'}</Text>
-                </View>
-                {index < 2 ? <View style={styles.timelineDivider} /> : null}
+          {result.prediction ? (
+            <>
+              <View style={[styles.headerCard, iosShadow]}>
+                <Text style={styles.headerCardTitle}>미래 예측</Text>
+                {result.prediction.daysSincePhoto ? (
+                  <Text style={styles.headerCardDescription}>
+                    촬영일: {result.prediction.photoDate} (
+                    {result.prediction.daysSincePhoto}일 전)
+                  </Text>
+                ) : null}
               </View>
-            ))}
-          </View>
 
-          {result.prediction.milestones?.length ? (
-            <View style={[styles.card, iosShadow]}>
-              <Text style={styles.sectionTitle}>달성 가능 목표</Text>
-              {result.prediction.milestones.map((item, index) => (
-                <View key={`${item}-${index}`} style={styles.bulletRow}>
-                  <Text style={styles.bulletDot}>•</Text>
-                  <Text style={styles.bulletText}>{item}</Text>
+              {result.prediction.daysSincePhoto ? (
+                <View style={[styles.card, iosShadow]}>
+                  <Text style={styles.sectionTitle}>현재 추정</Text>
+                  <Text style={styles.bodyText}>
+                    {result.prediction.currentEstimate ?? '-'}
+                  </Text>
                 </View>
+              ) : null}
+
+              {result.prediction.exerciseImpact ? (
+                <View style={[styles.card, iosShadow]}>
+                  <Text style={styles.sectionTitle}>운동 효과 분석</Text>
+                  <Text style={styles.bodyText}>
+                    {result.prediction.exerciseImpact}
+                  </Text>
+                </View>
+              ) : null}
+
+              <View style={[styles.card, iosShadow]}>
+                <Text style={styles.sectionTitle}>기간별 예측</Text>
+                {[
+                  {
+                    label: '3개월 후',
+                    marker: '3',
+                    value: result.prediction.threeMonthPrediction,
+                  },
+                  {
+                    label: '6개월 후',
+                    marker: '6',
+                    value: result.prediction.sixMonthPrediction,
+                  },
+                  {
+                    label: '1년 후',
+                    marker: '12',
+                    value: result.prediction.oneYearPrediction,
+                  },
+                ].map((item, index) => (
+                  <View key={item.label} style={styles.timelineItem}>
+                    <View style={styles.timelineMarker}>
+                      <Text style={styles.timelineMarkerText}>
+                        {item.marker}
+                      </Text>
+                    </View>
+                    <View style={styles.timelineContent}>
+                      <Text style={styles.timelineLabel}>{item.label}</Text>
+                      <Text style={styles.timelineText}>
+                        {item.value ?? '-'}
+                      </Text>
+                    </View>
+                    {index < 2 ? <View style={styles.timelineDivider} /> : null}
+                  </View>
+                ))}
+              </View>
+
+              {result.prediction.milestones?.length ? (
+                <View style={[styles.card, iosShadow]}>
+                  <Text style={styles.sectionTitle}>달성 가능 목표</Text>
+                  {result.prediction.milestones.map((item) => (
+                    <View key={item} style={styles.bulletRow}>
+                      <Text style={styles.bulletDot}>•</Text>
+                      <Text style={styles.bulletText}>{item}</Text>
+                    </View>
+                  ))}
+                </View>
+              ) : null}
+
+              {result.prediction.riskFactors?.length ? (
+                <View style={[styles.card, iosShadow]}>
+                  <Text style={styles.sectionTitle}>주의 위험 요소</Text>
+                  {result.prediction.riskFactors.map((item) => (
+                    <View key={item} style={styles.bulletRow}>
+                      <Text style={styles.bulletDot}>•</Text>
+                      <Text style={styles.bulletText}>{item}</Text>
+                    </View>
+                  ))}
+                </View>
+              ) : null}
+            </>
+          ) : null}
+
+          {result.medicalAnalysis ? (
+            <View style={[styles.medicalSection, iosShadow]}>
+              <Text style={styles.medicalTitle}>의료 증상 분석</Text>
+              {result.medicalAnalysis.disclaimer ? (
+                <View style={styles.medicalDisclaimer}>
+                  <Text style={styles.medicalDisclaimerText}>
+                    {result.medicalAnalysis.disclaimer}
+                  </Text>
+                </View>
+              ) : null}
+
+              <View style={styles.medicalBlock}>
+                <Text style={styles.medicalBlockTitle}>증상 평가</Text>
+                <Text style={styles.bodyText}>
+                  {result.medicalAnalysis.symptomAssessment ?? '-'}
+                </Text>
+              </View>
+
+              <View style={styles.medicalBlock}>
+                <Text style={styles.medicalBlockTitle}>체형 구조 영향</Text>
+                <Text style={styles.bodyText}>
+                  {result.medicalAnalysis.bodyStructureImpact ?? '-'}
+                </Text>
+              </View>
+
+              {result.medicalAnalysis.musculoskeletalRisks?.length ? (
+                <View style={styles.medicalBlock}>
+                  <Text style={styles.medicalBlockTitle}>
+                    근골격계 위험 요소
+                  </Text>
+                  {result.medicalAnalysis.musculoskeletalRisks.map(
+                    (item, index) => (
+                      <View
+                        key={`${item.area}-${index}`}
+                        style={styles.medicalRiskCard}
+                      >
+                        <View style={styles.medicalRiskHeader}>
+                          <Text style={styles.medicalRiskArea}>
+                            {item.area ?? '-'}
+                          </Text>
+                          <View
+                            style={[
+                              styles.medicalRiskBadge,
+                              {
+                                backgroundColor:
+                                  item.riskLevel === '높음'
+                                    ? 'rgba(239,68,68,0.15)'
+                                    : item.riskLevel === '중간'
+                                      ? 'rgba(245,158,11,0.15)'
+                                      : 'rgba(34,197,94,0.15)',
+                              },
+                            ]}
+                          >
+                            <Text
+                              style={[
+                                styles.medicalRiskBadgeText,
+                                {
+                                  color:
+                                    item.riskLevel === '높음'
+                                      ? Colors.danger
+                                      : item.riskLevel === '중간'
+                                        ? Colors.warning
+                                        : Colors.success,
+                                },
+                              ]}
+                            >
+                              {item.riskLevel ?? '-'}
+                            </Text>
+                          </View>
+                        </View>
+                        {item.description ? (
+                          <Text style={styles.bodyText}>
+                            {item.description}
+                          </Text>
+                        ) : null}
+                        {item.preventionTip ? (
+                          <Text style={styles.inlineInfoText}>
+                            {item.preventionTip}
+                          </Text>
+                        ) : null}
+                      </View>
+                    ),
+                  )}
+                </View>
+              ) : null}
+
+              {result.medicalAnalysis.exerciseWarnings?.length ? (
+                <View style={styles.medicalBlock}>
+                  <Text style={styles.medicalBlockTitle}>운동 주의사항</Text>
+                  {result.medicalAnalysis.exerciseWarnings.map(
+                    (item, index) => (
+                      <View
+                        key={`${item.exercise}-${index}`}
+                        style={styles.medicalWarnCard}
+                      >
+                        <Text style={styles.medicalWarnTitle}>
+                          {item.exercise ?? '-'}
+                        </Text>
+                        {item.reason ? (
+                          <Text style={styles.bodyText}>{item.reason}</Text>
+                        ) : null}
+                        {item.alternative ? (
+                          <Text style={styles.inlineInfoText}>
+                            대안: {item.alternative}
+                          </Text>
+                        ) : null}
+                      </View>
+                    ),
+                  )}
+                </View>
+              ) : null}
+
+              {result.medicalAnalysis.rehabExercises?.length ? (
+                <View style={styles.medicalBlock}>
+                  <Text style={styles.medicalBlockTitle}>재활/교정 운동</Text>
+                  {result.medicalAnalysis.rehabExercises.map((item, index) => (
+                    <View
+                      key={`${item.name}-${index}`}
+                      style={styles.medicalRehabCard}
+                    >
+                      <View style={styles.medicalRehabHeader}>
+                        <View style={styles.medicalRehabIndex}>
+                          <Text style={styles.medicalRehabIndexText}>
+                            {index + 1}
+                          </Text>
+                        </View>
+                        <View style={styles.medicalRehabTextWrap}>
+                          <Text style={styles.medicalRehabName}>
+                            {item.name ?? '-'}
+                          </Text>
+                          <Text style={styles.inlineInfoText}>
+                            {item.targetArea ?? '-'} · {item.frequency ?? '-'}
+                          </Text>
+                        </View>
+                      </View>
+                      {item.description ? (
+                        <Text style={styles.bodyText}>{item.description}</Text>
+                      ) : null}
+                      {item.precaution ? (
+                        <Text style={styles.inlineInfoText}>
+                          {item.precaution}
+                        </Text>
+                      ) : null}
+                    </View>
+                  ))}
+                </View>
+              ) : null}
+
+              {result.medicalAnalysis.lifestyleAdvice?.length ? (
+                <View style={styles.medicalBlock}>
+                  <Text style={styles.medicalBlockTitle}>생활습관 조언</Text>
+                  {result.medicalAnalysis.lifestyleAdvice.map((item) => (
+                    <View key={item} style={styles.bulletRow}>
+                      <Text style={styles.bulletDot}>•</Text>
+                      <Text style={styles.bulletText}>{item}</Text>
+                    </View>
+                  ))}
+                </View>
+              ) : null}
+
+              {result.medicalAnalysis.referralSuggestion ? (
+                <View style={styles.medicalReferralCard}>
+                  <Text style={styles.medicalReferralText}>
+                    {result.medicalAnalysis.referralSuggestion}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+          ) : null}
+
+          {result.recommendations?.length ? (
+            <View style={[styles.card, iosShadow]}>
+              <Text style={styles.sectionTitle}>체형 추천사항</Text>
+              {result.recommendations.map((item, index) => (
+                <RecommendationRow index={index} key={item} text={item} />
               ))}
             </View>
           ) : null}
 
-          {result.prediction.riskFactors?.length ? (
-            <View style={[styles.card, iosShadow]}>
-              <Text style={styles.sectionTitle}>주의 위험 요소</Text>
-              {result.prediction.riskFactors.map((item, index) => (
-                <View key={`${item}-${index}`} style={styles.bulletRow}>
-                  <Text style={styles.bulletDot}>•</Text>
-                  <Text style={styles.bulletText}>{item}</Text>
-                </View>
-              ))}
+          {result.summary ? (
+            <View style={[styles.summaryCard, iosShadow]}>
+              <Text style={styles.summaryTitle}>종합 요약</Text>
+              <Text style={styles.summaryText}>{result.summary}</Text>
             </View>
           ) : null}
         </>
-      ) : null}
-
-      {result.medicalAnalysis ? (
-        <View style={[styles.medicalSection, iosShadow]}>
-          <Text style={styles.medicalTitle}>의료 증상 분석</Text>
-          {result.medicalAnalysis.disclaimer ? (
-            <View style={styles.medicalDisclaimer}>
-              <Text style={styles.medicalDisclaimerText}>
-                {result.medicalAnalysis.disclaimer}
-              </Text>
-            </View>
-          ) : null}
-
-          <View style={styles.medicalBlock}>
-            <Text style={styles.medicalBlockTitle}>증상 평가</Text>
-            <Text style={styles.bodyText}>
-              {result.medicalAnalysis.symptomAssessment ?? '-'}
-            </Text>
-          </View>
-
-          <View style={styles.medicalBlock}>
-            <Text style={styles.medicalBlockTitle}>체형 구조 영향</Text>
-            <Text style={styles.bodyText}>
-              {result.medicalAnalysis.bodyStructureImpact ?? '-'}
-            </Text>
-          </View>
-
-          {result.medicalAnalysis.musculoskeletalRisks?.length ? (
-            <View style={styles.medicalBlock}>
-              <Text style={styles.medicalBlockTitle}>근골격계 위험 요소</Text>
-              {result.medicalAnalysis.musculoskeletalRisks.map((item, index) => (
-                <View key={`${item.area}-${index}`} style={styles.medicalRiskCard}>
-                  <View style={styles.medicalRiskHeader}>
-                    <Text style={styles.medicalRiskArea}>{item.area ?? '-'}</Text>
-                    <View
-                      style={[
-                        styles.medicalRiskBadge,
-                        {
-                          backgroundColor:
-                            item.riskLevel === '높음'
-                              ? 'rgba(239,68,68,0.15)'
-                              : item.riskLevel === '중간'
-                                ? 'rgba(245,158,11,0.15)'
-                                : 'rgba(34,197,94,0.15)',
-                        },
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.medicalRiskBadgeText,
-                          {
-                            color:
-                              item.riskLevel === '높음'
-                                ? Colors.danger
-                                : item.riskLevel === '중간'
-                                  ? Colors.warning
-                                  : Colors.success,
-                          },
-                        ]}
-                      >
-                        {item.riskLevel ?? '-'}
-                      </Text>
-                    </View>
-                  </View>
-                  {item.description ? (
-                    <Text style={styles.bodyText}>{item.description}</Text>
-                  ) : null}
-                  {item.preventionTip ? (
-                    <Text style={styles.inlineInfoText}>{item.preventionTip}</Text>
-                  ) : null}
-                </View>
-              ))}
-            </View>
-          ) : null}
-
-          {result.medicalAnalysis.exerciseWarnings?.length ? (
-            <View style={styles.medicalBlock}>
-              <Text style={styles.medicalBlockTitle}>운동 주의사항</Text>
-              {result.medicalAnalysis.exerciseWarnings.map((item, index) => (
-                <View key={`${item.exercise}-${index}`} style={styles.medicalWarnCard}>
-                  <Text style={styles.medicalWarnTitle}>{item.exercise ?? '-'}</Text>
-                  {item.reason ? <Text style={styles.bodyText}>{item.reason}</Text> : null}
-                  {item.alternative ? (
-                    <Text style={styles.inlineInfoText}>대안: {item.alternative}</Text>
-                  ) : null}
-                </View>
-              ))}
-            </View>
-          ) : null}
-
-          {result.medicalAnalysis.rehabExercises?.length ? (
-            <View style={styles.medicalBlock}>
-              <Text style={styles.medicalBlockTitle}>재활/교정 운동</Text>
-              {result.medicalAnalysis.rehabExercises.map((item, index) => (
-                <View key={`${item.name}-${index}`} style={styles.medicalRehabCard}>
-                  <View style={styles.medicalRehabHeader}>
-                    <View style={styles.medicalRehabIndex}>
-                      <Text style={styles.medicalRehabIndexText}>{index + 1}</Text>
-                    </View>
-                    <View style={styles.medicalRehabTextWrap}>
-                      <Text style={styles.medicalRehabName}>{item.name ?? '-'}</Text>
-                      <Text style={styles.inlineInfoText}>
-                        {item.targetArea ?? '-'} · {item.frequency ?? '-'}
-                      </Text>
-                    </View>
-                  </View>
-                  {item.description ? (
-                    <Text style={styles.bodyText}>{item.description}</Text>
-                  ) : null}
-                  {item.precaution ? (
-                    <Text style={styles.inlineInfoText}>{item.precaution}</Text>
-                  ) : null}
-                </View>
-              ))}
-            </View>
-          ) : null}
-
-          {result.medicalAnalysis.lifestyleAdvice?.length ? (
-            <View style={styles.medicalBlock}>
-              <Text style={styles.medicalBlockTitle}>생활습관 조언</Text>
-              {result.medicalAnalysis.lifestyleAdvice.map((item, index) => (
-                <View key={`${item}-${index}`} style={styles.bulletRow}>
-                  <Text style={styles.bulletDot}>•</Text>
-                  <Text style={styles.bulletText}>{item}</Text>
-                </View>
-              ))}
-            </View>
-          ) : null}
-
-          {result.medicalAnalysis.referralSuggestion ? (
-            <View style={styles.medicalReferralCard}>
-              <Text style={styles.medicalReferralText}>
-                {result.medicalAnalysis.referralSuggestion}
-              </Text>
-            </View>
-          ) : null}
-        </View>
-      ) : null}
-
-      {result.recommendations?.length ? (
-        <View style={[styles.card, iosShadow]}>
-          <Text style={styles.sectionTitle}>체형 추천사항</Text>
-          {result.recommendations.map((item, index) => (
-            <RecommendationRow index={index} key={`${item}-${index}`} text={item} />
-          ))}
-        </View>
-      ) : null}
-
-      {result.summary ? (
-        <View style={[styles.summaryCard, iosShadow]}>
-          <Text style={styles.summaryTitle}>종합 요약</Text>
-          <Text style={styles.summaryText}>{result.summary}</Text>
-        </View>
-      ) : null}
+      )}
     </View>
   );
 }

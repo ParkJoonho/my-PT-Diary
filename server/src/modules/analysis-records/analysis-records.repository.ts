@@ -28,6 +28,8 @@ export class AnalysisRecordsRepository implements AnalysisRecordsRepositoryPort 
           analyzed_at
         )
         VALUES ($1, $2, $3, $4::jsonb, $5::jsonb, $6::jsonb, $7::timestamptz)
+        ON CONFLICT (id) DO UPDATE
+        SET id = EXCLUDED.id
         RETURNING
           id,
           user_key,
@@ -49,7 +51,7 @@ export class AnalysisRecordsRepository implements AnalysisRecordsRepositoryPort 
       ],
     );
 
-    return result.rows[0]!;
+    return result.rows[0];
   }
 
   async listAnalysisRecords(params: {

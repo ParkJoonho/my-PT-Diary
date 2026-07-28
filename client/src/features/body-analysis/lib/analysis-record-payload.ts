@@ -1,3 +1,4 @@
+import type { CreateAnalysisRecordDto } from 'shared/api/generated/models';
 import type {
   BodyAnalysisResult,
   BodyComparisonResult,
@@ -6,10 +7,11 @@ import type {
 export function buildBodyAnalysisRecordPayload(
   analyzedAt: string,
   result: BodyAnalysisResult,
-) {
+): CreateAnalysisRecordDto {
   return {
     analysisType: 'body',
     analyzedAt,
+    idempotencyKey: `body-analysis:${analyzedAt}`,
     qualitativeData: {
       bodyType: result.bodyType ?? '',
       bodyTypeDescription: result.bodyTypeDescription ?? '',
@@ -30,10 +32,11 @@ export function buildBodyAnalysisRecordPayload(
 export function buildBodyComparisonRecordPayload(
   analyzedAt: string,
   result: BodyComparisonResult,
-) {
+): CreateAnalysisRecordDto {
   return {
     analysisType: 'body-comparison',
     analyzedAt,
+    idempotencyKey: `body-comparison:${analyzedAt}`,
     qualitativeData: {
       grade: result.overallChange?.grade ?? '',
       summary: result.overallChange?.summary ?? '',

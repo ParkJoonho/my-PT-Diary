@@ -1,5 +1,8 @@
 import { useNavigation } from '@granite-js/react-native';
+import { useBodyAnalysisEntryStore } from 'features/body-analysis/stores/use-body-analysis-entry-store';
+import { HomeTabBar } from 'features/home/components/home-tab-bar';
 import {
+  Accessibility,
   ChartColumnBig,
   ChevronRight,
   Footprints,
@@ -7,10 +10,15 @@ import {
   ScanFace,
   Utensils,
 } from 'lucide-react-native';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useBodyAnalysisEntryStore } from 'features/body-analysis/stores/use-body-analysis-entry-store';
-import { HomeTabBar } from 'features/home/components/home-tab-bar';
 import Colors, { iosShadow } from 'shared/constants/colors';
 
 const AI_FEATURES = [
@@ -41,7 +49,7 @@ const AI_FEATURES = [
   },
   {
     accent: Colors.info,
-    icon: ScanFace,
+    icon: Accessibility,
     iconBackground: '#E5F0FF',
     route: null,
     subtitle: '운동 자세 교정 및 피드백',
@@ -68,7 +76,9 @@ const AI_FEATURES = [
 export function AiHubScreen() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
-  const setEntryPoint = useBodyAnalysisEntryStore((state) => state.setEntryPoint);
+  const setEntryPoint = useBodyAnalysisEntryStore(
+    (state) => state.setEntryPoint,
+  );
 
   return (
     <View style={styles.container}>
@@ -102,7 +112,9 @@ export function AiHubScreen() {
                 return;
               }
 
-              setEntryPoint(feature.title === 'AI 신발 추천' ? 'shoe' : 'default');
+              setEntryPoint(
+                feature.title === 'AI 신발 추천' ? 'shoe' : 'default',
+              );
               navigation.navigate({ name: feature.route, params: {} });
             }}
             style={({ pressed }) => [
@@ -117,13 +129,21 @@ export function AiHubScreen() {
                 { backgroundColor: feature.iconBackground },
               ]}
             >
-              <feature.icon color={feature.accent} size={20} strokeWidth={2.1} />
+              <feature.icon
+                color={feature.accent}
+                size={20}
+                strokeWidth={2.1}
+              />
             </View>
             <View style={styles.featureTextWrap}>
               <Text style={styles.featureTitle}>{feature.title}</Text>
               <Text style={styles.featureSubtitle}>{feature.subtitle}</Text>
             </View>
-            <ChevronRight color={Colors.iconMuted} size={18} strokeWidth={2.1} />
+            <ChevronRight
+              color={Colors.iconMuted}
+              size={18}
+              strokeWidth={2.1}
+            />
           </Pressable>
         ))}
       </ScrollView>

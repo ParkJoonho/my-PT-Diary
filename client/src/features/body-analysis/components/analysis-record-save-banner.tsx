@@ -41,16 +41,13 @@ export function AnalysisRecordSaveBanner({
         <AlertCircle color={Colors.warning} size={16} strokeWidth={2.1} />
       )}
       <Text style={styles.recordSaveText}>
-        {isSaved ? successMessage : value.message ?? failedFallbackMessage}
+        {isSaved ? successMessage : (value.message ?? failedFallbackMessage)}
       </Text>
       {!isSaved && onActionPress ? (
         <Pressable
           disabled={pending}
           onPress={onActionPress}
-          style={[
-            styles.retryButton,
-            pending && styles.retryButtonDisabled,
-          ]}
+          style={[styles.retryButton, pending && styles.retryButtonDisabled]}
         >
           <Text style={styles.retryButtonText}>
             {pending ? '저장 중...' : (actionLabel ?? '다시 시도')}

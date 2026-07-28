@@ -1,8 +1,6 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { renderHook } from '@testing-library/react-native';
-import {
-  bodyComparisonControllerAnalyzeBodyComparison,
-} from 'shared/api/generated/endpoints/body-comparison/body-comparison';
+import { bodyComparisonControllerAnalyzeBodyComparison } from 'shared/api/generated/endpoints/body-comparison/body-comparison';
 import { useTrackerUserKey } from 'shared/api/user-key';
 import {
   selectBodyComparisonResponse,
@@ -28,9 +26,11 @@ jest.mock('@tanstack/react-query', () => {
 
   return {
     ...actual,
-    useMutation: jest.fn((options: { mutationFn: (variables: unknown) => unknown }) => ({
-      mutateAsync: options.mutationFn,
-    })),
+    useMutation: jest.fn(
+      (options: { mutationFn: (variables: unknown) => unknown }) => ({
+        mutateAsync: options.mutationFn,
+      }),
+    ),
     useQueryClient: jest.fn(() => ({
       invalidateQueries: jest.fn(),
     })),

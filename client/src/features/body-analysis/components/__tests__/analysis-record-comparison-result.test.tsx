@@ -1,7 +1,28 @@
-import { describe, expect, it } from '@jest/globals';
+import { describe, expect, it, jest } from '@jest/globals';
 import { render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { AnalysisRecordComparisonResult } from '../analysis-record-comparison-result';
+
+jest.mock('lucide-react-native', () => {
+  const { Text } = require('react-native');
+
+  return new Proxy(
+    {},
+    {
+      get: (_target, key) => {
+        return function MockIcon({
+          accessibilityLabel,
+        }: {
+          accessibilityLabel?: string;
+        }) {
+          return (
+            <Text accessibilityLabel={accessibilityLabel}>{String(key)}</Text>
+          );
+        };
+      },
+    },
+  );
+});
 
 describe('이력 비교 결과 뷰', () => {
   it('서버 비교 응답의 핵심 섹션을 모두 렌더링한다', () => {
@@ -15,7 +36,8 @@ describe('이력 비교 결과 뷰', () => {
           },
           declines: ['하체 가동성은 아직 더 보완이 필요해요.'],
           improvements: ['어깨 정렬이 좋아졌어요.'],
-          motivationalNote: '지금 흐름이면 다음 변화도 충분히 기대할 수 있어요.',
+          motivationalNote:
+            '지금 흐름이면 다음 변화도 충분히 기대할 수 있어요.',
           overallChange: '전반적인 정렬과 밸런스가 이전보다 좋아졌어요.',
           postureChanges: [
             {
@@ -46,6 +68,9 @@ describe('이력 비교 결과 뷰', () => {
     expect(screen.getByText('자세 점수 변화')).toBeTruthy();
     expect(screen.getByText('정량 변화')).toBeTruthy();
     expect(screen.getByText('추천사항')).toBeTruthy();
-    expect(screen.getByText('지금 흐름이면 다음 변화도 충분히 기대할 수 있어요.')).toBeTruthy();
+    expect(screen.getByLabelText('개선')).toBeTruthy();
+    expect(
+      screen.getByText('지금 흐름이면 다음 변화도 충분히 기대할 수 있어요.'),
+    ).toBeTruthy();
   });
 });

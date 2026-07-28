@@ -41,7 +41,9 @@ export function PhotoCard({
       ) : (
         <View style={styles.photoPlaceholder}>
           <FolderOpen color={Colors.textMuted} size={26} strokeWidth={2} />
-          <Text style={styles.photoPlaceholderText}>아직 선택한 사진이 없어요</Text>
+          <Text style={styles.photoPlaceholderText}>
+            아직 선택한 사진이 없어요
+          </Text>
         </View>
       )}
 

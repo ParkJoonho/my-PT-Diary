@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { randomUUID } from 'crypto';
+import { createHash, randomUUID } from 'crypto';
 import {
   AnalysisRecordDetailDto,
   AnalysisRecordDto,
@@ -30,13 +30,24 @@ export class AnalysisRecordsService {
     userKey: string,
     record: AnalysisRecordWriteModel,
   ): Promise<AnalysisRecordDetailDto> {
+    const recordId = record.idempotencyKey
+      ? this.createIdempotentRecordId(userKey, record.idempotencyKey)
+      : `record_${randomUUID()}`;
     const created = await this.analysisRecordsRepository.createAnalysisRecord({
       record,
-      recordId: `record_${randomUUID()}`,
+      recordId,
       userKey,
     });
 
     return this.mapDetail(created);
+  }
+
+  private createIdempotentRecordId(userKey: string, idempotencyKey: string) {
+    const digest = createHash('sha256')
+      .update(`${userKey}\u0000${idempotencyKey}`)
+      .digest('hex');
+
+    return `record_${digest}`;
   }
 
   async listAnalysisRecords(
@@ -86,10 +97,7 @@ export class AnalysisRecordsService {
       throw new NotFoundException('Analysis record not found.');
     }
 
-    if (
-      record1.analysis_type !== AnalysisRecordType.Body ||
-      record2.analysis_type !== AnalysisRecordType.Body
-    ) {
+    if (record1.analysis_type !== 'body' || record2.analysis_type !== 'body') {
       throw new BadRequestException(
         'Only body analysis records can be compared right now.',
       );
@@ -102,11 +110,12 @@ export class AnalysisRecordsService {
         : record2;
     const newerRecord = olderRecord === record1 ? record2 : record1;
 
-    const comparison =
-      await this.analysisRecordComparisonClient.compareRecords({
+    const comparison = await this.analysisRecordComparisonClient.compareRecords(
+      {
         newerRecord,
         olderRecord,
-      });
+      },
+    );
 
     return {
       ...comparison,

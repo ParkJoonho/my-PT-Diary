@@ -27,7 +27,8 @@ const 비교분석결과예시 = {
     muscleChange: '근육량은 소폭 증가한 것으로 추정돼요.',
     proportionChange: '상체와 코어 비율이 전보다 더 안정적으로 보여요.',
   },
-  motivationalMessage: '지금 흐름을 유지하면 다음 변화도 충분히 기대할 수 있어요.',
+  motivationalMessage:
+    '지금 흐름을 유지하면 다음 변화도 충분히 기대할 수 있어요.',
   overallChange: {
     grade: 'A' as const,
     score: 84,
@@ -84,15 +85,18 @@ describe('전·후 비교 분석 서비스', () => {
       notes: '같은 장소에서 촬영했어요.',
     });
 
-    expect(aiClient.analyzeBodyComparison).toHaveBeenCalledWith(
+    expect(aiClient.analyzeBodyComparison.mock.calls[0]?.[0]).toEqual(
       expect.objectContaining({
         afterImageBase64: 'b'.repeat(200),
         beforeImageBase64: 'a'.repeat(200),
         notes: '같은 장소에서 촬영했어요.',
       }),
     );
-    expect(analysisRecordsService.createAnalysisRecord).toHaveBeenCalledWith(
-      'user-a',
+    const createRecordCall =
+      analysisRecordsService.createAnalysisRecord.mock.calls[0];
+
+    expect(createRecordCall?.[0]).toBe('user-a');
+    expect(createRecordCall?.[1]).toEqual(
       expect.objectContaining({
         analysisType: 'body-comparison',
         qualitativeData: {
@@ -104,6 +108,7 @@ describe('전·후 비교 분석 서비스', () => {
         },
       }),
     );
+    expect(createRecordCall?.[1].idempotencyKey).toMatch(/^body-comparison:/);
     const comparison = bodyComparisonResultSchema.parse(result.comparison);
 
     expect(comparison.overallChange.grade).toBe('A');

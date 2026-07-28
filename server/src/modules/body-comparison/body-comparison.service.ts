@@ -47,16 +47,15 @@ export class BodyComparisonService {
     const analyzedAt = new Date().toISOString();
 
     try {
-      const savedRecord = await this.analysisRecordsService.createAnalysisRecord(
-        userKey,
-        {
+      const savedRecord =
+        await this.analysisRecordsService.createAnalysisRecord(userKey, {
           analyzedAt,
           analysisType: AnalysisRecordType.BodyComparison,
+          idempotencyKey: `body-comparison:${analyzedAt}`,
           qualitativeData: this.buildQualitativeData(comparison),
           quantitativeData: this.buildQuantitativeData(comparison),
           rawResult: comparison,
-        },
-      );
+        });
 
       return {
         analyzedAt,

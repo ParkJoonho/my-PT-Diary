@@ -5,10 +5,12 @@ import {
 } from '@tanstack/react-query';
 import {
   analysisRecordsControllerCompareAnalysisRecords,
-  analysisRecordsControllerGetAnalysisRecord,
-  analysisRecordsControllerListAnalysisRecords,
   type analysisRecordsControllerCompareAnalysisRecordsResponse,
+  analysisRecordsControllerCreateAnalysisRecord,
+  type analysisRecordsControllerCreateAnalysisRecordResponse,
+  analysisRecordsControllerGetAnalysisRecord,
   type analysisRecordsControllerGetAnalysisRecordResponse,
+  analysisRecordsControllerListAnalysisRecords,
   type analysisRecordsControllerListAnalysisRecordsResponse,
 } from 'shared/api/generated/endpoints/analysis-records/analysis-records';
 import type {
@@ -17,18 +19,11 @@ import type {
   AnalysisRecordsControllerListAnalysisRecordsParams,
   CompareAnalysisRecordsDto,
   CompareAnalysisRecordsResponseDto,
+  CreateAnalysisRecordDto,
 } from 'shared/api/generated/models';
 import { useTrackerUserKey } from 'shared/api/user-key';
 
 export const ANALYSIS_RECORDS_QUERY_KEY = ['analysis-records'] as const;
-
-export type CreateAnalysisRecordInput = {
-  analysisType: string;
-  analyzedAt: string;
-  qualitativeData?: Record<string, unknown>;
-  quantitativeData?: Record<string, unknown>;
-  rawResult: Record<string, unknown>;
-};
 
 export function getAnalysisRecordsQueryKey(
   userKey: string,
@@ -91,6 +86,16 @@ export function selectAnalysisComparison(
   return response.data;
 }
 
+export function selectCreatedAnalysisRecord(
+  response: analysisRecordsControllerCreateAnalysisRecordResponse,
+): AnalysisRecordDetailDto {
+  if (response.status !== 201 || !response.data) {
+    throw new Error('분석 기록 저장에 실패했어요.');
+  }
+
+  return response.data;
+}
+
 export function useAnalysisRecords(
   params: AnalysisRecordsControllerListAnalysisRecordsParams = {},
 ) {
@@ -145,22 +150,14 @@ export function useCreateAnalysisRecord() {
   const userKey = useTrackerUserKey();
 
   return useMutation({
-    mutationFn: async (dto: CreateAnalysisRecordInput) => {
-      const response = await fetch('http://127.0.0.1:3000/api/analysis-records', {
-        body: JSON.stringify(dto),
-        headers: {
-          'content-type': 'application/json',
-          'x-user-key': userKey,
-        },
-        method: 'POST',
-      });
-
-      if (!response.ok) {
-        throw new Error('분석 기록 저장에 실패했어요.');
-      }
-
-      return (await response.json()) as AnalysisRecordDetailDto;
-    },
+    mutationFn: async (dto: CreateAnalysisRecordDto) =>
+      selectCreatedAnalysisRecord(
+        await analysisRecordsControllerCreateAnalysisRecord(dto, {
+          headers: {
+            'x-user-key': userKey,
+          },
+        }),
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: getAnalysisRecordsQueryKeyPrefix(userKey),

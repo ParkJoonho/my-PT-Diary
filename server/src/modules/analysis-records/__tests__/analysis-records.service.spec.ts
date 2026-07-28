@@ -1,7 +1,4 @@
-import {
-  BadRequestException,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { AnalysisRecordComparisonClientPort } from '../analysis-record-comparison.client.port';
 import {
   AnalysisRecordsRepositoryPort,
@@ -48,8 +45,32 @@ describe('분석 이력 서비스', () => {
     service = new AnalysisRecordsService(repository, comparisonClient);
   });
 
+  it('같은 사용자와 멱등 키의 저장 재시도는 같은 기록 ID를 사용한다', async () => {
+    repository.createAnalysisRecord.mockResolvedValue(bodyRecordA);
+    const record = {
+      analyzedAt: '2026-07-28T01:23:45.000Z',
+      analysisType: 'body' as const,
+      idempotencyKey: 'body-analysis:2026-07-28T01:23:45.000Z',
+      rawResult: { bodyType: 'V' },
+    };
+
+    await service.createAnalysisRecord('user-a', record);
+    await service.createAnalysisRecord('user-a', record);
+
+    const firstRecordId =
+      repository.createAnalysisRecord.mock.calls[0]?.[0].recordId;
+    const secondRecordId =
+      repository.createAnalysisRecord.mock.calls[1]?.[0].recordId;
+
+    expect(firstRecordId).toMatch(/^record_[a-f0-9]{64}$/);
+    expect(secondRecordId).toBe(firstRecordId);
+  });
+
   it('목록 조회는 저장 row를 응답 DTO로 매핑한다', async () => {
-    repository.listAnalysisRecords.mockResolvedValue([bodyRecordA, bodyRecordB]);
+    repository.listAnalysisRecords.mockResolvedValue([
+      bodyRecordA,
+      bodyRecordB,
+    ]);
 
     const result = await service.listAnalysisRecords('user-a', {});
 
@@ -110,10 +131,12 @@ describe('분석 이력 서비스', () => {
       recordId2: 'record_b',
     });
 
-    expect(comparisonClient.compareRecords).toHaveBeenCalledWith({
-      newerRecord: bodyRecordB,
-      olderRecord: bodyRecordA,
-    });
+    expect(comparisonClient.compareRecords.mock.calls[0]).toEqual([
+      {
+        newerRecord: bodyRecordB,
+        olderRecord: bodyRecordA,
+      },
+    ]);
     expect(result.olderRecord.id).toBe('record_a');
     expect(result.newerRecord.id).toBe('record_b');
   });

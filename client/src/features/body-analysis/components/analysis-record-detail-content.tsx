@@ -1,8 +1,12 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Colors from 'shared/constants/colors';
+import {
+  toBodyAnalysisResult,
+  toBodyComparisonResult,
+} from '../lib/object-access';
 import type { AnalysisRecordDetail } from '../types/body-analysis';
-import { toBodyComparisonResult } from '../lib/object-access';
+import { BodyAnalysisResultView } from './body-analysis-result';
 import { BodyComparisonResultView } from './body-comparison-result';
 
 const BODY_TYPE_COLORS: Record<string, string> = {
@@ -67,7 +71,10 @@ function ScoreRow({
           <View
             style={[
               styles.scoreBarFill,
-              { backgroundColor: fillColor, width: `${(safeScore / 5) * 100}%` },
+              {
+                backgroundColor: fillColor,
+                width: `${(safeScore / 5) * 100}%`,
+              },
             ]}
           />
         </View>
@@ -99,7 +106,7 @@ function DetailInfoRow({
 }
 
 function BodyAnalysisDetail({ raw }: { raw: Record<string, unknown> }) {
-  const data = raw as any;
+  const data = toBodyAnalysisResult(raw);
 
   return (
     <>
@@ -109,7 +116,10 @@ function BodyAnalysisDetail({ raw }: { raw: Record<string, unknown> }) {
             <View
               style={[
                 styles.bodyTypeBadge,
-                { backgroundColor: BODY_TYPE_COLORS[data.bodyType] ?? Colors.info },
+                {
+                  backgroundColor:
+                    BODY_TYPE_COLORS[data.bodyType] ?? Colors.info,
+                },
               ]}
             >
               <Text style={styles.bodyTypeText}>{data.bodyType}</Text>
@@ -190,54 +200,46 @@ function BodyAnalysisDetail({ raw }: { raw: Record<string, unknown> }) {
       ) : null}
 
       {data.gaitAnalysis ? (
-        <DetailSection title="걸음걸이 분석">
-          <DetailInfoRow
-            label="마모 패턴"
-            note={data.gaitAnalysis.wearPattern?.description}
-            value={data.gaitAnalysis.wearPattern?.type}
-          />
-          <DetailInfoRow
-            label="보행 유형"
-            note={data.gaitAnalysis.gaitType?.description}
-            value={data.gaitAnalysis.gaitType?.type}
-          />
-          {Array.isArray(data.gaitAnalysis.gaitRecommendations) &&
-          data.gaitAnalysis.gaitRecommendations.length > 0 ? (
-            <View style={styles.bulletGroup}>
-              {data.gaitAnalysis.gaitRecommendations.map((item: string, index: number) => (
-                <View key={`${item}-${index}`} style={styles.bulletRow}>
-                  <View style={styles.numberBadge}>
-                    <Text style={styles.numberBadgeText}>{index + 1}</Text>
-                  </View>
-                  <Text style={styles.bulletText}>{item}</Text>
-                </View>
-              ))}
-            </View>
-          ) : null}
-        </DetailSection>
+        <BodyAnalysisResultView
+          result={{ gaitAnalysis: data.gaitAnalysis }}
+          shoeOnly
+        />
       ) : null}
 
       {data.prediction ? (
         <DetailSection title="미래 예측">
           {data.prediction.currentEstimate ? (
-            <DetailInfoRow label="현재 추정" note={data.prediction.currentEstimate} />
+            <DetailInfoRow
+              label="현재 추정"
+              note={data.prediction.currentEstimate}
+            />
           ) : null}
           {data.prediction.threeMonthPrediction ? (
-            <DetailInfoRow label="3개월 후" note={data.prediction.threeMonthPrediction} />
+            <DetailInfoRow
+              label="3개월 후"
+              note={data.prediction.threeMonthPrediction}
+            />
           ) : null}
           {data.prediction.sixMonthPrediction ? (
-            <DetailInfoRow label="6개월 후" note={data.prediction.sixMonthPrediction} />
+            <DetailInfoRow
+              label="6개월 후"
+              note={data.prediction.sixMonthPrediction}
+            />
           ) : null}
           {data.prediction.oneYearPrediction ? (
-            <DetailInfoRow label="1년 후" note={data.prediction.oneYearPrediction} />
+            <DetailInfoRow
+              label="1년 후"
+              note={data.prediction.oneYearPrediction}
+            />
           ) : null}
         </DetailSection>
       ) : null}
 
-      {Array.isArray(data.recommendations) && data.recommendations.length > 0 ? (
+      {Array.isArray(data.recommendations) &&
+      data.recommendations.length > 0 ? (
         <DetailSection title="추천사항">
           {data.recommendations.map((item: string, index: number) => (
-            <View key={`${item}-${index}`} style={styles.bulletRow}>
+            <View key={item} style={styles.bulletRow}>
               <View style={styles.numberBadge}>
                 <Text style={styles.numberBadgeText}>{index + 1}</Text>
               </View>
@@ -262,7 +264,11 @@ export function AnalysisRecordDetailContent({
   record: AnalysisRecordDetail;
 }) {
   if (record.analysisType === 'body-comparison') {
-    return <BodyComparisonResultView result={toBodyComparisonResult(record.rawResult)} />;
+    return (
+      <BodyComparisonResultView
+        result={toBodyComparisonResult(record.rawResult)}
+      />
+    );
   }
 
   if (record.analysisType === 'body') {

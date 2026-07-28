@@ -16,6 +16,7 @@ export const listAnalysisRecordsQuerySchema = z.object({
 export const createAnalysisRecordSchema = z.object({
   analysisType: analysisTypeSchema,
   analyzedAt: z.string().datetime(),
+  idempotencyKey: z.string().trim().min(1).max(200).optional(),
   qualitativeData: jsonObjectSchema.optional(),
   quantitativeData: jsonObjectSchema.optional(),
   rawResult: jsonObjectSchema,
@@ -67,7 +68,9 @@ export const analysisRecordComparisonSchema = z.object({
 });
 
 export type AnalysisTypeInput = z.infer<typeof analysisTypeSchema>;
-export type CreateAnalysisRecordInput = z.infer<typeof createAnalysisRecordSchema>;
+export type CreateAnalysisRecordInput = z.infer<
+  typeof createAnalysisRecordSchema
+>;
 export type AnalysisRecordComparisonInput = z.infer<
   typeof compareAnalysisRecordsSchema
 >;

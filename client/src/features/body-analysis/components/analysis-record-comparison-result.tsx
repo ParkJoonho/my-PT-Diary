@@ -1,3 +1,11 @@
+import {
+  ArrowDown,
+  ArrowUp,
+  Heart,
+  Minus,
+  TrendingDown,
+  TrendingUp,
+} from 'lucide-react-native';
 import { StyleSheet, Text, View } from 'react-native';
 import Colors, { iosShadow } from 'shared/constants/colors';
 import type { AnalysisRecordComparison } from '../types/body-analysis';
@@ -29,6 +37,30 @@ function getScoreColor(score?: number) {
   return Colors.danger;
 }
 
+function getPostureChangeVisual(change?: string) {
+  if (change === '개선') {
+    return {
+      accessibilityLabel: '개선',
+      color: Colors.success,
+      Icon: ArrowUp,
+    };
+  }
+
+  if (change === '악화') {
+    return {
+      accessibilityLabel: '악화',
+      color: Colors.danger,
+      Icon: ArrowDown,
+    };
+  }
+
+  return {
+    accessibilityLabel: '유지',
+    color: Colors.textMuted,
+    Icon: Minus,
+  };
+}
+
 export function AnalysisRecordComparisonResult({
   result,
 }: {
@@ -50,7 +82,8 @@ export function AnalysisRecordComparisonResult({
                 styles.bodyTypeBadge,
                 {
                   backgroundColor:
-                    BODY_TYPE_COLORS[result.bodyTypeChange.from ?? ''] ?? Colors.info,
+                    BODY_TYPE_COLORS[result.bodyTypeChange.from ?? ''] ??
+                    Colors.info,
                 },
               ]}
             >
@@ -64,7 +97,8 @@ export function AnalysisRecordComparisonResult({
                 styles.bodyTypeBadge,
                 {
                   backgroundColor:
-                    BODY_TYPE_COLORS[result.bodyTypeChange.to ?? ''] ?? Colors.info,
+                    BODY_TYPE_COLORS[result.bodyTypeChange.to ?? ''] ??
+                    Colors.info,
                 },
               ]}
             >
@@ -82,9 +116,9 @@ export function AnalysisRecordComparisonResult({
       {result.improvements?.length ? (
         <View style={[styles.card, iosShadow]}>
           <Text style={styles.cardTitle}>개선된 점</Text>
-          {result.improvements.map((item, index) => (
-            <View key={`${item}-${index}`} style={styles.bulletRow}>
-              <Text style={[styles.bulletDot, { color: Colors.success }]}>•</Text>
+          {result.improvements.map((item) => (
+            <View key={item} style={styles.bulletRow}>
+              <TrendingUp color={Colors.success} size={16} strokeWidth={2.1} />
               <Text style={styles.bulletText}>{item}</Text>
             </View>
           ))}
@@ -94,9 +128,9 @@ export function AnalysisRecordComparisonResult({
       {result.declines?.length ? (
         <View style={[styles.card, iosShadow]}>
           <Text style={styles.cardTitle}>주의 필요</Text>
-          {result.declines.map((item, index) => (
-            <View key={`${item}-${index}`} style={styles.bulletRow}>
-              <Text style={[styles.bulletDot, { color: Colors.danger }]}>•</Text>
+          {result.declines.map((item) => (
+            <View key={item} style={styles.bulletRow}>
+              <TrendingDown color={Colors.danger} size={16} strokeWidth={2.1} />
               <Text style={styles.bulletText}>{item}</Text>
             </View>
           ))}
@@ -106,33 +140,48 @@ export function AnalysisRecordComparisonResult({
       {result.postureChanges?.length ? (
         <View style={[styles.card, iosShadow]}>
           <Text style={styles.cardTitle}>자세 점수 변화</Text>
-          {result.postureChanges.map((item, index) => (
-            <View key={`${item.area}-${index}`} style={styles.postureRow}>
-              <View style={styles.postureHeader}>
-                <Text style={styles.postureArea}>{item.area ?? '-'}</Text>
-                <View style={styles.scoreChangeRow}>
-                  <Text
-                    style={[
-                      styles.scoreText,
-                      { color: getScoreColor(item.before) },
-                    ]}
-                  >
-                    {item.before ?? '-'}
-                  </Text>
-                  <Text style={styles.bodyTypeArrow}>→</Text>
-                  <Text
-                    style={[
-                      styles.scoreText,
-                      { color: getScoreColor(item.after) },
-                    ]}
-                  >
-                    {item.after ?? '-'}
-                  </Text>
+          {result.postureChanges.map((item, index) => {
+            const {
+              accessibilityLabel,
+              color,
+              Icon: ChangeIcon,
+            } = getPostureChangeVisual(item.change);
+
+            return (
+              <View key={`${item.area}-${index}`} style={styles.postureRow}>
+                <View style={styles.postureHeader}>
+                  <Text style={styles.postureArea}>{item.area ?? '-'}</Text>
+                  <View style={styles.scoreChangeRow}>
+                    <Text
+                      style={[
+                        styles.scoreText,
+                        { color: getScoreColor(item.before) },
+                      ]}
+                    >
+                      {item.before ?? '-'}
+                    </Text>
+                    <ChangeIcon
+                      accessibilityLabel={accessibilityLabel}
+                      color={color}
+                      size={14}
+                      strokeWidth={2.1}
+                    />
+                    <Text
+                      style={[
+                        styles.scoreText,
+                        { color: getScoreColor(item.after) },
+                      ]}
+                    >
+                      {item.after ?? '-'}
+                    </Text>
+                  </View>
                 </View>
+                {item.note ? (
+                  <Text style={styles.cardText}>{item.note}</Text>
+                ) : null}
               </View>
-              {item.note ? <Text style={styles.cardText}>{item.note}</Text> : null}
-            </View>
-          ))}
+            );
+          })}
         </View>
       ) : null}
 
@@ -143,7 +192,9 @@ export function AnalysisRecordComparisonResult({
             <View key={`${item.metric}-${index}`} style={styles.quantRow}>
               <View style={styles.quantHeader}>
                 <Text style={styles.quantMetric}>{item.metric ?? '-'}</Text>
-                <Text style={styles.quantPercent}>{item.changePercent ?? '-'}</Text>
+                <Text style={styles.quantPercent}>
+                  {item.changePercent ?? '-'}
+                </Text>
               </View>
               <Text style={styles.cardText}>
                 {item.before ?? '-'} → {item.after ?? '-'}
@@ -157,7 +208,7 @@ export function AnalysisRecordComparisonResult({
         <View style={[styles.card, iosShadow]}>
           <Text style={styles.cardTitle}>추천사항</Text>
           {result.recommendations.map((item, index) => (
-            <View key={`${item}-${index}`} style={styles.recommendationRow}>
+            <View key={item} style={styles.recommendationRow}>
               <View style={styles.recommendationNumber}>
                 <Text style={styles.recommendationNumberText}>{index + 1}</Text>
               </View>
@@ -169,6 +220,7 @@ export function AnalysisRecordComparisonResult({
 
       {result.motivationalNote ? (
         <View style={[styles.card, styles.motivationCard, iosShadow]}>
+          <Heart color={Colors.accent} size={20} strokeWidth={2.1} />
           <Text style={styles.motivationText}>{result.motivationalNote}</Text>
         </View>
       ) : null}
@@ -199,11 +251,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 10,
   },
-  bulletDot: {
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 14,
-  },
   bulletRow: {
+    alignItems: 'flex-start',
     flexDirection: 'row',
     gap: 8,
   },

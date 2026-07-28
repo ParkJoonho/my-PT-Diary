@@ -10,7 +10,10 @@ const 분석결과예시 = {
   gaitAnalysis: null,
   lowerBody: {
     hipWidth: { note: '골반 너비는 보통으로 보여요.', value: '보통' },
-    kneeAlignment: { note: '무릎 정렬은 비교적 안정적이에요.', value: '양호/주의필요'.split('/')[0]! },
+    kneeAlignment: {
+      note: '무릎 정렬은 비교적 안정적이에요.',
+      value: '양호',
+    },
     legLength: { note: '다리 길이는 보통으로 보여요.', value: '보통' },
   },
   medicalAnalysis: null,
@@ -37,13 +40,19 @@ const 분석결과예시 = {
     armToHeight: 0.49,
     upperToLower: 1.02,
   },
-  recommendations: ['흉추 신전 운동을 자주 해 주세요.', '견갑 안정화 운동을 추가해 주세요.'],
+  recommendations: [
+    '흉추 신전 운동을 자주 해 주세요.',
+    '견갑 안정화 운동을 추가해 주세요.',
+  ],
   summary: '상체 안정화가 핵심 과제로 보여요.',
   upperBody: {
     armLength: { note: '팔 길이는 보통이에요.', value: '보통' },
     neckLength: { note: '목 길이는 보통이에요.', value: '보통' },
     shoulderWidth: { note: '어깨가 비교적 넓은 편이에요.', value: '넓음' },
-    spineAlignment: { note: '흉추 정렬을 조금 더 보는 편이 좋아요.', value: '주의필요' },
+    spineAlignment: {
+      note: '흉추 정렬을 조금 더 보는 편이 좋아요.',
+      value: '주의필요',
+    },
   },
 };
 
@@ -168,7 +177,11 @@ describe('체형 분석 서비스', () => {
       listAnalysisRecords: jest.fn(),
     } as unknown as jest.Mocked<AnalysisRecordsService>;
 
-    service = new BodyAnalysisService(aiClient, repository, analysisRecordsService);
+    service = new BodyAnalysisService(
+      aiClient,
+      repository,
+      analysisRecordsService,
+    );
     repository.listRecentWorkoutContext.mockResolvedValue([
       {
         body_composition: { morningWeightKg: 72.4 },
@@ -209,23 +222,27 @@ describe('체형 분석 서비스', () => {
       shoeImageBase64: 'b'.repeat(200),
     });
 
-    expect(repository.listRecentWorkoutContext).toHaveBeenCalledWith({
+    expect(repository.listRecentWorkoutContext.mock.calls[0]?.[0]).toEqual({
       limit: 20,
       userKey: 'user-a',
     });
-    expect(aiClient.analyzeBody).toHaveBeenCalledWith(
+    expect(aiClient.analyzeBody.mock.calls[0]?.[0]).toEqual(
       expect.objectContaining({
         imageBase64: 'a'.repeat(200),
         medicalSymptoms: '어깨가 자주 뻐근해요.',
         shoeImageBase64: 'b'.repeat(200),
       }),
     );
-    expect(analysisRecordsService.createAnalysisRecord).toHaveBeenCalledWith(
-      'user-a',
+    const createRecordCall =
+      analysisRecordsService.createAnalysisRecord.mock.calls[0];
+
+    expect(createRecordCall?.[0]).toBe('user-a');
+    expect(createRecordCall?.[1]).toEqual(
       expect.objectContaining({
         analysisType: 'body',
       }),
     );
+    expect(createRecordCall?.[1].idempotencyKey).toMatch(/^body-analysis:/);
     expect(result.analysis.bodyType).toBe('V');
     expect(result.analysis.gaitAnalysis?.shoeSizeEstimate?.gender).toBe('남성');
     expect(result.recordSave).toEqual({

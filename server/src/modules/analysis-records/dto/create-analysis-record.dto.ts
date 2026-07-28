@@ -4,12 +4,22 @@ import { AnalysisRecordType } from './analysis-record-response.dto';
 
 export class CreateAnalysisRecordDto {
   @ApiProperty({ enum: AnalysisRecordType, example: AnalysisRecordType.Body })
+  @Allow()
   analysisType!: AnalysisRecordType;
 
   @ApiProperty({
     example: '2026-07-28T01:23:45.000Z',
   })
+  @Allow()
   analyzedAt!: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Stable key reused when retrying the same analysis record save.',
+    example: 'body-analysis:2026-07-28T01:23:45.000Z',
+  })
+  @Allow()
+  idempotencyKey?: string;
 
   @ApiPropertyOptional({
     example: {

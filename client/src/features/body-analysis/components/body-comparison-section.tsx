@@ -8,20 +8,13 @@ import {
   X,
 } from 'lucide-react-native';
 import { useState } from 'react';
-import {
-  Alert,
-  Image,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Alert, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import Colors, { iosShadow } from 'shared/constants/colors';
-import { useAnalyzeBodyComparison } from '../api/body-comparison';
 import { useCreateAnalysisRecord } from '../api/analysis-records';
+import { useAnalyzeBodyComparison } from '../api/body-comparison';
 import { buildBodyComparisonRecordPayload } from '../lib/analysis-record-payload';
-import { pickSingleImage, type PickedImage } from '../lib/pick-image';
 import { toBodyComparisonResult } from '../lib/object-access';
+import { type PickedImage, pickSingleImage } from '../lib/pick-image';
 import { AnalysisRecordSaveBanner } from './analysis-record-save-banner';
 import { BodyComparisonResultView } from './body-comparison-result';
 
@@ -57,7 +50,11 @@ function ComparisonSlot({
 
       {image ? (
         <View style={styles.previewWrap}>
-          <Image resizeMode="cover" source={{ uri: image.uri }} style={styles.thumb} />
+          <Image
+            resizeMode="cover"
+            source={{ uri: image.uri }}
+            style={styles.thumb}
+          />
           <Pressable hitSlop={8} onPress={onRemove} style={styles.removeButton}>
             <X color={Colors.white} size={16} strokeWidth={2.1} />
           </Pressable>
@@ -108,7 +105,8 @@ export function BodyComparisonSection({
     status: 'failed' | 'saved';
   } | null>(null);
 
-  const selectedCount = Number(Boolean(images.before)) + Number(Boolean(images.after));
+  const selectedCount =
+    Number(Boolean(images.before)) + Number(Boolean(images.after));
 
   const resetResultState = () => {
     setResult(null);
@@ -163,7 +161,9 @@ export function BodyComparisonSection({
       setRecordSave(response.recordSave);
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : '전·후 비교 분석 요청에 실패했어요.';
+        error instanceof Error
+          ? error.message
+          : '전·후 비교 분석 요청에 실패했어요.';
       Alert.alert('비교 분석 실패', message);
     }
   };
@@ -195,7 +195,10 @@ export function BodyComparisonSection({
 
   return (
     <View style={[styles.card, iosShadow]}>
-      <Pressable onPress={() => onOpenChange(!open)} style={styles.toggleButton}>
+      <Pressable
+        onPress={() => onOpenChange(!open)}
+        style={styles.toggleButton}
+      >
         <View style={styles.toggleLeft}>
           <GitCompareArrows color="#10B981" size={18} strokeWidth={2.1} />
           <Text style={styles.toggleTitle}>전/후 비교 분석</Text>
@@ -238,7 +241,11 @@ export function BodyComparisonSection({
               shortLabel="전"
             />
             <View style={styles.arrowWrap}>
-              <ArrowRight color={Colors.textMuted} size={22} strokeWidth={2.1} />
+              <ArrowRight
+                color={Colors.textMuted}
+                size={22}
+                strokeWidth={2.1}
+              />
             </View>
             <ComparisonSlot
               accentColor="#10B981"
@@ -273,7 +280,11 @@ export function BodyComparisonSection({
                 styles.analyzeButtonDisabled,
             ]}
           >
-            <GitCompareArrows color={Colors.white} size={16} strokeWidth={2.1} />
+            <GitCompareArrows
+              color={Colors.white}
+              size={16}
+              strokeWidth={2.1}
+            />
             <Text style={styles.analyzeButtonText}>
               {analyzeComparison.isPending
                 ? '비교 분석 중...'

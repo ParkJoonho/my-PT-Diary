@@ -69,16 +69,15 @@ export class BodyAnalysisService {
     const analyzedAt = new Date().toISOString();
 
     try {
-      const savedRecord = await this.analysisRecordsService.createAnalysisRecord(
-        userKey,
-        {
+      const savedRecord =
+        await this.analysisRecordsService.createAnalysisRecord(userKey, {
           analyzedAt,
           analysisType: AnalysisRecordType.Body,
+          idempotencyKey: `body-analysis:${analyzedAt}`,
           qualitativeData: this.buildQualitativeData(analysis),
           quantitativeData: this.buildQuantitativeData(analysis),
           rawResult: analysis,
-        },
-      );
+        });
 
       return {
         analysis,
@@ -139,7 +138,9 @@ export class BodyAnalysisService {
       const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
 
       if (!jsonMatch) {
-        throw new BadGatewayException('체형 분석 응답에서 JSON을 찾지 못했어요.');
+        throw new BadGatewayException(
+          '체형 분석 응답에서 JSON을 찾지 못했어요.',
+        );
       }
 
       cleaned = jsonMatch[0].replace(/,\s*([}\]])/g, '$1');

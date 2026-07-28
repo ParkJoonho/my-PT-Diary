@@ -1,6 +1,19 @@
 import { useNavigation } from '@granite-js/react-native';
+import {
+  Accessibility,
+  Brain,
+  ChartColumnBig,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  GitCompareArrows,
+  ScanFace,
+  X,
+  XCircle,
+} from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   Modal,
   Pressable,
@@ -10,8 +23,8 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { EmptyState, SuspenseSection } from 'shared/components/async-state';
 import type { CompareAnalysisRecordsDto } from 'shared/api/generated/models';
+import { EmptyState, SuspenseSection } from 'shared/components/async-state';
 import Colors, { iosShadow } from 'shared/constants/colors';
 import {
   useAnalysisRecord,
@@ -59,6 +72,21 @@ function getBodyTypeColor(bodyType?: string) {
   }
 }
 
+function getAnalysisRecordVisual(analysisType: string) {
+  switch (analysisType) {
+    case 'body':
+      return { color: Colors.accent, Icon: ScanFace };
+    case 'body-comparison':
+      return { color: Colors.success, Icon: GitCompareArrows };
+    case 'posture':
+      return { color: '#8B5CF6', Icon: Accessibility };
+    case 'state-vector':
+      return { color: '#D4AF37', Icon: Brain };
+    default:
+      return { color: Colors.info, Icon: ChartColumnBig };
+  }
+}
+
 function DetailModal({
   onClose,
   recordId,
@@ -86,6 +114,9 @@ function DetailModalContent({
 }) {
   const insets = useSafeAreaInsets();
   const record = toAnalysisRecordDetail(useAnalysisRecord(recordId).data);
+  const { color: typeColor, Icon: TypeIcon } = getAnalysisRecordVisual(
+    record.analysisType,
+  );
 
   return (
     <View style={styles.modalContainer}>
@@ -100,12 +131,15 @@ function DetailModalContent({
       >
         <View style={styles.modalHeader}>
           <Pressable onPress={onClose} style={styles.iconButton}>
-            <Text style={styles.iconButtonText}>닫기</Text>
+            <X color={Colors.text} size={24} strokeWidth={2.1} />
           </Pressable>
           <View style={styles.modalHeaderCenter}>
-            <Text style={styles.modalHeaderTitle}>
-              {getAnalysisRecordTypeLabel(record.analysisType)}
-            </Text>
+            <View style={styles.modalHeaderTitleRow}>
+              <TypeIcon color={typeColor} size={20} strokeWidth={2.1} />
+              <Text style={styles.modalHeaderTitle}>
+                {getAnalysisRecordTypeLabel(record.analysisType)}
+              </Text>
+            </View>
             <Text style={styles.modalHeaderDate}>
               {formatDate(record.analyzedAt)}
             </Text>
@@ -135,16 +169,24 @@ function RecordCard({
   const quantitativeData = asRecord(record.quantitativeData);
   const bodyType = asString(qualitativeData.bodyType);
   const bodyTypeDescription = asString(qualitativeData.bodyTypeDescription);
-  const summary = asString(qualitativeData.summary) ?? '요약 정보가 아직 없어요.';
+  const summary =
+    asString(qualitativeData.summary) ?? '요약 정보가 아직 없어요.';
   const grade = asString(qualitativeData.grade);
   const overallAlignment = quantitativeData.overallAlignment;
   const shoulderBalance = quantitativeData.shoulderBalance;
   const hipBalance = quantitativeData.hipBalance;
+  const { color: typeColor, Icon: TypeIcon } = getAnalysisRecordVisual(
+    record.analysisType,
+  );
 
   return (
     <Pressable
       onPress={onOpenDetail}
-      style={[styles.recordCard, iosShadow, selected && styles.recordCardSelected]}
+      style={[
+        styles.recordCard,
+        iosShadow,
+        selected && styles.recordCardSelected,
+      ]}
     >
       <View style={styles.recordHeader}>
         <View style={styles.recordHeaderLeft}>
@@ -161,13 +203,18 @@ function RecordCard({
               !comparable && styles.recordCheckboxDisabled,
             ]}
           >
-            {selected ? <Text style={styles.recordCheckboxMark}>✓</Text> : null}
+            {selected ? (
+              <Check color={Colors.white} size={14} strokeWidth={2.4} />
+            ) : null}
           </Pressable>
-          <Text style={styles.recordType}>{getAnalysisRecordTypeLabel(record.analysisType)}</Text>
+          <TypeIcon color={typeColor} size={22} strokeWidth={2.1} />
+          <Text style={styles.recordType}>
+            {getAnalysisRecordTypeLabel(record.analysisType)}
+          </Text>
         </View>
         <View style={styles.recordHeaderRight}>
           <Text style={styles.recordDate}>{formatDate(record.analyzedAt)}</Text>
-          <Text style={styles.recordChevron}>›</Text>
+          <ChevronRight color={Colors.textMuted} size={16} strokeWidth={2.1} />
         </View>
       </View>
 
@@ -262,7 +309,7 @@ function HistoryContent() {
       }
 
       if (previous.length >= 2) {
-        return [previous[1]!, recordId];
+        return [previous.at(-1) ?? recordId, recordId];
       }
 
       return [...previous, recordId];
@@ -270,9 +317,16 @@ function HistoryContent() {
   };
 
   const handleCompare = async () => {
+    const [recordId1, recordId2] = selectedIds;
+
+    if (!recordId1 || !recordId2) {
+      Alert.alert('알림', '비교할 기록 2개를 선택해 주세요.');
+      return;
+    }
+
     const payload: CompareAnalysisRecordsDto = {
-      recordId1: selectedIds[0]!,
-      recordId2: selectedIds[1]!,
+      recordId1,
+      recordId2,
     };
 
     try {
@@ -294,8 +348,11 @@ function HistoryContent() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <Pressable onPress={() => navigation.goBack()} style={styles.iconButton}>
-            <Text style={styles.iconButtonText}>뒤로</Text>
+          <Pressable
+            onPress={() => navigation.goBack()}
+            style={styles.iconButton}
+          >
+            <ChevronLeft color={Colors.text} size={24} strokeWidth={2.1} />
           </Pressable>
           <Text style={styles.headerTitle}>분석 기록</Text>
           <View style={styles.iconButtonPlaceholder} />
@@ -341,6 +398,15 @@ function HistoryContent() {
               compareRecords.isPending && styles.compareButtonDisabled,
             ]}
           >
+            {compareRecords.isPending ? (
+              <ActivityIndicator color={Colors.white} size="small" />
+            ) : (
+              <GitCompareArrows
+                color={Colors.white}
+                size={20}
+                strokeWidth={2.1}
+              />
+            )}
             <Text style={styles.compareButtonText}>
               {compareRecords.isPending
                 ? 'AI 비교 분석 중...'
@@ -352,6 +418,11 @@ function HistoryContent() {
         {comparison ? (
           <View style={styles.comparisonWrap}>
             <View style={styles.comparisonHeader}>
+              <GitCompareArrows
+                color={Colors.accent}
+                size={28}
+                strokeWidth={2.1}
+              />
               <Text style={styles.comparisonTitle}>비교 분석 결과</Text>
             </View>
             <AnalysisRecordComparisonResult result={comparison} />
@@ -362,7 +433,10 @@ function HistoryContent() {
               }}
               style={styles.closeComparisonButton}
             >
-              <Text style={styles.closeComparisonButtonText}>비교 결과 닫기</Text>
+              <XCircle color={Colors.textMuted} size={18} strokeWidth={2.1} />
+              <Text style={styles.closeComparisonButtonText}>
+                비교 결과 닫기
+              </Text>
             </Pressable>
           </View>
         ) : (
@@ -390,7 +464,10 @@ function HistoryContent() {
         )}
       </ScrollView>
 
-      <DetailModal onClose={() => setDetailRecordId(null)} recordId={detailRecordId} />
+      <DetailModal
+        onClose={() => setDetailRecordId(null)}
+        recordId={detailRecordId}
+      />
     </View>
   );
 }
@@ -421,6 +498,8 @@ const styles = StyleSheet.create({
     borderColor: Colors.cardBorder,
     borderRadius: 14,
     borderWidth: 1,
+    flexDirection: 'row',
+    gap: 6,
     justifyContent: 'center',
     minHeight: 46,
     marginTop: 12,
@@ -434,6 +513,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: Colors.primary,
     borderRadius: 14,
+    flexDirection: 'row',
+    gap: 8,
     justifyContent: 'center',
     marginHorizontal: 16,
     marginTop: 8,
@@ -448,6 +529,9 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   comparisonHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
     marginBottom: 12,
   },
   comparisonTitle: {
@@ -519,11 +603,6 @@ const styles = StyleSheet.create({
   iconButtonPlaceholder: {
     minWidth: 40,
   },
-  iconButtonText: {
-    color: Colors.text,
-    fontFamily: 'Pretendard-Medium',
-    fontSize: 14,
-  },
   miniScore: {
     alignItems: 'center',
   },
@@ -561,6 +640,11 @@ const styles = StyleSheet.create({
     fontFamily: 'Pretendard-SemiBold',
     fontSize: 17,
   },
+  modalHeaderTitleRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 6,
+  },
   recordBody: {
     gap: 8,
   },
@@ -594,19 +678,9 @@ const styles = StyleSheet.create({
   recordCheckboxDisabled: {
     opacity: 0.45,
   },
-  recordCheckboxMark: {
-    color: Colors.white,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 12,
-  },
   recordCheckboxSelected: {
     backgroundColor: Colors.accent,
     borderColor: Colors.accent,
-  },
-  recordChevron: {
-    color: Colors.textMuted,
-    fontFamily: 'Pretendard-Medium',
-    fontSize: 18,
   },
   recordDate: {
     color: Colors.textMuted,

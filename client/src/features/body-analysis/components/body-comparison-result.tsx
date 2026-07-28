@@ -97,7 +97,11 @@ export function BodyComparisonResultView({
           ) : null}
           {beforeImageUri && afterImageUri ? (
             <View style={styles.imageArrowWrap}>
-              <ArrowRight color={Colors.textMuted} size={20} strokeWidth={2.1} />
+              <ArrowRight
+                color={Colors.textMuted}
+                size={20}
+                strokeWidth={2.1}
+              />
             </View>
           ) : null}
           {afterImageUri ? (
@@ -126,9 +130,9 @@ export function BodyComparisonResultView({
             ['lowerBody', '하체'],
           ].map(([key, label]) => {
             const change =
-              result.bodyChanges?.[key as keyof NonNullable<
-                BodyComparisonResult['bodyChanges']
-              >];
+              result.bodyChanges?.[
+                key as keyof NonNullable<BodyComparisonResult['bodyChanges']>
+              ];
 
             if (!change) {
               return null;
@@ -140,15 +144,19 @@ export function BodyComparisonResultView({
               <View key={key} style={styles.changeItem}>
                 <View style={styles.changeHeader}>
                   <Text style={styles.changeLabel}>{label}</Text>
-                  <View style={[styles.changeBadge, { backgroundColor: color }]}>
+                  <View
+                    style={[styles.changeBadge, { backgroundColor: color }]}
+                  >
                     <Text style={styles.changeBadgeText}>{change.change}</Text>
                   </View>
                 </View>
                 {change.description ? (
-                  <Text style={styles.changeDescription}>{change.description}</Text>
+                  <Text style={styles.changeDescription}>
+                    {change.description}
+                  </Text>
                 ) : null}
-                {change.details?.map((detail, index) => (
-                  <View key={`${label}-${index}`} style={styles.detailRow}>
+                {change.details?.map((detail) => (
+                  <View key={`${label}-${detail}`} style={styles.detailRow}>
                     <Check color={color} size={14} strokeWidth={2.3} />
                     <Text style={styles.detailText}>{detail}</Text>
                   </View>
@@ -170,8 +178,8 @@ export function BodyComparisonResultView({
           {result.postureChanges.improvements?.length ? (
             <View style={styles.subSectionWrap}>
               <Text style={styles.subSectionTitle}>개선된 점</Text>
-              {result.postureChanges.improvements.map((item, index) => (
-                <View key={`improvement-${index}`} style={styles.detailRow}>
+              {result.postureChanges.improvements.map((item) => (
+                <View key={item} style={styles.detailRow}>
                   <CheckCircle2
                     color={Colors.success}
                     size={14}
@@ -185,8 +193,8 @@ export function BodyComparisonResultView({
           {result.postureChanges.remaining?.length ? (
             <View style={styles.subSectionWrap}>
               <Text style={styles.subSectionTitle}>개선 필요</Text>
-              {result.postureChanges.remaining.map((item, index) => (
-                <View key={`remaining-${index}`} style={styles.detailRow}>
+              {result.postureChanges.remaining.map((item) => (
+                <View key={item} style={styles.detailRow}>
                   <TriangleAlert
                     color={Colors.warning}
                     size={14}
@@ -235,8 +243,8 @@ export function BodyComparisonResultView({
               <Text style={[styles.subSectionTitle, { color: Colors.success }]}>
                 유지할 것
               </Text>
-              {result.recommendations.keepDoing.map((item, index) => (
-                <View key={`keep-${index}`} style={styles.detailRow}>
+              {result.recommendations.keepDoing.map((item) => (
+                <View key={item} style={styles.detailRow}>
                   <CheckCircle2
                     color={Colors.success}
                     size={14}
@@ -252,8 +260,8 @@ export function BodyComparisonResultView({
               <Text style={[styles.subSectionTitle, { color: Colors.accent }]}>
                 개선할 것
               </Text>
-              {result.recommendations.improve.map((item, index) => (
-                <View key={`improve-${index}`} style={styles.detailRow}>
+              {result.recommendations.improve.map((item) => (
+                <View key={item} style={styles.detailRow}>
                   <ArrowRight
                     color={Colors.accent}
                     size={14}
