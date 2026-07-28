@@ -13,6 +13,14 @@ export const listAnalysisRecordsQuerySchema = z.object({
   type: analysisTypeSchema.optional(),
 });
 
+export const createAnalysisRecordSchema = z.object({
+  analysisType: analysisTypeSchema,
+  analyzedAt: z.string().datetime(),
+  qualitativeData: jsonObjectSchema.optional(),
+  quantitativeData: jsonObjectSchema.optional(),
+  rawResult: jsonObjectSchema,
+});
+
 export const compareAnalysisRecordsSchema = z.object({
   recordId1: z
     .string()
@@ -59,6 +67,7 @@ export const analysisRecordComparisonSchema = z.object({
 });
 
 export type AnalysisTypeInput = z.infer<typeof analysisTypeSchema>;
+export type CreateAnalysisRecordInput = z.infer<typeof createAnalysisRecordSchema>;
 export type AnalysisRecordComparisonInput = z.infer<
   typeof compareAnalysisRecordsSchema
 >;

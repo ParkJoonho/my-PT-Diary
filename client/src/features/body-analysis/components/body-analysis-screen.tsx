@@ -12,7 +12,7 @@ import {
   Sparkles,
   X,
 } from 'lucide-react-native';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Alert,
   Image,
@@ -27,8 +27,11 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Colors, { iosShadow } from 'shared/constants/colors';
 import { useAnalyzeBody } from '../api/body-analysis';
+import { useCreateAnalysisRecord } from '../api/analysis-records';
+import { buildBodyAnalysisRecordPayload } from '../lib/analysis-record-payload';
 import { pickSingleImage, type PickedImage } from '../lib/pick-image';
 import { toBodyAnalysisResult } from '../lib/object-access';
+import { useBodyAnalysisEntryStore } from '../stores/use-body-analysis-entry-store';
 import { AnalysisRecordSaveBanner } from './analysis-record-save-banner';
 import { BodyAnalysisResultView } from './body-analysis-result';
 import { BodyComparisonSection } from './body-comparison-section';
@@ -184,11 +187,19 @@ export function BodyAnalysisScreen() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const analyzeBody = useAnalyzeBody();
+  const createAnalysisRecord = useCreateAnalysisRecord();
+  const consumeEntryPoint = useBodyAnalysisEntryStore(
+    (state) => state.consumeEntryPoint,
+  );
+  const scrollViewRef = useRef<ScrollView>(null);
+  const shoeAutoScrollDoneRef = useRef(false);
   const [images, setImages] = useState<PickedImages>({});
   const [height, setHeight] = useState('');
   const [medicalSymptoms, setMedicalSymptoms] = useState('');
   const [multiViewOpen, setMultiViewOpen] = useState(false);
   const [comparisonOpen, setComparisonOpen] = useState(false);
+  const [screenMode, setScreenMode] = useState<'default' | 'shoe'>('default');
+  const [shoeSectionOffset, setShoeSectionOffset] = useState<number | null>(null);
   const [result, setResult] = useState<ReturnType<typeof toBodyAnalysisResult> | null>(
     null,
   );
@@ -198,6 +209,28 @@ export function BodyAnalysisScreen() {
     recordId?: string;
     status: 'failed' | 'saved';
   } | null>(null);
+
+  useEffect(() => {
+    setScreenMode(consumeEntryPoint());
+  }, [consumeEntryPoint]);
+
+  useEffect(() => {
+    if (
+      screenMode !== 'shoe' ||
+      shoeAutoScrollDoneRef.current ||
+      shoeSectionOffset === null
+    ) {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      scrollViewRef.current?.scrollTo({
+        animated: false,
+        y: Math.max(shoeSectionOffset - 12, 0),
+      });
+      shoeAutoScrollDoneRef.current = true;
+    });
+  }, [screenMode, shoeSectionOffset]);
 
   const handlePickImage = async ({
     target,
@@ -257,6 +290,25 @@ export function BodyAnalysisScreen() {
     }
   };
 
+  const handleRetryRecordSave = async () => {
+    if (!result || !analyzedAt) {
+      return;
+    }
+
+    try {
+      await createAnalysisRecord.mutateAsync(
+        buildBodyAnalysisRecordPayload(analyzedAt, result),
+      );
+      setRecordSave({
+        status: 'saved',
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : '분석 기록 저장에 실패했어요.';
+      Alert.alert('저장 실패', message);
+    }
+  };
+
   const resetAnalysis = () => {
     setImages({});
     setMultiViewOpen(false);
@@ -278,6 +330,7 @@ export function BodyAnalysisScreen() {
   return (
     <View style={styles.container}>
       <ScrollView
+        ref={scrollViewRef}
         contentContainerStyle={{
           paddingBottom: 24 + insets.bottom,
           paddingTop: Platform.OS === 'web' ? 24 : insets.top + 14,
@@ -289,7 +342,9 @@ export function BodyAnalysisScreen() {
           <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
             <ArrowLeft color={Colors.text} size={22} strokeWidth={2.1} />
           </Pressable>
-          <Text style={styles.headerTitle}>AI 체형 분석</Text>
+          <Text style={styles.headerTitle}>
+            {screenMode === 'shoe' ? 'AI 신발 추천' : 'AI 체형 분석'}
+          </Text>
           <Pressable
             onPress={() =>
               navigation.navigate({ name: '/analysis-history', params: {} })
@@ -305,12 +360,19 @@ export function BodyAnalysisScreen() {
           <>
             <View style={[styles.infoCard, iosShadow]}>
               <View style={styles.infoIconWrap}>
-                <ScanFace color={Colors.accent} size={28} strokeWidth={2.1} />
+                {screenMode === 'shoe' ? (
+                  <Footprints color={Colors.info} size={28} strokeWidth={2.1} />
+                ) : (
+                  <ScanFace color={Colors.accent} size={28} strokeWidth={2.1} />
+                )}
               </View>
-              <Text style={styles.infoTitle}>AI 체형 분석</Text>
+              <Text style={styles.infoTitle}>
+                {screenMode === 'shoe' ? 'AI 신발 추천' : 'AI 체형 분석'}
+              </Text>
               <Text style={styles.infoDescription}>
-                전신 사진을 촬영하거나 선택하면{'\n'}AI가 체형, 자세, 비율을
-                분석하고{'\n'}미래 변화를 예측합니다
+                {screenMode === 'shoe'
+                  ? '전신 사진과 신발 밑창 사진을 함께 선택하면\nAI가 보행 패턴을 분석하고\n맞춤 신발을 추천합니다'
+                  : '전신 사진을 촬영하거나 선택하면\nAI가 체형, 자세, 비율을 분석하고\n미래 변화를 예측합니다'}
               </Text>
               <View style={styles.tipList}>
                 <TipRow text="전신이 보이는 정면 사진" />
@@ -420,7 +482,12 @@ export function BodyAnalysisScreen() {
               ) : null}
             </View>
 
-            <View style={[styles.photoSection, iosShadow]}>
+            <View
+              onLayout={(event) => {
+                setShoeSectionOffset(event.nativeEvent.layout.y);
+              }}
+              style={[styles.photoSection, iosShadow]}
+            >
               <View style={styles.sectionTitleRow}>
                 <Footprints color={Colors.info} size={18} strokeWidth={2.1} />
                 <Text style={styles.photoSectionTitle}>신발 밑창 사진 (선택)</Text>
@@ -462,9 +529,8 @@ export function BodyAnalysisScreen() {
             />
 
             <View style={[styles.photoSection, iosShadow]}>
-              <Text style={styles.photoSectionTitle}>추가 입력</Text>
+              <Text style={styles.photoSectionTitle}>키 입력 (선택사항)</Text>
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>키 (cm)</Text>
                 <TextInput
                   inputMode="numeric"
                   onChangeText={setHeight}
@@ -474,33 +540,35 @@ export function BodyAnalysisScreen() {
                   value={height}
                 />
               </View>
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>의료 증상 입력 (선택사항)</Text>
-                <Text style={styles.inputHelperText}>
-                  현재 겪고 있는 통증, 질환, 부상 이력 등을 입력하면 의료적
-                  관점의 분석이 추가돼요
-                </Text>
-                <TextInput
-                  multiline
-                  onChangeText={setMedicalSymptoms}
-                  placeholder="예: 허리디스크, 오른쪽 무릎 통증, 거북목, 라운드숄더, 족저근막염 등"
-                  placeholderTextColor={Colors.textMuted}
-                  style={[styles.input, styles.textArea]}
-                  value={medicalSymptoms}
-                />
-                {medicalSymptoms.trim().length > 0 ? (
-                  <View style={styles.medicalWarning}>
-                    <Text style={styles.medicalWarningText}>
-                      AI 분석은 참고용이며 전문 의료 진단을 대체할 수 없어요
-                    </Text>
-                  </View>
-                ) : null}
-              </View>
+            </View>
+
+            <View style={[styles.photoSection, iosShadow]}>
+              <Text style={styles.photoSectionTitle}>의료 증상 입력 (선택사항)</Text>
+              <Text style={styles.inputHelperText}>
+                현재 겪고 있는 통증, 질환, 부상 이력 등을 입력하면 의료적
+                관점의 분석이 추가돼요
+              </Text>
+              <TextInput
+                multiline
+                onChangeText={setMedicalSymptoms}
+                placeholder="예: 허리디스크, 오른쪽 무릎 통증, 거북목, 라운드숄더, 족저근막염 등"
+                placeholderTextColor={Colors.textMuted}
+                style={[styles.input, styles.textArea]}
+                value={medicalSymptoms}
+              />
+              {medicalSymptoms.trim().length > 0 ? (
+                <View style={styles.medicalWarning}>
+                  <Text style={styles.medicalWarningText}>
+                    AI 분석은 참고용이며 전문 의료 진단을 대체할 수 없어요
+                  </Text>
+                </View>
+              ) : null}
             </View>
 
             <Pressable
               disabled={!images.front?.base64 || analyzeBody.isPending}
               onPress={() => void handleAnalyze()}
+              testID="analyze-btn"
               style={[
                 styles.analyzeButton,
                 (!images.front?.base64 || analyzeBody.isPending) &&
@@ -519,7 +587,14 @@ export function BodyAnalysisScreen() {
           <>
             <AnalysisRecordSaveBanner
               failedFallbackMessage="분석 결과는 생성됐지만 기록 저장에 실패했어요."
+              onActionPress={
+                recordSave?.status === 'failed'
+                  ? () => void handleRetryRecordSave()
+                  : undefined
+              }
+              pending={createAnalysisRecord.isPending}
               successMessage="분석 결과를 기록에 저장했어요."
+              actionLabel="기록 저장 다시 시도"
               value={recordSave}
             />
 

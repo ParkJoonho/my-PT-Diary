@@ -11,6 +11,7 @@ import {
 import { UserKey } from '../../common/decorators/user-key.decorator';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { AnalysisRecordsService } from './analysis-records.service';
+import { CreateAnalysisRecordDto } from './dto/create-analysis-record.dto';
 import { CompareAnalysisRecordsDto } from './dto/compare-analysis-records.dto';
 import { CompareAnalysisRecordsResponseDto } from './dto/compare-analysis-response.dto';
 import {
@@ -19,6 +20,7 @@ import {
 } from './dto/analysis-record-response.dto';
 import { ListAnalysisRecordsQueryDto } from './dto/list-analysis-records-query.dto';
 import {
+  createAnalysisRecordSchema,
   compareAnalysisRecordsSchema,
   listAnalysisRecordsQuerySchema,
 } from './analysis-records.schemas';
@@ -38,6 +40,21 @@ export class AnalysisRecordsController {
   constructor(
     private readonly analysisRecordsService: AnalysisRecordsService,
   ) {}
+
+  @ApiOperation({
+    summary: 'Create one analysis record for the current user key.',
+  })
+  @ApiOkResponse({
+    type: AnalysisRecordDetailDto,
+  })
+  @Post()
+  createAnalysisRecord(
+    @UserKey() userKey: string,
+    @Body(new ZodValidationPipe(createAnalysisRecordSchema))
+    dto: CreateAnalysisRecordDto,
+  ) {
+    return this.analysisRecordsService.createAnalysisRecord(userKey, dto);
+  }
 
   @ApiOperation({
     summary: 'List analysis records for the current user key.',

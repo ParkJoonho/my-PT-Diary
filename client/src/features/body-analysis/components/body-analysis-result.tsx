@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { UnimplementedBadge } from 'shared/components/unimplemented-badge';
 import Colors, { iosShadow } from 'shared/constants/colors';
 import type {
   BodyAnalysisResult,
+  MobilityDetail,
+  SeverityDetail,
   ShoeRecommendationItem,
 } from '../types/body-analysis';
 
@@ -34,20 +35,59 @@ const WEAR_PATTERN_COLORS: Record<string, string> = {
   정상: Colors.success,
 };
 
-function getScoreColor(score: number) {
-  if (score >= 4) {
+function getScoreColor(score?: number) {
+  const normalizedScore = score ?? 0;
+
+  if (normalizedScore >= 4) {
     return Colors.success;
   }
 
-  if (score >= 3) {
+  if (normalizedScore >= 3) {
     return Colors.info;
   }
 
-  if (score >= 2) {
+  if (normalizedScore >= 2) {
     return Colors.warning;
   }
 
   return Colors.danger;
+}
+
+function getGradeColor(grade?: string) {
+  switch (grade) {
+    case 'S':
+      return '#AF52DE';
+    case 'A':
+      return Colors.success;
+    case 'B':
+      return Colors.info;
+    case 'C':
+      return Colors.warning;
+    case 'D':
+    case 'F':
+      return Colors.danger;
+    default:
+      return Colors.textMuted;
+  }
+}
+
+function getSeverityColor(severity?: string, detected?: boolean) {
+  if (detected === false) {
+    return Colors.success;
+  }
+
+  switch (severity) {
+    case '정상':
+      return Colors.success;
+    case '경미':
+      return Colors.info;
+    case '중등':
+      return Colors.warning;
+    case '심각':
+      return Colors.danger;
+    default:
+      return Colors.textMuted;
+  }
 }
 
 function ScoreBar({
@@ -86,7 +126,43 @@ function ScoreBar({
   );
 }
 
-function DetailRow({
+function RatioItem({
+  labels,
+  title,
+  value,
+}: {
+  labels: [string, string, string];
+  title: string;
+  value?: number;
+}) {
+  const safeValue = typeof value === 'number' ? value : 0;
+
+  return (
+    <View style={styles.ratioItem}>
+      <Text style={styles.ratioLabel}>{title}</Text>
+      <Text style={styles.ratioValue}>
+        {typeof value === 'number' ? value.toFixed(2) : '-'}
+      </Text>
+      <View style={styles.ratioBar}>
+        <View style={styles.ratioBarBackground}>
+          <View
+            style={[
+              styles.ratioMarker,
+              { left: `${Math.max(0, Math.min(safeValue * 100, 100))}%` },
+            ]}
+          />
+        </View>
+        <View style={styles.ratioLabelsRow}>
+          <Text style={styles.ratioHint}>{labels[0]}</Text>
+          <Text style={styles.ratioHint}>{labels[1]}</Text>
+          <Text style={styles.ratioHint}>{labels[2]}</Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function MeasureRow({
   label,
   note,
   value,
@@ -100,12 +176,14 @@ function DetailRow({
   }
 
   return (
-    <View style={styles.detailRow}>
-      <View style={styles.detailHeaderRow}>
-        <Text style={styles.detailLabel}>{label}</Text>
-        {value ? <Text style={styles.detailValue}>{value}</Text> : null}
-      </View>
-      {note ? <Text style={styles.detailNote}>{note}</Text> : null}
+    <View style={styles.measureRow}>
+      <Text style={styles.measureLabel}>{label}</Text>
+      {value ? (
+        <View style={styles.measureValueBadge}>
+          <Text style={styles.measureValue}>{value}</Text>
+        </View>
+      ) : null}
+      {note ? <Text style={styles.measureNote}>{note}</Text> : null}
     </View>
   );
 }
@@ -131,6 +209,60 @@ function RecommendationRow({
   );
 }
 
+function SeverityRow({
+  fallbackWhenFalse = '정상',
+  label,
+  value,
+}: {
+  fallbackWhenFalse?: string;
+  label: string;
+  value?: SeverityDetail;
+}) {
+  if (!value) {
+    return null;
+  }
+
+  const badgeText = value.detected === false ? fallbackWhenFalse : value.severity ?? '감지';
+
+  return (
+    <View style={styles.viewDetailRow}>
+      <View
+        style={[
+          styles.severityBadge,
+          {
+            backgroundColor: getSeverityColor(value.severity, value.detected),
+          },
+        ]}
+      >
+        <Text style={styles.severityBadgeText}>{badgeText}</Text>
+      </View>
+      <Text style={styles.viewDetailLabel}>{label}</Text>
+      {value.note ? <Text style={styles.viewDetailNote}>{value.note}</Text> : null}
+    </View>
+  );
+}
+
+function MobilityCard({
+  label,
+  value,
+}: {
+  label: string;
+  value?: MobilityDetail;
+}) {
+  if (!value) {
+    return null;
+  }
+
+  return (
+    <View style={styles.mobilityItem}>
+      <Text style={styles.mobilityLabel}>{label}</Text>
+      <Text style={[styles.mobilityScore, { color: getScoreColor(value.score) }]}>
+        {value.score ?? 0}/5
+      </Text>
+    </View>
+  );
+}
+
 function ShoeRecommendationCard({ item }: { item: ShoeRecommendationItem }) {
   return (
     <View style={[styles.shoeCard, iosShadow]}>
@@ -140,18 +272,13 @@ function ShoeRecommendationCard({ item }: { item: ShoeRecommendationItem }) {
         </View>
         <Text style={styles.shoeModelText}>{item.model ?? '-'}</Text>
       </View>
-
       <View style={styles.shoeMetaRow}>
         <View style={styles.shoeTypeBadge}>
-          <Text style={styles.shoeTypeBadgeText}>{item.type ?? '-'}</Text>
+          <Text style={styles.shoeTypeText}>{item.type ?? '-'}</Text>
         </View>
         <Text style={styles.shoePriceText}>{item.priceRange ?? '-'}</Text>
       </View>
-
-      {item.reason ? (
-        <Text style={styles.shoeReasonText}>{item.reason}</Text>
-      ) : null}
-
+      {item.reason ? <Text style={styles.shoeReasonText}>{item.reason}</Text> : null}
       <View style={styles.shoeSpecRow}>
         {[
           { label: '아치 지지', value: item.archSupport },
@@ -164,7 +291,6 @@ function ShoeRecommendationCard({ item }: { item: ShoeRecommendationItem }) {
           </View>
         ))}
       </View>
-
       {item.features?.length ? (
         <View style={styles.featureWrap}>
           {item.features.map((feature, index) => (
@@ -180,7 +306,6 @@ function ShoeRecommendationCard({ item }: { item: ShoeRecommendationItem }) {
 
 export function BodyAnalysisResultView({
   result,
-  showFutureAsUnimplemented = false,
 }: {
   result: BodyAnalysisResult;
   showFutureAsUnimplemented?: boolean;
@@ -201,47 +326,78 @@ export function BodyAnalysisResultView({
 
   return (
     <View style={styles.container}>
-      <View style={[styles.heroCard, iosShadow]}>
+      <View style={[styles.bodyTypeCard, iosShadow]}>
         <View style={[styles.bodyTypeBadge, { backgroundColor: bodyTypeColor }]}>
           <Text style={styles.bodyTypeLetter}>{result.bodyType ?? '?'}</Text>
         </View>
-        <View style={styles.heroTextWrap}>
-          <Text style={styles.heroTitle}>BODY MBTI</Text>
-          <Text style={styles.heroSubTitle}>
-            {BODY_TYPE_NAMES[result.bodyType ?? ''] ?? (result.bodyType ?? '-')}
-          </Text>
-          {result.bodyTypeDescription ? (
-            <Text style={styles.heroDescription}>
-              {result.bodyTypeDescription}
-            </Text>
-          ) : null}
-        </View>
+        <Text style={styles.bodyTypeTitle}>BODY MBTI</Text>
+        <Text style={styles.bodyTypeName}>
+          {BODY_TYPE_NAMES[result.bodyType ?? ''] ?? (result.bodyType ?? '-')}
+        </Text>
+        {result.bodyTypeDescription ? (
+          <Text style={styles.bodyTypeDescription}>{result.bodyTypeDescription}</Text>
+        ) : null}
       </View>
 
       <View style={[styles.card, iosShadow]}>
-        <Text style={styles.cardTitle}>체형 비율</Text>
-        <View style={styles.ratioGrid}>
-          <View style={styles.ratioItem}>
-            <Text style={styles.ratioLabel}>팔/키 비율</Text>
-            <Text style={styles.ratioValue}>
-              {typeof result.ratios?.armToHeight === 'number'
-                ? result.ratios.armToHeight.toFixed(2)
-                : '-'}
-            </Text>
-          </View>
-          <View style={styles.ratioItem}>
-            <Text style={styles.ratioLabel}>상하체 비율</Text>
-            <Text style={styles.ratioValue}>
-              {typeof result.ratios?.upperToLower === 'number'
-                ? result.ratios.upperToLower.toFixed(2)
-                : '-'}
-            </Text>
-          </View>
-        </View>
+        <Text style={styles.sectionTitle}>신체 비율</Text>
+        <RatioItem
+          labels={['짧은편', '평균 1.00', '긴편']}
+          title="팔 / 키"
+          value={result.ratios?.armToHeight}
+        />
+        <RatioItem
+          labels={['하체↑', '평균 1.0', '상체↑']}
+          title="상하체"
+          value={result.ratios?.upperToLower}
+        />
       </View>
 
       <View style={[styles.card, iosShadow]}>
-        <Text style={styles.cardTitle}>자세 평가</Text>
+        <Text style={styles.sectionTitle}>상체</Text>
+        <MeasureRow
+          label="어깨너비"
+          note={result.upperBody?.shoulderWidth?.note}
+          value={result.upperBody?.shoulderWidth?.value}
+        />
+        <MeasureRow
+          label="팔길이"
+          note={result.upperBody?.armLength?.note}
+          value={result.upperBody?.armLength?.value}
+        />
+        <MeasureRow
+          label="목길이"
+          note={result.upperBody?.neckLength?.note}
+          value={result.upperBody?.neckLength?.value}
+        />
+        <MeasureRow
+          label="척추정렬"
+          note={result.upperBody?.spineAlignment?.note}
+          value={result.upperBody?.spineAlignment?.value}
+        />
+      </View>
+
+      <View style={[styles.card, iosShadow]}>
+        <Text style={styles.sectionTitle}>하체</Text>
+        <MeasureRow
+          label="허리너비"
+          note={result.lowerBody?.hipWidth?.note}
+          value={result.lowerBody?.hipWidth?.value}
+        />
+        <MeasureRow
+          label="다리길이"
+          note={result.lowerBody?.legLength?.note}
+          value={result.lowerBody?.legLength?.value}
+        />
+        <MeasureRow
+          label="무릎정렬"
+          note={result.lowerBody?.kneeAlignment?.note}
+          value={result.lowerBody?.kneeAlignment?.value}
+        />
+      </View>
+
+      <View style={[styles.card, iosShadow]}>
+        <Text style={styles.sectionTitle}>자세 분석</Text>
         <ScoreBar
           label="전체 정렬"
           note={result.posture?.overallAlignment?.note}
@@ -258,86 +414,201 @@ export function BodyAnalysisResultView({
           score={result.posture?.hipBalance?.score}
         />
         <ScoreBar
-          label="척추 곡률"
+          label="척추 곡선"
           note={result.posture?.spinalCurvature?.note}
           score={result.posture?.spinalCurvature?.score}
         />
       </View>
 
-      <View style={[styles.card, iosShadow]}>
-        <Text style={styles.cardTitle}>상체 특징</Text>
-        <DetailRow
-          label="어깨 너비"
-          note={result.upperBody?.shoulderWidth?.note}
-          value={result.upperBody?.shoulderWidth?.value}
-        />
-        <DetailRow
-          label="팔 길이"
-          note={result.upperBody?.armLength?.note}
-          value={result.upperBody?.armLength?.value}
-        />
-        <DetailRow
-          label="목 길이"
-          note={result.upperBody?.neckLength?.note}
-          value={result.upperBody?.neckLength?.value}
-        />
-        <DetailRow
-          label="척추 정렬"
-          note={result.upperBody?.spineAlignment?.note}
-          value={result.upperBody?.spineAlignment?.value}
-        />
-      </View>
-
-      <View style={[styles.card, iosShadow]}>
-        <Text style={styles.cardTitle}>하체 특징</Text>
-        <DetailRow
-          label="골반 너비"
-          note={result.lowerBody?.hipWidth?.note}
-          value={result.lowerBody?.hipWidth?.value}
-        />
-        <DetailRow
-          label="다리 길이"
-          note={result.lowerBody?.legLength?.note}
-          value={result.lowerBody?.legLength?.value}
-        />
-        <DetailRow
-          label="무릎 정렬"
-          note={result.lowerBody?.kneeAlignment?.note}
-          value={result.lowerBody?.kneeAlignment?.value}
-        />
-      </View>
-
       {result.multiViewAnalysis ? (
         <View style={[styles.card, iosShadow]}>
-          <View style={styles.cardHeaderRow}>
-            <Text style={styles.cardTitle}>다각도 분석</Text>
-            <View style={styles.multiViewGradeBadge}>
-              <Text style={styles.multiViewGradeText}>
-                {result.multiViewAnalysis.compositeGrade ?? '-'} ·{' '}
-                {result.multiViewAnalysis.compositePostureScore ?? 0}점
+          <View style={styles.multiViewHeader}>
+            <Text style={styles.sectionTitle}>다중 각도 종합 분석</Text>
+            <View
+              style={[
+                styles.gradeBadge,
+                {
+                  backgroundColor: getGradeColor(
+                    result.multiViewAnalysis.compositeGrade,
+                  ),
+                },
+              ]}
+            >
+              <Text style={styles.gradeBadgeText}>
+                {result.multiViewAnalysis.compositeGrade ?? '-'}
               </Text>
             </View>
           </View>
-          {result.multiViewAnalysis.priorityCorrections?.map((item, index) => (
-            <View key={`${item.issue}-${index}`} style={styles.correctionItem}>
-              <View style={styles.correctionHeader}>
-                <View style={styles.correctionPriorityBadge}>
-                  <Text style={styles.correctionPriorityText}>
-                    {item.priority ?? '-'}
+          <View style={styles.compositeScoreCard}>
+            <Text style={styles.compositeScoreValue}>
+              {result.multiViewAnalysis.compositePostureScore ?? 0}점
+            </Text>
+            <Text style={styles.compositeScoreLabel}>종합 자세 점수 (100점 만점)</Text>
+            <View style={styles.compositeScoreBar}>
+              <View
+                style={[
+                  styles.compositeScoreFill,
+                  {
+                    backgroundColor: getGradeColor(
+                      result.multiViewAnalysis.compositeGrade,
+                    ),
+                    width: `${result.multiViewAnalysis.compositePostureScore ?? 0}%`,
+                  },
+                ]}
+              />
+            </View>
+          </View>
+
+          {result.multiViewAnalysis.sideView ? (
+            <View style={styles.viewSection}>
+              <Text style={styles.viewSectionTitle}>측면 분석</Text>
+              <SeverityRow
+                label="거북목"
+                value={result.multiViewAnalysis.sideView.forwardHeadPosture}
+              />
+              <SeverityRow
+                label="라운드숄더"
+                value={result.multiViewAnalysis.sideView.roundedShoulders}
+              />
+              <SeverityRow
+                label="골반 전방경사"
+                value={result.multiViewAnalysis.sideView.anteriorPelvicTilt}
+              />
+              {result.multiViewAnalysis.sideView.spinalCurve ? (
+                <View style={styles.viewDetailRow}>
+                  <View
+                    style={[
+                      styles.severityBadge,
+                      { backgroundColor: Colors.info },
+                    ]}
+                  >
+                    <Text style={styles.severityBadgeText}>
+                      {result.multiViewAnalysis.sideView.spinalCurve.type ?? '-'}
+                    </Text>
+                  </View>
+                  <Text style={styles.viewDetailLabel}>척추 곡선</Text>
+                  <Text style={styles.viewDetailNote}>
+                    {result.multiViewAnalysis.sideView.spinalCurve.note}
                   </Text>
                 </View>
-                <Text style={styles.correctionTitle}>{item.issue ?? '-'}</Text>
-              </View>
-              <Text style={styles.correctionExercise}>
-                교정 운동: {item.exercise ?? '-'}
-              </Text>
-              {item.description ? (
-                <Text style={styles.correctionDescription}>
-                  {item.description}
-                </Text>
               ) : null}
             </View>
-          ))}
+          ) : null}
+
+          {result.multiViewAnalysis.backView ? (
+            <View style={styles.viewSection}>
+              <Text style={styles.viewSectionTitle}>후면 분석</Text>
+              <SeverityRow
+                fallbackWhenFalse="정상"
+                label="척추 측만"
+                value={result.multiViewAnalysis.backView.scoliosis}
+              />
+              <SeverityRow
+                fallbackWhenFalse="정상"
+                label="견갑골 날개"
+                value={result.multiViewAnalysis.backView.scapularWinging}
+              />
+              <SeverityRow
+                fallbackWhenFalse="정상"
+                label="어깨 비대칭"
+                value={result.multiViewAnalysis.backView.shoulderAsymmetry}
+              />
+              <SeverityRow
+                fallbackWhenFalse="정상"
+                label="골반 비대칭"
+                value={result.multiViewAnalysis.backView.pelvicAsymmetry}
+              />
+              <SeverityRow
+                fallbackWhenFalse="정상"
+                label="근육 불균형"
+                value={result.multiViewAnalysis.backView.muscleImbalance}
+              />
+            </View>
+          ) : null}
+
+          {result.multiViewAnalysis.squatView ? (
+            <View style={styles.viewSection}>
+              <Text style={styles.viewSectionTitle}>스쿼트 분석</Text>
+              <SeverityRow
+                label="무릎 내전"
+                value={result.multiViewAnalysis.squatView.kneeValgus}
+              />
+              {result.multiViewAnalysis.squatView.squatDepth ? (
+                <View style={styles.viewDetailRow}>
+                  <View
+                    style={[
+                      styles.severityBadge,
+                      { backgroundColor: Colors.info },
+                    ]}
+                  >
+                    <Text style={styles.severityBadgeText}>
+                      {result.multiViewAnalysis.squatView.squatDepth.value ?? '-'}
+                    </Text>
+                  </View>
+                  <Text style={styles.viewDetailLabel}>스쿼트 깊이</Text>
+                  <Text style={styles.viewDetailNote}>
+                    {result.multiViewAnalysis.squatView.squatDepth.note}
+                  </Text>
+                </View>
+              ) : null}
+              <SeverityRow
+                label="상체 기울기"
+                value={result.multiViewAnalysis.squatView.trunkLean}
+              />
+              <View style={styles.mobilityRow}>
+                <MobilityCard
+                  label="고관절"
+                  value={result.multiViewAnalysis.squatView.hipMobility}
+                />
+                <MobilityCard
+                  label="발목"
+                  value={result.multiViewAnalysis.squatView.ankleMobility}
+                />
+                <MobilityCard
+                  label="균형"
+                  value={result.multiViewAnalysis.squatView.balance}
+                />
+              </View>
+            </View>
+          ) : null}
+
+          {result.multiViewAnalysis.priorityCorrections?.length ? (
+            <View style={styles.viewSection}>
+              <Text style={styles.viewSectionTitle}>우선 교정 사항</Text>
+              {result.multiViewAnalysis.priorityCorrections.map((item, index) => (
+                <View key={`${item.issue}-${index}`} style={styles.priorityCard}>
+                  <View style={styles.priorityHeader}>
+                    <View
+                      style={[
+                        styles.priorityBadge,
+                        {
+                          backgroundColor:
+                            item.priority === '높음'
+                              ? Colors.danger
+                              : item.priority === '중간'
+                                ? Colors.warning
+                                : Colors.info,
+                        },
+                      ]}
+                    >
+                      <Text style={styles.priorityBadgeText}>
+                        {item.priority ?? '-'}
+                      </Text>
+                    </View>
+                    <Text style={styles.priorityTitle}>{item.issue ?? '-'}</Text>
+                  </View>
+                  <Text style={styles.priorityExercise}>
+                    교정 운동: {item.exercise ?? '-'}
+                  </Text>
+                  {item.description ? (
+                    <Text style={styles.priorityDescription}>
+                      {item.description}
+                    </Text>
+                  ) : null}
+                </View>
+              ))}
+            </View>
+          ) : null}
         </View>
       ) : null}
 
@@ -351,7 +622,7 @@ export function BodyAnalysisResultView({
           </View>
 
           <View style={[styles.card, iosShadow]}>
-            <Text style={styles.cardTitle}>신발 마모 패턴</Text>
+            <Text style={styles.sectionTitle}>신발 마모 패턴</Text>
             <View style={styles.wearPatternRow}>
               <View
                 style={[
@@ -369,22 +640,22 @@ export function BodyAnalysisResultView({
                 </Text>
               </View>
               {result.gaitAnalysis.wearPattern?.leftRight ? (
-                <View style={styles.sideBadge}>
-                  <Text style={styles.sideBadgeText}>
+                <View style={styles.leftRightBadge}>
+                  <Text style={styles.leftRightBadgeText}>
                     {result.gaitAnalysis.wearPattern.leftRight}
                   </Text>
                 </View>
               ) : null}
             </View>
             {result.gaitAnalysis.wearPattern?.description ? (
-              <Text style={styles.sectionDescription}>
+              <Text style={styles.bodyText}>
                 {result.gaitAnalysis.wearPattern.description}
               </Text>
             ) : null}
           </View>
 
           <View style={[styles.card, iosShadow]}>
-            <Text style={styles.cardTitle}>보행 유형</Text>
+            <Text style={styles.sectionTitle}>보행 유형</Text>
             {result.gaitAnalysis.gaitType?.type ? (
               <View style={styles.gaitTypeBadge}>
                 <Text style={styles.gaitTypeBadgeText}>
@@ -393,15 +664,15 @@ export function BodyAnalysisResultView({
               </View>
             ) : null}
             {result.gaitAnalysis.gaitType?.description ? (
-              <Text style={styles.sectionDescription}>
+              <Text style={styles.bodyText}>
                 {result.gaitAnalysis.gaitType.description}
               </Text>
             ) : null}
           </View>
 
           <View style={[styles.card, iosShadow]}>
-            <Text style={styles.cardTitle}>발 정렬 상태</Text>
-            <DetailRow
+            <Text style={styles.sectionTitle}>발 정렬 상태</Text>
+            <MeasureRow
               label="아치 유형"
               value={result.gaitAnalysis.footAlignment?.archType}
             />
@@ -410,7 +681,7 @@ export function BodyAnalysisResultView({
               note={result.gaitAnalysis.footAlignment?.ankleAlignment?.note}
               score={result.gaitAnalysis.footAlignment?.ankleAlignment?.score}
             />
-            <DetailRow
+            <MeasureRow
               label="발가락"
               note={result.gaitAnalysis.footAlignment?.toeAlignment?.note}
               value={result.gaitAnalysis.footAlignment?.toeAlignment?.value}
@@ -418,7 +689,7 @@ export function BodyAnalysisResultView({
           </View>
 
           <View style={[styles.card, iosShadow]}>
-            <Text style={styles.cardTitle}>걸음걸이가 신체에 미치는 영향</Text>
+            <Text style={styles.sectionTitle}>걸음걸이가 신체에 미치는 영향</Text>
             <ScoreBar
               label="무릎 영향"
               note={result.gaitAnalysis.bodyImpact?.kneeImpact?.note}
@@ -438,7 +709,7 @@ export function BodyAnalysisResultView({
 
           {result.gaitAnalysis.gaitRecommendations?.length ? (
             <View style={[styles.card, iosShadow]}>
-              <Text style={styles.cardTitle}>걸음걸이 교정 추천</Text>
+              <Text style={styles.sectionTitle}>걸음걸이 교정 추천</Text>
               {result.gaitAnalysis.gaitRecommendations.map((item, index) => (
                 <RecommendationRow
                   index={index}
@@ -452,34 +723,34 @@ export function BodyAnalysisResultView({
 
           {result.gaitAnalysis.shoeSizeEstimate ? (
             <View style={[styles.card, iosShadow]}>
-              <Text style={styles.cardTitle}>신발 사이즈 측정</Text>
-              <View style={styles.shoeSizeRow}>
-                <View style={styles.shoeSizeBadge}>
-                  <Text style={styles.shoeSizeNumber}>
+              <Text style={styles.sectionTitle}>신발 사이즈 측정</Text>
+              <View style={styles.shoeSizeMainRow}>
+                <View style={styles.shoeSizeBigBadge}>
+                  <Text style={styles.shoeSizeBigValue}>
                     {result.gaitAnalysis.shoeSizeEstimate.estimatedSize ?? '-'}
                   </Text>
-                  <Text style={styles.shoeSizeUnit}>mm</Text>
+                  <Text style={styles.shoeSizeBigUnit}>mm</Text>
                 </View>
-                <View style={styles.shoeSizeInfo}>
-                  <View style={styles.shoeTagRow}>
+                <View style={styles.shoeSizeInfoColumn}>
+                  <View style={styles.shoeSizeTagRow}>
                     {result.gaitAnalysis.shoeSizeEstimate.ageGroup ? (
-                      <View style={styles.shoeTag}>
-                        <Text style={styles.shoeTagText}>
+                      <View style={styles.shoeSizeTag}>
+                        <Text style={styles.shoeSizeTagText}>
                           {result.gaitAnalysis.shoeSizeEstimate.ageGroup}
                         </Text>
                       </View>
                     ) : null}
                     {result.gaitAnalysis.shoeSizeEstimate.gender &&
                     result.gaitAnalysis.shoeSizeEstimate.gender !== '판단불가' ? (
-                      <View style={[styles.shoeTag, styles.shoeTagInfo]}>
-                        <Text style={styles.shoeTagText}>
+                      <View style={styles.shoeSizeTag}>
+                        <Text style={styles.shoeSizeTagText}>
                           {result.gaitAnalysis.shoeSizeEstimate.gender}
                         </Text>
                       </View>
                     ) : null}
                     {result.gaitAnalysis.shoeSizeEstimate.width ? (
-                      <View style={[styles.shoeTag, styles.shoeTagAccent]}>
-                        <Text style={styles.shoeTagText}>
+                      <View style={styles.shoeSizeTag}>
+                        <Text style={styles.shoeSizeTagText}>
                           발볼 {result.gaitAnalysis.shoeSizeEstimate.width}
                         </Text>
                       </View>
@@ -493,7 +764,6 @@ export function BodyAnalysisResultView({
                   </Text>
                 </View>
               </View>
-
               <View style={styles.shoeSizeDetailGrid}>
                 <View style={styles.shoeSizeDetailItem}>
                   <Text style={styles.shoeSizeDetailLabel}>발 길이</Text>
@@ -508,15 +778,14 @@ export function BodyAnalysisResultView({
                   </Text>
                 </View>
               </View>
-
               {result.gaitAnalysis.shoeSizeEstimate.widthDescription ? (
-                <Text style={styles.sectionDescription}>
+                <Text style={styles.bodyText}>
                   {result.gaitAnalysis.shoeSizeEstimate.widthDescription}
                 </Text>
               ) : null}
               {result.gaitAnalysis.shoeSizeEstimate.genderReason &&
               result.gaitAnalysis.shoeSizeEstimate.gender !== '판단불가' ? (
-                <Text style={styles.genderReasonText}>
+                <Text style={styles.inlineInfoText}>
                   {result.gaitAnalysis.shoeSizeEstimate.genderReason}
                 </Text>
               ) : null}
@@ -528,15 +797,15 @@ export function BodyAnalysisResultView({
               <View style={[styles.headerCard, iosShadow]}>
                 <Text style={styles.headerCardTitle}>맞춤 신발 추천</Text>
                 <Text style={styles.headerCardDescription}>
-                  {result.gaitAnalysis.shoeSizeEstimate?.ageGroup
-                    ? `${result.gaitAnalysis.shoeSizeEstimate.ageGroup}${result.gaitAnalysis.shoeSizeEstimate.gender && result.gaitAnalysis.shoeSizeEstimate.gender !== '판단불가' ? ` · ${result.gaitAnalysis.shoeSizeEstimate.gender}` : ''}${result.gaitAnalysis.shoeSizeEstimate.sizeRange ? ` · ${result.gaitAnalysis.shoeSizeEstimate.sizeRange}mm` : ''}`
+                  {result.gaitAnalysis?.shoeSizeEstimate
+                    ? `${result.gaitAnalysis.shoeSizeEstimate.ageGroup ?? ''}${result.gaitAnalysis.shoeSizeEstimate.gender && result.gaitAnalysis.shoeSizeEstimate.gender !== '판단불가' ? ` · ${result.gaitAnalysis.shoeSizeEstimate.gender}` : ''}${result.gaitAnalysis.shoeSizeEstimate.sizeRange ? ` · ${result.gaitAnalysis.shoeSizeEstimate.sizeRange}mm` : ''}`
                     : '보행 패턴 기반 User-Item Matching'}
                 </Text>
               </View>
 
               <View style={[styles.card, iosShadow]}>
-                <Text style={styles.cardTitle}>매칭 분석</Text>
-                <Text style={styles.sectionDescription}>
+                <Text style={styles.sectionTitle}>매칭 분석</Text>
+                <Text style={styles.bodyText}>
                   {shoeRecommendations.matchingLogic ?? '-'}
                 </Text>
               </View>
@@ -577,11 +846,11 @@ export function BodyAnalysisResultView({
               </View>
 
               {shoeTab === 'after' && shoeRecommendations.afterCorrection ? (
-                <View style={[styles.infoInlineCard, iosShadow]}>
-                  <Text style={styles.infoInlineText}>
+                <View style={[styles.inlineInfoCard, iosShadow]}>
+                  <Text style={styles.inlineInfoStrong}>
                     예상 교정 기간: {shoeRecommendations.afterCorrection.timeline ?? '-'}
                   </Text>
-                  <Text style={styles.infoInlineSubText}>
+                  <Text style={styles.inlineInfoText}>
                     교정 후 보행: {shoeRecommendations.afterCorrection.correctedGaitType ?? '-'}
                   </Text>
                 </View>
@@ -634,7 +903,7 @@ export function BodyAnalysisResultView({
                 ))
               ) : (
                 <View style={[styles.card, iosShadow]}>
-                  <Text style={styles.sectionDescription}>
+                  <Text style={styles.bodyText}>
                     해당 카테고리의 추천 신발이 없어요.
                   </Text>
                 </View>
@@ -648,8 +917,7 @@ export function BodyAnalysisResultView({
         <>
           <View style={[styles.headerCard, iosShadow]}>
             <Text style={styles.headerCardTitle}>미래 예측</Text>
-            {showFutureAsUnimplemented ? <UnimplementedBadge compact /> : null}
-            {result.prediction.photoDate && result.prediction.daysSincePhoto ? (
+            {result.prediction.daysSincePhoto ? (
               <Text style={styles.headerCardDescription}>
                 촬영일: {result.prediction.photoDate} ({result.prediction.daysSincePhoto}일 전)
               </Text>
@@ -658,8 +926,8 @@ export function BodyAnalysisResultView({
 
           {result.prediction.daysSincePhoto ? (
             <View style={[styles.card, iosShadow]}>
-              <Text style={styles.cardTitle}>현재 추정</Text>
-              <Text style={styles.sectionDescription}>
+              <Text style={styles.sectionTitle}>현재 추정</Text>
+              <Text style={styles.bodyText}>
                 {result.prediction.currentEstimate ?? '-'}
               </Text>
             </View>
@@ -667,37 +935,34 @@ export function BodyAnalysisResultView({
 
           {result.prediction.exerciseImpact ? (
             <View style={[styles.card, iosShadow]}>
-              <Text style={styles.cardTitle}>운동 효과 분석</Text>
-              <Text style={styles.sectionDescription}>
-                {result.prediction.exerciseImpact}
-              </Text>
+              <Text style={styles.sectionTitle}>운동 효과 분석</Text>
+              <Text style={styles.bodyText}>{result.prediction.exerciseImpact}</Text>
             </View>
           ) : null}
 
           <View style={[styles.card, iosShadow]}>
-            <Text style={styles.cardTitle}>기간별 예측</Text>
+            <Text style={styles.sectionTitle}>기간별 예측</Text>
             {[
-              { label: '3개월 후', value: result.prediction.threeMonthPrediction },
-              { label: '6개월 후', value: result.prediction.sixMonthPrediction },
-              { label: '1년 후', value: result.prediction.oneYearPrediction },
+              { label: '3개월 후', marker: '3', value: result.prediction.threeMonthPrediction },
+              { label: '6개월 후', marker: '6', value: result.prediction.sixMonthPrediction },
+              { label: '1년 후', marker: '12', value: result.prediction.oneYearPrediction },
             ].map((item, index) => (
               <View key={item.label} style={styles.timelineItem}>
-                <View style={styles.timelineDot}>
-                  <Text style={styles.timelineDotText}>
-                    {index === 0 ? '3' : index === 1 ? '6' : '12'}
-                  </Text>
+                <View style={styles.timelineMarker}>
+                  <Text style={styles.timelineMarkerText}>{item.marker}</Text>
                 </View>
                 <View style={styles.timelineContent}>
                   <Text style={styles.timelineLabel}>{item.label}</Text>
                   <Text style={styles.timelineText}>{item.value ?? '-'}</Text>
                 </View>
+                {index < 2 ? <View style={styles.timelineDivider} /> : null}
               </View>
             ))}
           </View>
 
           {result.prediction.milestones?.length ? (
             <View style={[styles.card, iosShadow]}>
-              <Text style={styles.cardTitle}>달성 가능 목표</Text>
+              <Text style={styles.sectionTitle}>달성 가능 목표</Text>
               {result.prediction.milestones.map((item, index) => (
                 <View key={`${item}-${index}`} style={styles.bulletRow}>
                   <Text style={styles.bulletDot}>•</Text>
@@ -709,7 +974,7 @@ export function BodyAnalysisResultView({
 
           {result.prediction.riskFactors?.length ? (
             <View style={[styles.card, iosShadow]}>
-              <Text style={styles.cardTitle}>주의 위험 요소</Text>
+              <Text style={styles.sectionTitle}>주의 위험 요소</Text>
               {result.prediction.riskFactors.map((item, index) => (
                 <View key={`${item}-${index}`} style={styles.bulletRow}>
                   <Text style={styles.bulletDot}>•</Text>
@@ -722,71 +987,147 @@ export function BodyAnalysisResultView({
       ) : null}
 
       {result.medicalAnalysis ? (
-        <View style={[styles.card, iosShadow]}>
-          <View style={styles.cardHeaderRow}>
-            <Text style={styles.cardTitle}>증상 참고 분석</Text>
-            <UnimplementedBadge compact />
-          </View>
-          <Text style={styles.helperText}>
-            원본보다 간결하게 렌더링하고 있어요. 상세 위험/재활 리스트는 후속으로
-            더 풀어낼 수 있어요.
-          </Text>
-          <DetailRow
-            label="증상 평가"
-            note={result.medicalAnalysis.symptomAssessment}
-          />
-          <DetailRow
-            label="체형 영향"
-            note={result.medicalAnalysis.bodyStructureImpact}
-          />
-          {result.medicalAnalysis.exerciseWarnings?.length ? (
-            <View style={styles.subSection}>
-              <Text style={styles.subSectionTitle}>주의 운동</Text>
-              {result.medicalAnalysis.exerciseWarnings.map((item, index) => (
-                <View key={`${item.exercise}-${index}`} style={styles.bulletRow}>
-                  <Text style={styles.bulletDot}>•</Text>
-                  <Text style={styles.bulletText}>
-                    {item.exercise} — {item.reason}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          ) : null}
-          {result.medicalAnalysis.rehabExercises?.length ? (
-            <View style={styles.subSection}>
-              <Text style={styles.subSectionTitle}>재활 보조 운동</Text>
-              {result.medicalAnalysis.rehabExercises.map((item, index) => (
-                <View key={`${item.name}-${index}`} style={styles.bulletRow}>
-                  <Text style={styles.bulletDot}>•</Text>
-                  <Text style={styles.bulletText}>
-                    {item.name} ({item.frequency}) — {item.description}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          ) : null}
-          {result.medicalAnalysis.referralSuggestion ? (
-            <Text style={styles.referralText}>
-              {result.medicalAnalysis.referralSuggestion}
-            </Text>
-          ) : null}
+        <View style={[styles.medicalSection, iosShadow]}>
+          <Text style={styles.medicalTitle}>의료 증상 분석</Text>
           {result.medicalAnalysis.disclaimer ? (
-            <Text style={styles.disclaimerText}>
-              {result.medicalAnalysis.disclaimer}
+            <View style={styles.medicalDisclaimer}>
+              <Text style={styles.medicalDisclaimerText}>
+                {result.medicalAnalysis.disclaimer}
+              </Text>
+            </View>
+          ) : null}
+
+          <View style={styles.medicalBlock}>
+            <Text style={styles.medicalBlockTitle}>증상 평가</Text>
+            <Text style={styles.bodyText}>
+              {result.medicalAnalysis.symptomAssessment ?? '-'}
             </Text>
+          </View>
+
+          <View style={styles.medicalBlock}>
+            <Text style={styles.medicalBlockTitle}>체형 구조 영향</Text>
+            <Text style={styles.bodyText}>
+              {result.medicalAnalysis.bodyStructureImpact ?? '-'}
+            </Text>
+          </View>
+
+          {result.medicalAnalysis.musculoskeletalRisks?.length ? (
+            <View style={styles.medicalBlock}>
+              <Text style={styles.medicalBlockTitle}>근골격계 위험 요소</Text>
+              {result.medicalAnalysis.musculoskeletalRisks.map((item, index) => (
+                <View key={`${item.area}-${index}`} style={styles.medicalRiskCard}>
+                  <View style={styles.medicalRiskHeader}>
+                    <Text style={styles.medicalRiskArea}>{item.area ?? '-'}</Text>
+                    <View
+                      style={[
+                        styles.medicalRiskBadge,
+                        {
+                          backgroundColor:
+                            item.riskLevel === '높음'
+                              ? 'rgba(239,68,68,0.15)'
+                              : item.riskLevel === '중간'
+                                ? 'rgba(245,158,11,0.15)'
+                                : 'rgba(34,197,94,0.15)',
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.medicalRiskBadgeText,
+                          {
+                            color:
+                              item.riskLevel === '높음'
+                                ? Colors.danger
+                                : item.riskLevel === '중간'
+                                  ? Colors.warning
+                                  : Colors.success,
+                          },
+                        ]}
+                      >
+                        {item.riskLevel ?? '-'}
+                      </Text>
+                    </View>
+                  </View>
+                  {item.description ? (
+                    <Text style={styles.bodyText}>{item.description}</Text>
+                  ) : null}
+                  {item.preventionTip ? (
+                    <Text style={styles.inlineInfoText}>{item.preventionTip}</Text>
+                  ) : null}
+                </View>
+              ))}
+            </View>
+          ) : null}
+
+          {result.medicalAnalysis.exerciseWarnings?.length ? (
+            <View style={styles.medicalBlock}>
+              <Text style={styles.medicalBlockTitle}>운동 주의사항</Text>
+              {result.medicalAnalysis.exerciseWarnings.map((item, index) => (
+                <View key={`${item.exercise}-${index}`} style={styles.medicalWarnCard}>
+                  <Text style={styles.medicalWarnTitle}>{item.exercise ?? '-'}</Text>
+                  {item.reason ? <Text style={styles.bodyText}>{item.reason}</Text> : null}
+                  {item.alternative ? (
+                    <Text style={styles.inlineInfoText}>대안: {item.alternative}</Text>
+                  ) : null}
+                </View>
+              ))}
+            </View>
+          ) : null}
+
+          {result.medicalAnalysis.rehabExercises?.length ? (
+            <View style={styles.medicalBlock}>
+              <Text style={styles.medicalBlockTitle}>재활/교정 운동</Text>
+              {result.medicalAnalysis.rehabExercises.map((item, index) => (
+                <View key={`${item.name}-${index}`} style={styles.medicalRehabCard}>
+                  <View style={styles.medicalRehabHeader}>
+                    <View style={styles.medicalRehabIndex}>
+                      <Text style={styles.medicalRehabIndexText}>{index + 1}</Text>
+                    </View>
+                    <View style={styles.medicalRehabTextWrap}>
+                      <Text style={styles.medicalRehabName}>{item.name ?? '-'}</Text>
+                      <Text style={styles.inlineInfoText}>
+                        {item.targetArea ?? '-'} · {item.frequency ?? '-'}
+                      </Text>
+                    </View>
+                  </View>
+                  {item.description ? (
+                    <Text style={styles.bodyText}>{item.description}</Text>
+                  ) : null}
+                  {item.precaution ? (
+                    <Text style={styles.inlineInfoText}>{item.precaution}</Text>
+                  ) : null}
+                </View>
+              ))}
+            </View>
+          ) : null}
+
+          {result.medicalAnalysis.lifestyleAdvice?.length ? (
+            <View style={styles.medicalBlock}>
+              <Text style={styles.medicalBlockTitle}>생활습관 조언</Text>
+              {result.medicalAnalysis.lifestyleAdvice.map((item, index) => (
+                <View key={`${item}-${index}`} style={styles.bulletRow}>
+                  <Text style={styles.bulletDot}>•</Text>
+                  <Text style={styles.bulletText}>{item}</Text>
+                </View>
+              ))}
+            </View>
+          ) : null}
+
+          {result.medicalAnalysis.referralSuggestion ? (
+            <View style={styles.medicalReferralCard}>
+              <Text style={styles.medicalReferralText}>
+                {result.medicalAnalysis.referralSuggestion}
+              </Text>
+            </View>
           ) : null}
         </View>
       ) : null}
 
       {result.recommendations?.length ? (
         <View style={[styles.card, iosShadow]}>
-          <Text style={styles.cardTitle}>체형 추천사항</Text>
+          <Text style={styles.sectionTitle}>체형 추천사항</Text>
           {result.recommendations.map((item, index) => (
-            <RecommendationRow
-              index={index}
-              key={`${item}-${index}`}
-              text={item}
-            />
+            <RecommendationRow index={index} key={`${item}-${index}`} text={item} />
           ))}
         </View>
       ) : null}
@@ -802,17 +1143,52 @@ export function BodyAnalysisResultView({
 }
 
 const styles = StyleSheet.create({
+  bodyText: {
+    color: Colors.textSecondary,
+    fontFamily: 'Pretendard-Regular',
+    fontSize: 13,
+    lineHeight: 20,
+  },
   bodyTypeBadge: {
     alignItems: 'center',
-    borderRadius: 20,
-    height: 56,
+    borderRadius: 28,
+    height: 64,
     justifyContent: 'center',
-    width: 56,
+    width: 64,
+  },
+  bodyTypeCard: {
+    alignItems: 'center',
+    backgroundColor: Colors.card,
+    borderRadius: 18,
+    marginHorizontal: 16,
+    marginTop: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 24,
+  },
+  bodyTypeDescription: {
+    color: Colors.textSecondary,
+    fontFamily: 'Pretendard-Regular',
+    fontSize: 14,
+    lineHeight: 22,
+    marginTop: 10,
+    textAlign: 'center',
   },
   bodyTypeLetter: {
     color: Colors.white,
     fontFamily: 'Pretendard-SemiBold',
-    fontSize: 28,
+    fontSize: 30,
+  },
+  bodyTypeName: {
+    color: Colors.text,
+    fontFamily: 'Pretendard-SemiBold',
+    fontSize: 18,
+    marginTop: 4,
+  },
+  bodyTypeTitle: {
+    color: Colors.textMuted,
+    fontFamily: 'Pretendard-SemiBold',
+    fontSize: 14,
+    marginTop: 12,
   },
   bulletDot: {
     color: Colors.accent,
@@ -820,7 +1196,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   bulletRow: {
-    alignItems: 'flex-start',
     flexDirection: 'row',
     gap: 8,
   },
@@ -829,103 +1204,54 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: 'Pretendard-Regular',
     fontSize: 13,
-    lineHeight: 18,
+    lineHeight: 19,
   },
   card: {
     backgroundColor: Colors.card,
-    borderRadius: 16,
-    gap: 12,
-    padding: 16,
-  },
-  cardHeaderRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  cardTitle: {
-    color: Colors.text,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 17,
-  },
-  container: {
+    borderRadius: 18,
     gap: 12,
     marginHorizontal: 16,
     marginTop: 12,
+    padding: 16,
   },
-  correctionDescription: {
-    color: Colors.textSecondary,
-    fontFamily: 'Pretendard-Regular',
-    fontSize: 13,
-    lineHeight: 19,
-  },
-  correctionExercise: {
-    color: Colors.text,
-    fontFamily: 'Pretendard-Medium',
-    fontSize: 13,
-  },
-  correctionHeader: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 8,
-  },
-  correctionItem: {
-    gap: 8,
-  },
-  correctionPriorityBadge: {
-    backgroundColor: Colors.accentLight,
+  compositeScoreBar: {
+    backgroundColor: Colors.surfaceMuted,
     borderRadius: 999,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    height: 10,
+    marginTop: 12,
+    overflow: 'hidden',
   },
-  correctionPriorityText: {
-    color: Colors.accent,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 11,
+  compositeScoreCard: {
+    backgroundColor: Colors.surfaceMuted,
+    borderRadius: 16,
+    padding: 16,
   },
-  correctionTitle: {
-    color: Colors.text,
-    flex: 1,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 14,
+  compositeScoreFill: {
+    borderRadius: 999,
+    height: '100%',
   },
-  detailHeaderRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  detailLabel: {
-    color: Colors.text,
-    fontFamily: 'Pretendard-Medium',
-    fontSize: 14,
-  },
-  detailNote: {
-    color: Colors.textSecondary,
-    fontFamily: 'Pretendard-Regular',
-    fontSize: 13,
-    lineHeight: 20,
-  },
-  detailRow: {
-    gap: 6,
-  },
-  detailValue: {
-    color: Colors.accent,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 13,
-  },
-  disclaimerText: {
+  compositeScoreLabel: {
     color: Colors.textMuted,
     fontFamily: 'Pretendard-Regular',
     fontSize: 12,
-    lineHeight: 17,
+    marginTop: 4,
+  },
+  compositeScoreValue: {
+    color: Colors.text,
+    fontFamily: 'Pretendard-SemiBold',
+    fontSize: 24,
+  },
+  container: {
+    paddingBottom: 12,
   },
   featureBadge: {
     backgroundColor: Colors.surfaceMuted,
     borderRadius: 999,
     paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingVertical: 5,
   },
   featureBadgeText: {
-    color: Colors.text,
+    color: Colors.textSecondary,
     fontFamily: 'Pretendard-Medium',
     fontSize: 12,
   },
@@ -936,116 +1262,316 @@ const styles = StyleSheet.create({
   },
   gaitTypeBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: '#EAF0FF',
+    backgroundColor: Colors.accentLight,
     borderRadius: 999,
     paddingHorizontal: 12,
-    paddingVertical: 7,
+    paddingVertical: 8,
   },
   gaitTypeBadgeText: {
-    color: Colors.info,
+    color: Colors.accent,
     fontFamily: 'Pretendard-SemiBold',
     fontSize: 13,
   },
-  genderReasonText: {
-    color: Colors.textMuted,
-    fontFamily: 'Pretendard-Regular',
-    fontSize: 12,
-    lineHeight: 17,
+  gradeBadge: {
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  gradeBadgeText: {
+    color: Colors.white,
+    fontFamily: 'Pretendard-SemiBold',
+    fontSize: 13,
   },
   headerCard: {
     backgroundColor: Colors.card,
-    borderRadius: 16,
-    gap: 4,
-    padding: 16,
+    borderRadius: 18,
+    marginHorizontal: 16,
+    marginTop: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 18,
   },
   headerCardDescription: {
     color: Colors.textMuted,
     fontFamily: 'Pretendard-Regular',
     fontSize: 13,
+    lineHeight: 18,
+    marginTop: 4,
   },
   headerCardTitle: {
     color: Colors.text,
     fontFamily: 'Pretendard-SemiBold',
     fontSize: 18,
   },
-  helperText: {
-    color: Colors.textMuted,
-    fontFamily: 'Pretendard-Regular',
-    fontSize: 12,
-    lineHeight: 18,
-  },
-  heroCard: {
+  inlineInfoCard: {
     backgroundColor: Colors.card,
     borderRadius: 16,
-    flexDirection: 'row',
-    gap: 14,
-    padding: 16,
+    marginHorizontal: 16,
+    marginTop: 12,
+    padding: 14,
   },
-  heroDescription: {
-    color: Colors.textSecondary,
-    fontFamily: 'Pretendard-Regular',
-    fontSize: 14,
-    lineHeight: 21,
-  },
-  heroSubTitle: {
-    color: Colors.text,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 16,
-  },
-  heroTextWrap: {
-    flex: 1,
-    gap: 6,
-    justifyContent: 'center',
-  },
-  heroTitle: {
-    color: Colors.text,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 18,
-  },
-  infoInlineCard: {
-    backgroundColor: '#EAF0FF',
-    borderRadius: 14,
-    gap: 4,
-    marginTop: -2,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-  },
-  infoInlineSubText: {
-    color: Colors.textSecondary,
-    fontFamily: 'Pretendard-Regular',
-    fontSize: 12,
-  },
-  infoInlineText: {
+  inlineInfoStrong: {
     color: Colors.text,
     fontFamily: 'Pretendard-Medium',
     fontSize: 13,
   },
-  multiViewGradeBadge: {
-    backgroundColor: Colors.accentLight,
+  inlineInfoText: {
+    color: Colors.textMuted,
+    fontFamily: 'Pretendard-Regular',
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 4,
+  },
+  leftRightBadge: {
+    backgroundColor: Colors.surfaceMuted,
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
-  multiViewGradeText: {
-    color: Colors.accent,
+  leftRightBadgeText: {
+    color: Colors.textSecondary,
+    fontFamily: 'Pretendard-Medium',
+    fontSize: 12,
+  },
+  measureLabel: {
+    color: Colors.text,
+    fontFamily: 'Pretendard-Medium',
+    fontSize: 14,
+  },
+  measureNote: {
+    color: Colors.textSecondary,
+    flex: 1,
+    fontFamily: 'Pretendard-Regular',
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  measureRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  measureValue: {
+    color: Colors.text,
     fontFamily: 'Pretendard-SemiBold',
     fontSize: 12,
   },
-  ratioGrid: {
+  measureValueBadge: {
+    backgroundColor: Colors.surfaceMuted,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  medicalBlock: {
+    gap: 10,
+  },
+  medicalBlockTitle: {
+    color: Colors.text,
+    fontFamily: 'Pretendard-SemiBold',
+    fontSize: 15,
+  },
+  medicalDisclaimer: {
+    backgroundColor: '#FFF3E0',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  medicalDisclaimerText: {
+    color: Colors.warning,
+    fontFamily: 'Pretendard-Regular',
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  medicalRehabCard: {
+    backgroundColor: Colors.surfaceMuted,
+    borderRadius: 14,
+    gap: 8,
+    padding: 12,
+  },
+  medicalRehabHeader: {
     flexDirection: 'row',
     gap: 10,
   },
-  ratioItem: {
-    backgroundColor: Colors.surfaceMuted,
-    borderRadius: 12,
+  medicalRehabIndex: {
+    alignItems: 'center',
+    backgroundColor: Colors.accent,
+    borderRadius: 999,
+    height: 24,
+    justifyContent: 'center',
+    width: 24,
+  },
+  medicalRehabIndexText: {
+    color: Colors.white,
+    fontFamily: 'Pretendard-SemiBold',
+    fontSize: 12,
+  },
+  medicalRehabName: {
+    color: Colors.text,
+    fontFamily: 'Pretendard-Medium',
+    fontSize: 14,
+  },
+  medicalRehabTextWrap: {
     flex: 1,
-    gap: 6,
-    padding: 14,
+  },
+  medicalReferralCard: {
+    backgroundColor: 'rgba(239,68,68,0.08)',
+    borderRadius: 14,
+    padding: 12,
+  },
+  medicalReferralText: {
+    color: Colors.danger,
+    fontFamily: 'Pretendard-Medium',
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  medicalRiskArea: {
+    color: Colors.text,
+    fontFamily: 'Pretendard-SemiBold',
+    fontSize: 14,
+  },
+  medicalRiskBadge: {
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  medicalRiskBadgeText: {
+    fontFamily: 'Pretendard-SemiBold',
+    fontSize: 12,
+  },
+  medicalRiskCard: {
+    backgroundColor: Colors.surfaceMuted,
+    borderRadius: 14,
+    gap: 8,
+    padding: 12,
+  },
+  medicalRiskHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  medicalSection: {
+    backgroundColor: Colors.card,
+    borderRadius: 18,
+    gap: 14,
+    marginHorizontal: 16,
+    marginTop: 16,
+    padding: 16,
+  },
+  medicalTitle: {
+    color: Colors.text,
+    fontFamily: 'Pretendard-SemiBold',
+    fontSize: 18,
+  },
+  medicalWarnCard: {
+    backgroundColor: Colors.surfaceMuted,
+    borderRadius: 14,
+    gap: 8,
+    padding: 12,
+  },
+  medicalWarnTitle: {
+    color: Colors.text,
+    fontFamily: 'Pretendard-SemiBold',
+    fontSize: 14,
+  },
+  mobilityItem: {
+    backgroundColor: Colors.surfaceMuted,
+    borderRadius: 14,
+    flex: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 14,
+  },
+  mobilityLabel: {
+    color: Colors.textMuted,
+    fontFamily: 'Pretendard-Regular',
+    fontSize: 12,
+  },
+  mobilityRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 6,
+  },
+  mobilityScore: {
+    fontFamily: 'Pretendard-SemiBold',
+    fontSize: 16,
+    marginTop: 4,
+  },
+  multiViewHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  priorityBadge: {
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  priorityBadgeText: {
+    color: Colors.white,
+    fontFamily: 'Pretendard-SemiBold',
+    fontSize: 12,
+  },
+  priorityCard: {
+    backgroundColor: Colors.surfaceMuted,
+    borderRadius: 14,
+    gap: 8,
+    padding: 12,
+  },
+  priorityDescription: {
+    color: Colors.textSecondary,
+    fontFamily: 'Pretendard-Regular',
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  priorityExercise: {
+    color: Colors.text,
+    fontFamily: 'Pretendard-Medium',
+    fontSize: 13,
+  },
+  priorityHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+  },
+  priorityTitle: {
+    color: Colors.text,
+    flex: 1,
+    fontFamily: 'Pretendard-SemiBold',
+    fontSize: 14,
+  },
+  ratioBar: {
+    marginTop: 10,
+  },
+  ratioBarBackground: {
+    backgroundColor: Colors.surfaceMuted,
+    borderRadius: 999,
+    height: 10,
+    position: 'relative',
+  },
+  ratioHint: {
+    color: Colors.textMuted,
+    fontFamily: 'Pretendard-Regular',
+    fontSize: 11,
+  },
+  ratioItem: {
+    gap: 4,
   },
   ratioLabel: {
     color: Colors.textMuted,
     fontFamily: 'Pretendard-Regular',
-    fontSize: 12,
+    fontSize: 13,
+  },
+  ratioLabelsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 6,
+  },
+  ratioMarker: {
+    backgroundColor: Colors.accent,
+    borderRadius: 999,
+    height: 16,
+    marginLeft: -6,
+    position: 'absolute',
+    top: -3,
+    width: 12,
   },
   ratioValue: {
     color: Colors.text,
@@ -1062,12 +1588,11 @@ const styles = StyleSheet.create({
   recommendationBadgeText: {
     color: Colors.white,
     fontFamily: 'Pretendard-SemiBold',
-    fontSize: 11,
+    fontSize: 12,
   },
   recommendationRow: {
-    alignItems: 'flex-start',
     flexDirection: 'row',
-    gap: 10,
+    gap: 8,
   },
   recommendationText: {
     color: Colors.textSecondary,
@@ -1076,16 +1601,9 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 19,
   },
-  referralText: {
-    color: Colors.danger,
-    fontFamily: 'Pretendard-Medium',
-    fontSize: 13,
-    lineHeight: 19,
-  },
   scoreBarBackground: {
-    backgroundColor: Colors.cardBorder,
+    backgroundColor: Colors.surfaceMuted,
     borderRadius: 999,
-    flex: 1,
     height: 8,
     overflow: 'hidden',
   },
@@ -1094,9 +1612,7 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   scoreBarWrap: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 8,
+    gap: 6,
   },
   scoreLabel: {
     color: Colors.text,
@@ -1114,39 +1630,37 @@ const styles = StyleSheet.create({
   },
   scoreValue: {
     fontFamily: 'Pretendard-SemiBold',
-    fontSize: 12,
-    minWidth: 32,
-    textAlign: 'right',
-  },
-  sectionDescription: {
-    color: Colors.textSecondary,
-    fontFamily: 'Pretendard-Regular',
     fontSize: 13,
-    lineHeight: 20,
+  },
+  sectionTitle: {
+    color: Colors.text,
+    fontFamily: 'Pretendard-SemiBold',
+    fontSize: 16,
   },
   segmentedButton: {
     alignItems: 'center',
-    backgroundColor: Colors.surfaceMuted,
-    borderRadius: 12,
+    borderColor: Colors.cardBorder,
+    borderRadius: 14,
+    borderWidth: 1,
     flex: 1,
-    minHeight: 42,
     justifyContent: 'center',
+    minHeight: 46,
   },
   segmentedButtonActive: {
     backgroundColor: Colors.accent,
+    borderColor: Colors.accent,
   },
   segmentedButtonLight: {
     alignItems: 'center',
     backgroundColor: Colors.card,
     borderColor: Colors.cardBorder,
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
     flex: 1,
-    minHeight: 42,
     justifyContent: 'center',
+    minHeight: 46,
   },
   segmentedButtonLightActive: {
-    backgroundColor: Colors.accentLight,
     borderColor: Colors.accent,
   },
   segmentedButtonLightText: {
@@ -1160,7 +1674,7 @@ const styles = StyleSheet.create({
   segmentedButtonText: {
     color: Colors.textSecondary,
     fontFamily: 'Pretendard-SemiBold',
-    fontSize: 13,
+    fontSize: 14,
   },
   segmentedButtonTextActive: {
     color: Colors.white,
@@ -1168,6 +1682,18 @@ const styles = StyleSheet.create({
   segmentedRow: {
     flexDirection: 'row',
     gap: 10,
+    marginHorizontal: 16,
+    marginTop: 12,
+  },
+  severityBadge: {
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  severityBadgeText: {
+    color: Colors.white,
+    fontFamily: 'Pretendard-SemiBold',
+    fontSize: 12,
   },
   shoeBrandBadge: {
     backgroundColor: Colors.accentLight,
@@ -1182,8 +1708,10 @@ const styles = StyleSheet.create({
   },
   shoeCard: {
     backgroundColor: Colors.card,
-    borderRadius: 16,
+    borderRadius: 18,
     gap: 12,
+    marginHorizontal: 16,
+    marginTop: 12,
     padding: 16,
   },
   shoeCardHeader: {
@@ -1200,10 +1728,10 @@ const styles = StyleSheet.create({
     color: Colors.text,
     flex: 1,
     fontFamily: 'Pretendard-SemiBold',
-    fontSize: 15,
+    fontSize: 16,
   },
   shoePriceText: {
-    color: Colors.textSecondary,
+    color: Colors.textMuted,
     fontFamily: 'Pretendard-Medium',
     fontSize: 13,
   },
@@ -1213,13 +1741,24 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 19,
   },
-  shoeSizeBadge: {
+  shoeSizeBigBadge: {
     alignItems: 'center',
     backgroundColor: Colors.accentLight,
-    borderRadius: 16,
-    minWidth: 88,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    borderRadius: 18,
+    justifyContent: 'center',
+    minHeight: 96,
+    minWidth: 96,
+    paddingHorizontal: 12,
+  },
+  shoeSizeBigUnit: {
+    color: Colors.accent,
+    fontFamily: 'Pretendard-Medium',
+    fontSize: 12,
+  },
+  shoeSizeBigValue: {
+    color: Colors.accent,
+    fontFamily: 'Pretendard-SemiBold',
+    fontSize: 28,
   },
   shoeSizeDetailGrid: {
     flexDirection: 'row',
@@ -1227,7 +1766,7 @@ const styles = StyleSheet.create({
   },
   shoeSizeDetailItem: {
     backgroundColor: Colors.surfaceMuted,
-    borderRadius: 12,
+    borderRadius: 14,
     flex: 1,
     gap: 4,
     padding: 12,
@@ -1240,39 +1779,45 @@ const styles = StyleSheet.create({
   shoeSizeDetailValue: {
     color: Colors.text,
     fontFamily: 'Pretendard-SemiBold',
-    fontSize: 13,
+    fontSize: 14,
   },
-  shoeSizeInfo: {
+  shoeSizeInfoColumn: {
     flex: 1,
     gap: 6,
+  },
+  shoeSizeMainRow: {
+    flexDirection: 'row',
+    gap: 12,
   },
   shoeSizeMeta: {
     color: Colors.textSecondary,
     fontFamily: 'Pretendard-Regular',
-    fontSize: 12,
+    fontSize: 13,
   },
-  shoeSizeNumber: {
-    color: Colors.accent,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 28,
+  shoeSizeTag: {
+    backgroundColor: Colors.accent,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
   },
-  shoeSizeRow: {
+  shoeSizeTagRow: {
     flexDirection: 'row',
-    gap: 12,
+    flexWrap: 'wrap',
+    gap: 8,
   },
-  shoeSizeUnit: {
-    color: Colors.accent,
+  shoeSizeTagText: {
+    color: Colors.white,
     fontFamily: 'Pretendard-SemiBold',
-    fontSize: 12,
+    fontSize: 11,
   },
   shoeSpecItem: {
     alignItems: 'center',
     backgroundColor: Colors.surfaceMuted,
-    borderRadius: 12,
+    borderRadius: 14,
     flex: 1,
     gap: 4,
     paddingHorizontal: 10,
-    paddingVertical: 10,
+    paddingVertical: 12,
   },
   shoeSpecLabel: {
     color: Colors.textMuted,
@@ -1286,114 +1831,110 @@ const styles = StyleSheet.create({
   shoeSpecValue: {
     color: Colors.text,
     fontFamily: 'Pretendard-SemiBold',
-    fontSize: 12,
-  },
-  shoeTag: {
-    backgroundColor: Colors.primary,
-    borderRadius: 999,
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-  },
-  shoeTagAccent: {
-    backgroundColor: Colors.accent,
-  },
-  shoeTagInfo: {
-    backgroundColor: Colors.info,
-  },
-  shoeTagRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-  },
-  shoeTagText: {
-    color: Colors.white,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 11,
+    fontSize: 13,
   },
   shoeTypeBadge: {
     backgroundColor: Colors.surfaceMuted,
     borderRadius: 999,
     paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingVertical: 5,
   },
-  shoeTypeBadgeText: {
-    color: Colors.text,
-    fontFamily: 'Pretendard-Medium',
-    fontSize: 12,
-  },
-  sideBadge: {
-    backgroundColor: Colors.surfaceMuted,
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-  },
-  sideBadgeText: {
+  shoeTypeText: {
     color: Colors.textSecondary,
     fontFamily: 'Pretendard-Medium',
     fontSize: 12,
   },
-  subSection: {
-    gap: 8,
-  },
-  subSectionTitle: {
-    color: Colors.text,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 14,
-  },
   summaryCard: {
     backgroundColor: Colors.card,
-    borderRadius: 16,
-    gap: 8,
-    padding: 16,
+    borderRadius: 18,
+    marginHorizontal: 16,
+    marginTop: 16,
+    padding: 18,
   },
   summaryText: {
     color: Colors.textSecondary,
     fontFamily: 'Pretendard-Regular',
     fontSize: 14,
     lineHeight: 22,
+    marginTop: 8,
   },
   summaryTitle: {
     color: Colors.text,
     fontFamily: 'Pretendard-SemiBold',
-    fontSize: 17,
+    fontSize: 16,
   },
   timelineContent: {
     flex: 1,
-    gap: 4,
   },
-  timelineDot: {
-    alignItems: 'center',
-    backgroundColor: Colors.accent,
-    borderRadius: 999,
-    height: 28,
-    justifyContent: 'center',
-    width: 28,
-  },
-  timelineDotText: {
-    color: Colors.white,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 11,
+  timelineDivider: {
+    backgroundColor: Colors.cardBorder,
+    height: 16,
+    left: 16,
+    position: 'absolute',
+    top: 34,
+    width: 1,
   },
   timelineItem: {
-    alignItems: 'flex-start',
     flexDirection: 'row',
-    gap: 10,
+    gap: 12,
+    paddingBottom: 12,
+    position: 'relative',
   },
   timelineLabel: {
     color: Colors.text,
+    fontFamily: 'Pretendard-Medium',
+    fontSize: 14,
+  },
+  timelineMarker: {
+    alignItems: 'center',
+    backgroundColor: Colors.accent,
+    borderRadius: 999,
+    height: 32,
+    justifyContent: 'center',
+    width: 32,
+  },
+  timelineMarkerText: {
+    color: Colors.white,
     fontFamily: 'Pretendard-SemiBold',
-    fontSize: 13,
+    fontSize: 12,
   },
   timelineText: {
     color: Colors.textSecondary,
     fontFamily: 'Pretendard-Regular',
     fontSize: 13,
     lineHeight: 19,
+    marginTop: 4,
+  },
+  viewDetailLabel: {
+    color: Colors.text,
+    fontFamily: 'Pretendard-Medium',
+    fontSize: 13,
+  },
+  viewDetailNote: {
+    color: Colors.textSecondary,
+    flex: 1,
+    fontFamily: 'Pretendard-Regular',
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  viewDetailRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  viewSection: {
+    gap: 10,
+  },
+  viewSectionTitle: {
+    color: Colors.text,
+    fontFamily: 'Pretendard-SemiBold',
+    fontSize: 15,
   },
   wearPatternBadge: {
     borderRadius: 999,
     paddingHorizontal: 12,
-    paddingVertical: 7,
+    paddingVertical: 8,
   },
   wearPatternBadgeText: {
     color: Colors.white,
@@ -1401,7 +1942,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   wearPatternRow: {
+    alignItems: 'center',
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
   },
 });

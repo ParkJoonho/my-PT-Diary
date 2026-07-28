@@ -1,18 +1,16 @@
 import { useNavigation } from '@granite-js/react-native';
 import {
-  Accessibility,
   ChartColumnBig,
   ChevronRight,
   Footprints,
   MessageCircleMore,
   ScanFace,
-  Shirt,
   Utensils,
 } from 'lucide-react-native';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useBodyAnalysisEntryStore } from 'features/body-analysis/stores/use-body-analysis-entry-store';
 import { HomeTabBar } from 'features/home/components/home-tab-bar';
-import { UnimplementedBadge } from 'shared/components/unimplemented-badge';
 import Colors, { iosShadow } from 'shared/constants/colors';
 
 const AI_FEATURES = [
@@ -29,7 +27,7 @@ const AI_FEATURES = [
     accent: '#D4AF37',
     icon: MessageCircleMore,
     iconBackground: '#FFF8E1',
-    implemented: false,
+    route: null,
     subtitle: '맞춤형 운동·식단·동기부여 코칭',
     title: 'AI 트레이너 아테나',
   },
@@ -37,15 +35,15 @@ const AI_FEATURES = [
     accent: Colors.success,
     icon: Utensils,
     iconBackground: '#E8F8EE',
-    implemented: false,
+    route: null,
     subtitle: '사진으로 칼로리·영양소 분석',
     title: 'AI 식단 분석',
   },
   {
     accent: Colors.info,
-    icon: Accessibility,
+    icon: ScanFace,
     iconBackground: '#E5F0FF',
-    implemented: false,
+    route: null,
     subtitle: '운동 자세 교정 및 피드백',
     title: 'AI 자세 분석',
   },
@@ -53,23 +51,15 @@ const AI_FEATURES = [
     accent: Colors.warning,
     icon: Footprints,
     iconBackground: '#FFF3E0',
-    implemented: false,
+    route: '/ai-analysis',
     subtitle: '보행 분석 기반 맞춤 신발 추천',
     title: 'AI 신발 추천',
-  },
-  {
-    accent: '#8B5CF6',
-    icon: Shirt,
-    iconBackground: '#F3E8FF',
-    implemented: false,
-    subtitle: '몸매 예측 및 스타일 추천',
-    title: '나의 몸매 & 스타일',
   },
   {
     accent: Colors.accent,
     icon: ChartColumnBig,
     iconBackground: '#FFF0EA',
-    implemented: false,
+    route: null,
     subtitle: '종합 점수·부상 위험도·체형 예측',
     title: 'AI 통합 피트니스 분석',
   },
@@ -78,6 +68,7 @@ const AI_FEATURES = [
 export function AiHubScreen() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
+  const setEntryPoint = useBodyAnalysisEntryStore((state) => state.setEntryPoint);
 
   return (
     <View style={styles.container}>
@@ -106,11 +97,12 @@ export function AiHubScreen() {
           <Pressable
             key={feature.title}
             onPress={() => {
-              if (!feature.implemented || !feature.route) {
+              if (!feature.route) {
                 Alert.alert(feature.title, '준비 중입니다.');
                 return;
               }
 
+              setEntryPoint(feature.title === 'AI 신발 추천' ? 'shoe' : 'default');
               navigation.navigate({ name: feature.route, params: {} });
             }}
             style={({ pressed }) => [
@@ -128,10 +120,7 @@ export function AiHubScreen() {
               <feature.icon color={feature.accent} size={20} strokeWidth={2.1} />
             </View>
             <View style={styles.featureTextWrap}>
-              <View style={styles.featureTitleRow}>
-                <Text style={styles.featureTitle}>{feature.title}</Text>
-                {!feature.implemented ? <UnimplementedBadge compact /> : null}
-              </View>
+              <Text style={styles.featureTitle}>{feature.title}</Text>
               <Text style={styles.featureSubtitle}>{feature.subtitle}</Text>
             </View>
             <ChevronRight color={Colors.iconMuted} size={18} strokeWidth={2.1} />
@@ -184,11 +173,6 @@ const styles = StyleSheet.create({
     color: Colors.text,
     fontFamily: 'Pretendard-SemiBold',
     fontSize: 16,
-  },
-  featureTitleRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 6,
   },
   header: {
     backgroundColor: Colors.card,

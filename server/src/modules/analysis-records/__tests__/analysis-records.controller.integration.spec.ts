@@ -78,6 +78,39 @@ describe('분석 이력 컨트롤러 통합', () => {
     expect(body[0]?.id).toBe('record_a');
   });
 
+  it('생성 요청은 올바른 응답을 반환한다', async () => {
+    service.createAnalysisRecord.mockResolvedValue({
+      analysisType: 'body' as never,
+      analyzedAt: '2026-07-28T01:23:45.000Z',
+      createdAt: '2026-07-28T01:23:45.000Z',
+      id: 'record_created',
+      qualitativeData: { bodyType: 'V' },
+      quantitativeData: { overallAlignment: 3 },
+      rawResult: { summary: 'saved' },
+    });
+
+    const response = await request(app.getHttpServer())
+      .post('/api/analysis-records')
+      .set('x-user-key', 'integration-user')
+      .send({
+        analysisType: 'body',
+        analyzedAt: '2026-07-28T01:23:45.000Z',
+        qualitativeData: { bodyType: 'V' },
+        quantitativeData: { overallAlignment: 3 },
+        rawResult: { summary: 'saved' },
+      })
+      .expect(201);
+
+    expect(service.createAnalysisRecord).toHaveBeenCalledWith(
+      'integration-user',
+      expect.objectContaining({
+        analysisType: 'body',
+        analyzedAt: '2026-07-28T01:23:45.000Z',
+      }),
+    );
+    expect(response.body.id).toBe('record_created');
+  });
+
   it('비교 요청 본문이 잘못되면 400을 반환한다', async () => {
     await request(app.getHttpServer())
       .post('/api/analysis-records/compare')

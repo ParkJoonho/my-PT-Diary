@@ -18,6 +18,8 @@ import {
 } from 'react-native';
 import Colors, { iosShadow } from 'shared/constants/colors';
 import { useAnalyzeBodyComparison } from '../api/body-comparison';
+import { useCreateAnalysisRecord } from '../api/analysis-records';
+import { buildBodyComparisonRecordPayload } from '../lib/analysis-record-payload';
 import { pickSingleImage, type PickedImage } from '../lib/pick-image';
 import { toBodyComparisonResult } from '../lib/object-access';
 import { AnalysisRecordSaveBanner } from './analysis-record-save-banner';
@@ -94,6 +96,7 @@ export function BodyComparisonSection({
   open: boolean;
 }) {
   const analyzeComparison = useAnalyzeBodyComparison();
+  const createAnalysisRecord = useCreateAnalysisRecord();
   const [images, setImages] = useState<ComparisonImages>({});
   const [result, setResult] = useState<ReturnType<
     typeof toBodyComparisonResult
@@ -169,6 +172,25 @@ export function BodyComparisonSection({
     setImages({});
     resetResultState();
     onOpenChange(false);
+  };
+
+  const handleRetryRecordSave = async () => {
+    if (!result || !analyzedAt) {
+      return;
+    }
+
+    try {
+      await createAnalysisRecord.mutateAsync(
+        buildBodyComparisonRecordPayload(analyzedAt, result),
+      );
+      setRecordSave({
+        status: 'saved',
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : '분석 기록 저장에 실패했어요.';
+      Alert.alert('저장 실패', message);
+    }
   };
 
   return (
@@ -264,7 +286,14 @@ export function BodyComparisonSection({
       ) : null}
 
       <AnalysisRecordSaveBanner
+        actionLabel="기록 저장 다시 시도"
         failedFallbackMessage="분석 결과는 생성됐지만 기록 저장에 실패했어요."
+        onActionPress={
+          recordSave?.status === 'failed'
+            ? () => void handleRetryRecordSave()
+            : undefined
+        }
+        pending={createAnalysisRecord.isPending}
         successMessage="전·후 비교 분석 결과를 기록에 저장했어요."
         value={recordSave}
       />
