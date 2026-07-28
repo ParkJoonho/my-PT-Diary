@@ -317,6 +317,30 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         ON analysis_records (user_key, analysis_type, analyzed_at DESC, created_at DESC)
       `);
 
+      await this.pool.query(`
+        CREATE TABLE IF NOT EXISTS meal_records (
+          id TEXT PRIMARY KEY,
+          user_key TEXT NOT NULL,
+          meal_type TEXT NOT NULL CHECK (
+            meal_type IN ('breakfast', 'lunch', 'dinner', 'snack')
+          ),
+          analysis_result JSONB NOT NULL,
+          total_calories INTEGER NOT NULL DEFAULT 0,
+          protein INTEGER NOT NULL DEFAULT 0,
+          carbs INTEGER NOT NULL DEFAULT 0,
+          fat INTEGER NOT NULL DEFAULT 0,
+          fiber INTEGER NOT NULL DEFAULT 0,
+          sodium INTEGER NOT NULL DEFAULT 0,
+          meal_date DATE NOT NULL,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+      `);
+
+      await this.pool.query(`
+        CREATE INDEX IF NOT EXISTS meal_records_user_key_meal_date_idx
+        ON meal_records (user_key, meal_date DESC, created_at DESC)
+      `);
+
       this.logger.log('Database schema is ready.');
     } finally {
       await this.pool.query('SELECT pg_advisory_unlock(2026072301)');

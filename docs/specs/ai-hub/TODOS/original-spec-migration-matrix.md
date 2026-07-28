@@ -41,18 +41,18 @@
 | AIHUB-021 | 아테나 | 의료 진단·위험 운동·극단 식단을 막는 코칭 안전 경계를 둔다. | X | X | 아테나 프롬프트·응답 안전 처리·안내 UI가 없다. [현재 서버 모듈][cur-app-module] |
 | AIHUB-022 | 아테나 | 채팅과 음성 인식 API는 현재 사용자만 호출할 수 있다. | X | X | 해당 API와 클라이언트 호출 자체가 없다. [현재 서버 모듈][cur-app-module] |
 | AIHUB-023 | 아테나 | 메시지 role·문자열·길이를 런타임 검증하고 시스템 역할 주입을 막는다. | X | X | 채팅 요청 스키마와 화면 입력이 없다. [현재 서버 모듈][cur-app-module] |
-| AIHUB-024 | 식단 | 사진→영양 분석→확인 후 저장→당일 합계→AI 가이드의 전체 흐름을 제공한다. | X | X | 식단 분석·식단 기록·식단 가이드 서버 모듈과 화면이 모두 없다. [현재 서버 모듈][cur-app-module] [현재 라우트][cur-routes] |
-| AIHUB-025 | 식단 | Hub 카드에서 식단 분석으로 진입하고 분석·저장·조회는 현재 사용자 기록만 다룬다. | X | X | Hub는 미구현 알림만 표시하고 관련 API·라우트가 없다. [현재 Hub][cur-hub] [현재 서버 모듈][cur-app-module] |
-| AIHUB-026 | 식단 | 아침/점심/간식/저녁을 선택하고 식사 전 사진은 필수, 식사 후 사진은 선택으로 받는다. | X | X | 요청 스키마와 사진 입력 화면이 없다. [현재 서버 모듈][cur-app-module] [현재 라우트][cur-routes] |
-| AIHUB-027 | 식단 | 전·후 사진이 있으면 남긴 양과 신뢰 가능한 촬영 시간 차이로 섭취량·식사 속도를 추정한다. | X | X | 전·후 식사 사진 분석과 EXIF 시간 처리 모두 없다. [현재 서버 모듈][cur-app-module] |
-| AIHUB-028 | 식단 | 음식별 중량·칼로리·탄단지·식이섬유·나트륨과 합계·균형·조언을 검증해 반환한다. | X | X | 음식 멀티모달 분석 API·응답 스키마·결과 화면이 없다. [현재 서버 모듈][cur-app-module] |
-| AIHUB-029 | 식단 | 총열량·영양소·인식 음식·AI 조언을 보고 저장 또는 새 사진 재분석을 선택한다. | X | X | 결과 확인·저장·재분석 UI가 없다. [현재 라우트][cur-routes] |
-| AIHUB-030 | 식단 | 사용자가 저장을 선택하면 사용자·식사유형·현지 식사일·분석 결과·영양 합계를 저장한다. | X | X | `meal_records` 저장 모듈과 저장 버튼 UI가 없다. [현재 서버 모듈][cur-app-module] |
-| AIHUB-031 | 식단 | 현지 당일 기록의 열량·주요 영양소·끼니 수를 합산하고 각 끼니 요약을 재확인한다. | X | X | 당일 식단 조회/합계 API와 화면이 없다. [현재 서버 모듈][cur-app-module] |
-| AIHUB-032 | 식단 | 식사일 저장·당일 조회·합계에 회원 현지 날짜를 일관되게 쓴다. | X | X | 식단 날짜 처리 자체가 없다. [현재 서버 모듈][cur-app-module] |
-| AIHUB-033 | 식단 | 식사 유형·날짜·영양 수치의 enum·형식·범위를 서버에서 검증한다. | X | X | 식단 저장 스키마와 입력 검증 UI가 없다. [현재 서버 모듈][cur-app-module] |
-| AIHUB-034 | 식단 | 저장된 식단으로 섭취 평가와 권장 식사 구성을 만들고 기록이 없으면 일반 안내임을 구분한다. | X | X | 식단 가이드 API와 빈 기록/개인 기록 분기 UI가 없다. [현재 서버 모듈][cur-app-module] |
-| AIHUB-035 | 식단 | 가이드의 평가·목표 영양소·식사 구성·개선 조언 계약을 화면과 일치시킨다. | X | X | 가이드 계약과 결과 화면이 없다. [현재 서버 모듈][cur-app-module] |
+| AIHUB-024 | 식단 | 사진→영양 분석→확인 후 저장→당일 합계→AI 가이드의 전체 흐름을 제공한다. | O | X | 서버에 분석, 사용자 선택 후 기록 저장, 날짜별 조회, 일일 합계, 저장 기록 기반 가이드 API가 분리되어 원본 흐름대로 연결됐다. 클라이언트 화면과 라우트는 아직 없다. [현재 식단 컨트롤러][cur-meal-controller] [현재 식단 서비스][cur-meal-service] [현재 라우트][cur-routes] |
+| AIHUB-025 | 식단 | Hub 카드에서 식단 분석으로 진입하고 분석·저장·조회는 현재 사용자 기록만 다룬다. | O | X | 모든 식단 API가 필수 `x-user-key` 경계 안에 있고 저장·조회·합계·가이드는 `user_key`로 격리한다. Hub 카드는 아직 미구현 상태이며 식단 화면 라우트가 없다. [현재 식단 컨트롤러][cur-meal-controller] [현재 식단 저장소][cur-meal-repo] [현재 Hub][cur-hub] |
+| AIHUB-026 | 식단 | 아침/점심/간식/저녁을 선택하고 식사 전 사진은 필수, 식사 후 사진은 선택으로 받는다. | O | X | 서버 요청 계약이 네 식사 유형 enum, 필수 식사 전 base64 사진, 선택 식사 후 사진을 원본과 같이 검증한다. 대응 사진 입력 화면은 아직 없다. [현재 식단 스키마][cur-meal-schema] [현재 식단 컨트롤러 테스트][cur-meal-controller-test] |
+| AIHUB-027 | 식단 | 전·후 사진이 있으면 남긴 양과 신뢰 가능한 촬영 시간 차이로 섭취량·식사 속도를 추정한다. | O | X | 서버는 전·후 사진을 순서대로 멀티모달 입력에 넣어 남긴 양과 섭취율을 추정하고, 클라이언트가 전달한 선택 `eatingDurationMinutes`로 식사 속도 결과를 만든다. 원본처럼 EXIF 시간 추출은 클라이언트 책임이며, EXIF 신뢰성 보정은 원본에 없는 `(QA 기대사항)`이다. 현재 식단 클라이언트가 없어 촬영 시간 전달은 아직 연결되지 않았다. [현재 식단 AI][cur-meal-ai] [현재 식단 스키마][cur-meal-schema] |
+| AIHUB-028 | 식단 | 음식별 중량·칼로리·탄단지·식이섬유·나트륨과 합계·균형·조언을 검증해 반환한다. | O | X | 서버가 원본의 음식별 추정량, 섭취율, 영양소와 전체 합계·균형·식단 조언·운동 상쇄량·요약 계약을 Zod로 검증한다. 외부 상품·칼로리 DB를 통한 사실성 검증은 원본에 없는 `(QA 기대사항)`이므로 추가하지 않았고 프롬프트도 외부 검증을 가장하지 않도록 했다. 결과 화면은 아직 없다. [현재 식단 스키마][cur-meal-schema] [현재 식단 AI][cur-meal-ai] |
+| AIHUB-029 | 식단 | 총열량·영양소·인식 음식·AI 조언을 보고 저장 또는 새 사진 재분석을 선택한다. | O | X | 분석 응답과 기록 저장 API를 분리해 분석 직후 자동 저장하지 않고, 원본처럼 확인 후 저장하거나 다시 분석할 수 있는 서버 경계를 마련했다. 선택과 결과 표시를 담당할 클라이언트 화면은 아직 없다. [현재 식단 컨트롤러][cur-meal-controller] [현재 식단 서비스][cur-meal-service] |
+| AIHUB-030 | 식단 | 사용자가 저장을 선택하면 사용자·식사유형·현지 식사일·분석 결과·영양 합계를 저장한다. | O | X | `meal_records`에 사용자 키, 식사 유형, 전달받은 `YYYY-MM-DD` 식사일, 전체 분석 JSON과 반올림한 영양 합계를 저장한다. 저장 버튼 UI는 아직 없다. [현재 식단 저장소][cur-meal-repo] [현재 DB 스키마][cur-database] |
+| AIHUB-031 | 식단 | 현지 당일 기록의 열량·주요 영양소·끼니 수를 합산하고 각 끼니 요약을 재확인한다. | O | X | 날짜별 사용자 기록 조회와 열량·탄단지·식이섬유·나트륨·끼니 수의 일일 합계 API를 구현했고 실DB 스모크로 합산과 사용자 격리를 확인했다. 기록·합계 화면은 아직 없다. [현재 식단 저장소][cur-meal-repo] [현재 식단 저장소 테스트][cur-meal-repo-test] |
+| AIHUB-032 | 식단 | 식사일 저장·당일 조회·합계에 회원 현지 날짜를 일관되게 쓴다. | O | X | 서버는 클라이언트가 현지 기준으로 전달하는 `YYYY-MM-DD`를 날짜 변환 없이 동일하게 저장·필터·합계·가이드 생성에 사용한다. 현지 날짜를 만들어 전달할 식단 클라이언트는 아직 없다. [현재 식단 스키마][cur-meal-schema] [현재 식단 저장소][cur-meal-repo] |
+| AIHUB-033 | 식단 | 식사 유형·날짜·영양 수치의 enum·형식·범위를 서버에서 검증한다. | O | X | 서버가 식사 유형 enum, 날짜 형식, 사진 크기, 식사 시간, 음식·영양 수치·점수·비율 범위를 요청과 AI 응답 양쪽에서 검증한다. 클라이언트 입력 검증은 아직 없다. [현재 식단 스키마][cur-meal-schema] [현재 식단 서비스 테스트][cur-meal-service-test] |
+| AIHUB-034 | 식단 | 저장된 식단으로 섭취 평가와 권장 식사 구성을 만들고 기록이 없으면 일반 안내임을 구분한다. | O | X | 서버가 현재 사용자·요청 날짜의 저장 기록만 가이드 컨텍스트로 사용하고, 기록이 없으면 일반 가이드를 요청하며 응답의 `sourceMealCount`를 0으로 내려 구분한다. 가이드 화면은 아직 없다. [현재 식단 서비스][cur-meal-service] [현재 식단 AI][cur-meal-ai] |
+| AIHUB-035 | 식단 | 가이드의 평가·목표 영양소·식사 구성·개선 조언 계약을 화면과 일치시킨다. | O | X | 원본 서버와 화면 사이에 어긋나 있던 필드를 실제 원본 화면이 소비하는 `overallAssessment`, `macroTargets`, `mealPlan`, `tips` 계약으로 통일하고 서버에서 검증한다. 이를 표시할 현재 클라이언트는 아직 없다. [현재 식단 스키마][cur-meal-schema] [현재 식단 응답 DTO][cur-meal-response] |
 | AIHUB-036 | 자세 | Hub의 자세 분석 카드에서 운동 영상 선택·촬영 및 교정 결과 화면으로 진입한다. | O | X | 순수 진입 스펙이라 서버 작업은 불필요하다. 현재 카드는 미구현 알림이며 자세 분석 라우트가 없다. [현재 Hub][cur-hub] [현재 라우트][cur-routes] |
 | AIHUB-037 | 자세 | 최대 5초 운동 영상을 촬영/선택하고 3개 분석 프레임을 추출한다. | X | X | 현재 `/ai-analysis`에는 원본의 `자세 분석 영상` 섹션이 없고 프레임 추출 모듈도 없다. [원본 체형 화면][src-body-ui] [현재 체형 화면][cur-body-ui] |
 | AIHUB-038 | 자세 | 현재 사용자만 유효 이미지 프레임을 제출하고 서버가 프레임 개수·형식을 검증한다. | X | X | 자세 분석 API·요청 스키마·클라이언트 호출이 없다. [현재 서버 모듈][cur-app-module] |
@@ -92,10 +92,11 @@
 
 ## 핵심 결론
 
-- 현재 판정 합계는 백엔드 `O 22 / X 49`, 클라이언트 `O 20 / X 51`이다.
+- 현재 판정 합계는 백엔드 `O 34 / X 37`, 클라이언트 `O 20 / X 51`이다.
 - 현재 실제로 끝까지 연결된 범위는 `AI Hub → 체형 분석`, `AI Hub → 신발 입력 섹션`, 정면/추가 사진 분석 요청, 사용자별 저장, 전·후 비교의 핵심 결과, 다각도·의료 상세, 그리고 체형 분석에 포함된 신발 결과의 메인 화면 렌더링이다.
 - 체형 분석의 원본 UX 범위에서는 비율 마커, 멱등한 저장 재시도, 이력 화면과 신발 전체 재열람까지 보완했다. PT 컨텍스트, 촬영일, 현재 체성분 등 QA 기대사항과 원본의 최신 연구 섹션은 별도 미완료 항목으로 남아 있다.
-- 아테나, 식단 분석, 영상 자세 분석, 통합 피트니스 분석은 카드 문구만 있고 백엔드와 실제 화면은 마이그레이션되지 않았다.
+- 식단 분석은 사진 분석, 확인 후 저장, 사용자별 날짜 조회와 일일 합계, 저장 기록 기반 가이드까지 백엔드가 마이그레이션됐지만 클라이언트 화면과 Hub 진입은 아직 미구현이다.
+- 아테나, 영상 자세 분석, 통합 피트니스 분석은 카드 문구만 있고 백엔드와 실제 화면이 마이그레이션되지 않았다.
 - 신발 추천은 원본 기준의 Hub 진입, 체형 분석 안의 선택 신발 입력, 서버 계약, 메인 결과 및 이력 전체 재열람까지 연결됐다. 신발만의 입력 흐름, 판독 검증, 실측, 민감 속성 처리, 상품 현재성, 의료 안전 경계는 원본에 없고 QA 기대사항으로 식별된 항목이다.
 - Hub는 원본과 같은 6개 카드와 자세 분석 아이콘 구성으로 복원됐다.
 
@@ -104,12 +105,12 @@
 - 원본 클라이언트: Hub, 체형/신발/영상 자세/전·후 비교, 이력, 아테나, 식단, 통합 분석, 활성 운동
 - 원본 서버: AI 분석·채팅·식단 가이드·상태 벡터·기록 저장/비교 경로
 - 현재 클라이언트: 생성 라우트 전체, Hub, 체형 입력/결과, 전·후 비교, 이력, 활성 운동
-- 현재 서버: AppModule 전체 등록 모듈, body-analysis, body-comparison, analysis-records, workout-records
+- 현재 서버: AppModule 전체 등록 모듈, body-analysis, body-comparison, analysis-records, workout-records, meal-analysis
 - QA 기준: AI Hub 추적 매트릭스의 `AIHUB-001`~`AIHUB-066`과 도메인별 QA 문서
-- 재검증: 클라이언트 전체 테스트 29개 suite/78개 test, 서버 전체 테스트 23개 suite/90개 test 통과
+- 재검증: 클라이언트 전체 테스트 29개 suite/78개 test, 서버 전체 테스트 27개 suite/106개 test 통과
 - 정적 검사: 클라이언트 변경 기능 범위 Biome와 서버 변경 파일 ESLint 통과
-- 실제 API 확인: 같은 멱등 키로 기록 생성 POST를 두 번 호출해 동일 기록 ID와 단일 저장 행을 확인
-- 테스트 보강: 비율 마커 계산, Hub 카드 구성, 비교 결과 방향 표현, 신발 이력 전체 재열람을 회귀 테스트로 확인
+- 실제 API 확인: 같은 멱등 키로 분석 기록 생성 POST를 두 번 호출해 동일 기록 ID와 단일 저장 행을 확인했고, 식단 기록 생성·사용자별 날짜 조회·일일 합계와 스모크 기록 정리까지 확인
+- 테스트 보강: 비율 마커 계산, Hub 카드 구성, 비교 결과 방향 표현, 신발 이력 전체 재열람과 식단 분석·기록·가이드 계약을 회귀 테스트로 확인
 
 [qa-matrix]: <../../../../../2026-07-13/pt-diary-qa/ai-hub/AI_Hub_QA_추적매트릭스.csv>
 [src-hub]: <../../../../../2026-07-13/my-PT-Diary/app/(tabs)/ai-hub.tsx>
@@ -141,3 +142,13 @@
 [cur-history-server]: ../../../../server/src/modules/analysis-records/analysis-records.service.ts
 [cur-history-schema]: ../../../../server/src/modules/analysis-records/analysis-records.schemas.ts
 [cur-app-module]: ../../../../server/src/app.module.ts
+[cur-database]: ../../../../server/src/database/database.service.ts
+[cur-meal-controller]: ../../../../server/src/modules/meal-analysis/meal-analysis.controller.ts
+[cur-meal-service]: ../../../../server/src/modules/meal-analysis/meal-analysis.service.ts
+[cur-meal-schema]: ../../../../server/src/modules/meal-analysis/meal-analysis.schemas.ts
+[cur-meal-ai]: ../../../../server/src/modules/meal-analysis/openai-meal-analysis.client.ts
+[cur-meal-repo]: ../../../../server/src/modules/meal-analysis/meal-records.repository.ts
+[cur-meal-response]: ../../../../server/src/modules/meal-analysis/dto/meal-analysis-response.dto.ts
+[cur-meal-controller-test]: ../../../../server/src/modules/meal-analysis/__tests__/meal-analysis.controller.integration.spec.ts
+[cur-meal-service-test]: ../../../../server/src/modules/meal-analysis/__tests__/meal-analysis.service.spec.ts
+[cur-meal-repo-test]: ../../../../server/src/modules/meal-analysis/__tests__/meal-records.repository.spec.ts
