@@ -1,4 +1,4 @@
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { App } from 'supertest/types';
@@ -44,13 +44,14 @@ describe('운동 배우기 컨트롤러 통합', () => {
       updateGuide: jest.fn(),
     };
 
-    allGuides = [...BODY_PART_EXERCISE_GUIDES, ...EQUIPMENT_EXERCISE_GUIDES].map(
-      (guide) => ({
-        ...guide,
-        createdAt: '2026-07-27T09:00:00.000Z',
-        updatedAt: '2026-07-27T09:00:00.000Z',
-      }),
-    );
+    allGuides = [
+      ...BODY_PART_EXERCISE_GUIDES,
+      ...EQUIPMENT_EXERCISE_GUIDES,
+    ].map((guide) => ({
+      ...guide,
+      createdAt: '2026-07-27T09:00:00.000Z',
+      updatedAt: '2026-07-27T09:00:00.000Z',
+    }));
     repository.listGuides.mockImplementation(async (params) =>
       params?.catalogType
         ? allGuides.filter((guide) => guide.catalogType === params.catalogType)
@@ -79,6 +80,13 @@ describe('운동 배우기 컨트롤러 통합', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.useGlobalPipes(
+      new ValidationPipe({
+        forbidNonWhitelisted: true,
+        transform: true,
+        whitelist: true,
+      }),
+    );
     await app.init();
   });
 

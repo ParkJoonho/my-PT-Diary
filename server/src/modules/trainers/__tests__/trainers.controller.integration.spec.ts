@@ -1,4 +1,4 @@
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { App } from 'supertest/types';
@@ -87,9 +87,7 @@ describe('트레이너 컨트롤러 통합', () => {
       listConnectRequests: jest.fn(),
       setTrainerLike: jest.fn(),
     };
-    repository.listApprovedTrainers.mockResolvedValue([
-      trainerRow,
-    ]);
+    repository.listApprovedTrainers.mockResolvedValue([trainerRow]);
     repository.getTrainerProfileData.mockResolvedValue({
       conditionRecords: [],
       ptLessons: [],
@@ -107,18 +105,16 @@ describe('트레이너 컨트롤러 통합', () => {
         user_key: 'user-a',
       },
     ]);
-    repository.createOrReturnConnectRequest.mockResolvedValue(
-      {
-        created_at: '2026-07-29T12:00:00.000Z',
-        id: '6952028b-c6a4-4f50-97d9-9971c4e4574e',
-        message: '등/어깨 위주 PT를 받고 싶어요.',
-        status: TrainerConnectRequestStatus.Pending,
-        trainer_id: 'trainer-seed-kim-minjun',
-        trainer_name: '김민준',
-        updated_at: '2026-07-29T12:00:00.000Z',
-        user_key: 'user-a',
-      },
-    );
+    repository.createOrReturnConnectRequest.mockResolvedValue({
+      created_at: '2026-07-29T12:00:00.000Z',
+      id: '6952028b-c6a4-4f50-97d9-9971c4e4574e',
+      message: '등/어깨 위주 PT를 받고 싶어요.',
+      status: TrainerConnectRequestStatus.Pending,
+      trainer_id: 'trainer-seed-kim-minjun',
+      trainer_name: '김민준',
+      updated_at: '2026-07-29T12:00:00.000Z',
+      user_key: 'user-a',
+    });
     repository.setTrainerLike.mockResolvedValue({
       ...trainerRow,
       liked: true,
@@ -136,6 +132,13 @@ describe('트레이너 컨트롤러 통합', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.useGlobalPipes(
+      new ValidationPipe({
+        forbidNonWhitelisted: true,
+        transform: true,
+        whitelist: true,
+      }),
+    );
     await app.init();
   });
 
@@ -177,9 +180,7 @@ describe('트레이너 컨트롤러 통합', () => {
 
     const body = connectRequestSchema.parse(response.body);
     expect(body.trainerId).toBe('trainer-seed-kim-minjun');
-    expect(
-      repository.createOrReturnConnectRequest.mock.calls[0]?.[0],
-    ).toEqual({
+    expect(repository.createOrReturnConnectRequest.mock.calls[0]?.[0]).toEqual({
       message: '등/어깨 위주 PT를 받고 싶어요.',
       trainerId: 'trainer-seed-kim-minjun',
       userKey: 'integration-user',

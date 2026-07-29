@@ -1,4 +1,4 @@
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
@@ -50,13 +50,14 @@ describe('운동 배우기 관리자 컨트롤러 통합', () => {
       updateGuide: jest.fn(),
     };
 
-    allGuides = [...BODY_PART_EXERCISE_GUIDES, ...EQUIPMENT_EXERCISE_GUIDES].map(
-      (guide) => ({
-        ...guide,
-        createdAt: '2026-07-27T09:00:00.000Z',
-        updatedAt: '2026-07-27T09:00:00.000Z',
-      }),
-    );
+    allGuides = [
+      ...BODY_PART_EXERCISE_GUIDES,
+      ...EQUIPMENT_EXERCISE_GUIDES,
+    ].map((guide) => ({
+      ...guide,
+      createdAt: '2026-07-27T09:00:00.000Z',
+      updatedAt: '2026-07-27T09:00:00.000Z',
+    }));
 
     repository.listGuides.mockImplementation(async (params) =>
       params?.catalogType
@@ -105,13 +106,22 @@ describe('운동 배우기 관리자 컨트롤러 통합', () => {
           provide: ConfigService,
           useValue: {
             get: (key: string) =>
-              key === 'SERVICE_ROLE_KEY' ? 'integration-service-key' : undefined,
+              key === 'SERVICE_ROLE_KEY'
+                ? 'integration-service-key'
+                : undefined,
           },
         },
       ],
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.useGlobalPipes(
+      new ValidationPipe({
+        forbidNonWhitelisted: true,
+        transform: true,
+        whitelist: true,
+      }),
+    );
     await app.init();
   });
 
@@ -160,6 +170,31 @@ describe('운동 배우기 관리자 컨트롤러 통합', () => {
 
     expect(body.id).toMatch(/^guide_/);
     expect(body.title).toBe('새 가이드');
+  });
+
+  it('관리자 수정은 변경된 가이드를 반환한다', async () => {
+    const response = await request(app.getHttpServer())
+      .put('/api/admin/exercise-guides/r1')
+      .set('x-service-role-key', 'integration-service-key')
+      .send({
+        bodyPart: '가슴',
+        catalogType: 'body_part',
+        description: '수정 설명',
+        displayOrder: 1,
+        duration: '12:00',
+        equipment: '바벨',
+        equipmentTypes: ['바벨'],
+        initialLikeCount: 3,
+        targetMuscles: '가슴 상부',
+        title: '수정 가이드',
+        videoUrl: 'https://www.youtube.com/embed/updated',
+      })
+      .expect(200);
+
+    const body = 관리자운동가이드응답스키마.parse(response.body);
+
+    expect(body.id).toBe('r1');
+    expect(body.title).toBe('수정 가이드');
   });
 
   it('관리자 삭제는 204를 반환한다', async () => {

@@ -1,4 +1,4 @@
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { App } from 'supertest/types';
@@ -111,9 +111,7 @@ describe('컨디션 기록 컨트롤러 통합', () => {
     repository.createConditionRecord.mockResolvedValue(createConditionRow());
     repository.listConditionRecords.mockResolvedValue([createConditionRow()]);
     repository.findConditionRecord.mockResolvedValue(createConditionRow());
-    repository.updateConditionRecord.mockResolvedValue(
-      createConditionRow(),
-    );
+    repository.updateConditionRecord.mockResolvedValue(createConditionRow());
     repository.deleteConditionRecord.mockResolvedValue(createConditionRow());
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -128,6 +126,13 @@ describe('컨디션 기록 컨트롤러 통합', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.useGlobalPipes(
+      new ValidationPipe({
+        forbidNonWhitelisted: true,
+        transform: true,
+        whitelist: true,
+      }),
+    );
     await app.init();
   });
 
