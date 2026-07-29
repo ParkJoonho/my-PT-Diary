@@ -1,7 +1,6 @@
 import { useSafeAreaInsets } from '@granite-js/native/react-native-safe-area-context';
 import { HomeTabBar } from 'features/home/components/home-tab-bar';
 import { ShieldCheck, UserRound } from 'lucide-react-native';
-import { Image } from 'react-native';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTrackerUserKey } from 'shared/api/user-key';
 import { SuspenseSection } from 'shared/components/async-state';
@@ -9,28 +8,12 @@ import Colors, { iosShadow } from 'shared/constants/colors';
 import { buildAccountProfile } from '../lib/account-profile';
 import { AccountBackground } from './account-background';
 
-const APP_ICON = require('../../../assets/images/icon.png');
-
 export function AccountScreen() {
   const insets = useSafeAreaInsets();
 
   return (
     <View style={styles.container}>
       <AccountBackground />
-
-      <View
-        style={[
-          styles.header,
-          {
-            paddingTop: insets.top + 10,
-          },
-        ]}
-      >
-        <View style={styles.headerBrand}>
-          <Image source={APP_ICON} style={styles.headerIcon} />
-          <Text style={styles.headerTitle}>PT Diary</Text>
-        </View>
-      </View>
 
       <ScrollView
         contentContainerStyle={[
@@ -117,29 +100,6 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     fontFamily: 'Pretendard-Medium',
     fontSize: 13,
-  },
-  header: {
-    backgroundColor: Colors.card,
-    borderBottomColor: Colors.cardBorder,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    paddingBottom: 12,
-    paddingHorizontal: 16,
-  },
-  headerBrand: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 8,
-    justifyContent: 'center',
-  },
-  headerIcon: {
-    borderRadius: 7,
-    height: 26,
-    width: 26,
-  },
-  headerTitle: {
-    color: Colors.text,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 17,
   },
   previewBadge: {
     backgroundColor: Colors.accentLight,

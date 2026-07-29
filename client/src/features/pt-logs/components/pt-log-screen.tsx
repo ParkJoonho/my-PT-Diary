@@ -5,13 +5,14 @@ import {
   ArrowRight,
   Calendar,
   ChevronDown,
+  ClipboardList,
   Plus,
-  Users,
 } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import {
   Alert,
   FlatList,
+  Image,
   Pressable,
   RefreshControl,
   StyleSheet,
@@ -114,10 +115,11 @@ function PtLogContent() {
         keyExtractor={(item) => item.id}
         ListEmptyComponent={
           <View style={styles.emptyCard}>
+            <ClipboardList color={Colors.textMuted} size={32} />
             <Text style={styles.emptyTitle}>
               {isFiltered
-                ? '해당 기간에 수업일지가 없어요.'
-                : '수업일지가 없어요.\n+ 버튼으로 첫 수업을 등록해보세요.'}
+                ? '해당 기간에 수업일지가 없어요'
+                : '수업일지가 없어요\n+ 버튼을 눌러 첫 수업을 등록해보세요'}
             </Text>
             {!isFiltered ? (
               <Pressable
@@ -132,14 +134,9 @@ function PtLogContent() {
         }
         ListHeaderComponent={
           <View>
-            <View style={styles.header}>
-              <View>
-                <Text style={styles.eyebrow}>PT</Text>
-                <Text style={styles.title}>PT 수업일지</Text>
-              </View>
-            </View>
-
-            <Text style={styles.sectionTitle}>AI 추천 트레이너</Text>
+            <Text style={[styles.sectionTitle, styles.trainerSectionTitle]}>
+              AI 추천 트레이너
+            </Text>
             <Pressable
               onPress={() =>
                 navigation.navigate({ name: '/ai-trainer-match', params: {} })
@@ -149,16 +146,15 @@ function PtLogContent() {
                 pressed && styles.trainerCardPressed,
               ]}
             >
-              <View style={styles.trainerIconWrap}>
-                <Users color={Colors.accent} size={20} />
-              </View>
+              <Image
+                resizeMode="contain"
+                source={require('../../../assets/images/trainer-icon.png')}
+                style={styles.trainerIcon}
+              />
               <View style={styles.trainerTextWrap}>
-                <View style={styles.trainerTitleRow}>
-                  <Text style={styles.trainerTitle}>트레이너 연결</Text>
-                </View>
+                <Text style={styles.trainerTitle}>트레이너 연결</Text>
                 <Text style={styles.trainerSubtitle}>
-                  현재 운동 기록과 PT 수업일지를 바탕으로 트레이너를
-                  추천해드려요.
+                  나에게 딱 맞는 트레이너를 추천해드려요.
                 </Text>
               </View>
               <ArrowRight color={Colors.iconMuted} size={18} />
@@ -263,11 +259,6 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     textAlign: 'center',
   },
-  eyebrow: {
-    color: Colors.textSecondary,
-    fontFamily: 'Pretendard-Medium',
-    fontSize: 13,
-  },
   fab: {
     alignItems: 'center',
     backgroundColor: Colors.accent,
@@ -302,9 +293,6 @@ const styles = StyleSheet.create({
   filterButtonTextActive: {
     color: Colors.accent,
   },
-  header: {
-    marginBottom: 22,
-  },
   sectionHeader: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -315,13 +303,9 @@ const styles = StyleSheet.create({
     color: Colors.text,
     fontFamily: 'Pretendard-Medium',
     fontSize: 17,
-    marginBottom: 10,
   },
-  title: {
-    color: Colors.text,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 30,
-    marginTop: 4,
+  trainerSectionTitle: {
+    marginBottom: 10,
   },
   trainerCard: {
     ...iosShadow,
@@ -331,39 +315,31 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 14,
     marginBottom: 20,
-    minHeight: 78,
+    minHeight: 72,
     paddingHorizontal: 16,
-    paddingVertical: 18,
+    paddingVertical: 19,
   },
   trainerCardPressed: {
     opacity: 0.84,
+    transform: [{ scale: 0.98 }],
   },
-  trainerIconWrap: {
-    alignItems: 'center',
-    backgroundColor: Colors.accentLight,
-    borderRadius: 18,
-    height: 36,
-    justifyContent: 'center',
-    width: 36,
+  trainerIcon: {
+    borderRadius: 999,
+    height: 34,
+    width: 34,
   },
   trainerSubtitle: {
-    color: Colors.textMuted,
+    color: '#8E8E8E',
     fontFamily: 'Pretendard-Regular',
     fontSize: 13,
-    lineHeight: 19,
   },
   trainerTextWrap: {
     flex: 1,
     gap: 4,
   },
   trainerTitle: {
-    color: Colors.text,
+    color: '#00192B',
     fontFamily: 'Pretendard-Medium',
     fontSize: 16,
-  },
-  trainerTitleRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 8,
   },
 });

@@ -81,17 +81,6 @@ export function AiHubScreen() {
 
   return (
     <View style={styles.container}>
-      <View
-        style={[
-          styles.header,
-          {
-            paddingTop: insets.top + 10,
-          },
-        ]}
-      >
-        <Text style={styles.headerTitle}>AI Hub</Text>
-      </View>
-
       <ScrollView
         contentContainerStyle={{
           gap: 10,
@@ -199,18 +188,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     gap: 8,
-  },
-  header: {
-    backgroundColor: Colors.card,
-    borderBottomColor: Colors.cardBorder,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  headerTitle: {
-    color: Colors.text,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 17,
   },
   scrollView: {
     flex: 1,

@@ -111,6 +111,26 @@ jest.mock('../../api/trainers', () => ({
         region: '용산',
         specialties: ['재활 운동'],
       },
+      {
+        avatarColor: '#AF52DE',
+        bio: '기능성 움직임과 밸런스 회복을 돕습니다.',
+        career: '기능성 트레이닝 6년 지도',
+        certifications: ['FMS 레벨2', '임산부 전문'],
+        connectRequestStatus: null,
+        experienceYears: 6,
+        focusBodyParts: ['코어', '전신', '힙'],
+        gymName: '마포 짐',
+        id: 'trainer-3',
+        liked: false,
+        memberCount: 11,
+        name: '최유나',
+        onlineAvailable: true,
+        philosophy: '움직임의 질을 먼저 세웁니다.',
+        pricePerSession: '55,000원',
+        rating: 4.7,
+        region: '마포',
+        specialties: ['기능성 운동', '밸런스'],
+      },
     ],
   }),
 }));
@@ -126,9 +146,18 @@ describe('트레이너 추천 화면', () => {
     const rendered = render(<TrainerMatchScreen />);
 
     expect(screen.getByText('AI 트레이너 추천')).toBeTruthy();
+    expect(screen.queryByText('AI 추천 트레이너')).toBeNull();
     expect(screen.getByText('김민준')).toBeTruthy();
     expect(screen.getByText('박지훈')).toBeTruthy();
     expect(rendered.UNSAFE_getAllByType(ScrollView).length).toBeGreaterThan(0);
+  });
+
+  it('원본 카드처럼 경력과 자격 뱃지를 목록에 표시한다', () => {
+    render(<TrainerMatchScreen />);
+
+    expect(screen.getByText('경력 6년')).toBeTruthy();
+    expect(screen.getByText('FMS 레벨2')).toBeTruthy();
+    expect(screen.getByText('임산부 전문')).toBeTruthy();
   });
 
   it('찜 버튼을 누르면 서버 토글 mutation을 호출한다', async () => {

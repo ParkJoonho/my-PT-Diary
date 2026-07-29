@@ -47,6 +47,7 @@ describe('AI Hub 화면', () => {
     expect(screen.getByText('AI 자세 분석')).toBeTruthy();
     expect(screen.getByText('AI 신발 추천')).toBeTruthy();
     expect(screen.getByText('AI 통합 피트니스 분석')).toBeTruthy();
+    expect(screen.queryByText('AI Hub')).toBeNull();
     expect(screen.queryByText('나의 몸매 & 스타일')).toBeNull();
     expect(screen.getByText('Accessibility')).toBeTruthy();
   });

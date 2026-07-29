@@ -1,14 +1,14 @@
-import { useNavigation } from '@granite-js/react-native';
+import { HomeTabBar } from 'features/home/components/home-tab-bar';
 import {
-  ArrowLeft,
+  Check,
   ChevronDown,
   ChevronRight,
+  Clock3,
   Heart,
-  MapPin,
   Star,
-  Users,
+  Zap,
 } from 'lucide-react-native';
-import { type ReactNode, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Alert,
   Modal,
@@ -23,6 +23,7 @@ import type {
   TrainerDto,
 } from 'shared/api/generated/models';
 import { SuspenseSection } from 'shared/components/async-state';
+import { AIInfoIcon } from 'shared/components/icons/pt-diary-icons';
 import Colors, { iosShadow } from 'shared/constants/colors';
 import {
   useCreateTrainerConnectRequest,
@@ -33,6 +34,7 @@ import {
 
 type SortMode = 'ai' | 'default' | 'popular';
 type TrainerListItem = RecommendedTrainerDto | TrainerDto;
+const GOLD = '#D4AF37';
 
 const SORT_OPTIONS: Array<{ label: string; mode: SortMode }> = [
   { label: '기본순', mode: 'default' },
@@ -41,7 +43,6 @@ const SORT_OPTIONS: Array<{ label: string; mode: SortMode }> = [
 ];
 
 export function TrainerMatchScreen() {
-  const navigation = useNavigation();
   const setTrainerLikeMutation = useSetTrainerLike();
   const [sortMode, setSortMode] = useState<SortMode>('default');
   const [sortMenuOpen, setSortMenuOpen] = useState(false);
@@ -63,16 +64,12 @@ export function TrainerMatchScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      {sortMenuOpen ? (
         <Pressable
-          onPress={() => navigation.goBack()}
-          style={styles.headerButton}
-        >
-          <ArrowLeft color={Colors.text} size={20} />
-        </Pressable>
-        <Text style={styles.headerTitle}>AI 추천 트레이너</Text>
-        <View style={styles.headerButton} />
-      </View>
+          onPress={() => setSortMenuOpen(false)}
+          style={styles.dropdownOverlay}
+        />
+      ) : null}
 
       <ScrollView
         contentContainerStyle={styles.content}
@@ -108,6 +105,9 @@ export function TrainerMatchScreen() {
                     >
                       {option.label}
                     </Text>
+                    {option.mode === sortMode ? (
+                      <Check color={Colors.accent} size={14} />
+                    ) : null}
                   </Pressable>
                 ))}
               </View>
@@ -115,10 +115,15 @@ export function TrainerMatchScreen() {
           </View>
         </View>
 
-        <Text style={styles.subtitle}>
-          현재 운동 기록과 PT 수업일지를 바탕으로 잘 맞는 트레이너를
-          추천해드려요.
-        </Text>
+        <View style={styles.descriptionRow}>
+          <View style={styles.descriptionIcon}>
+            <AIInfoIcon />
+          </View>
+          <Text style={styles.descriptionText}>
+            AI 추천순을 선택하면 AI가 내 운동기록을 분석해 최적의 트레이너를
+            추천해요.
+          </Text>
+        </View>
 
         {sortMode === 'ai' ? (
           <SuspenseSection errorMessage="추천 트레이너를 불러오지 못했어요.">
@@ -142,6 +147,7 @@ export function TrainerMatchScreen() {
         onClose={() => setSelectedTrainer(null)}
         trainer={selectedTrainer}
       />
+      <HomeTabBar activeKey="pt-log" />
     </View>
   );
 }
@@ -220,8 +226,14 @@ function TrainerCard({
   const connectLabel = resolveConnectRequestLabel(trainer.connectRequestStatus);
 
   return (
-    <Pressable onPress={onPress} style={styles.card}>
-      <View style={styles.cardHeader}>
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.trainerCard,
+        pressed && styles.trainerCardPressed,
+      ]}
+    >
+      <View style={styles.cardTop}>
         <View
           style={[
             styles.avatar,
@@ -232,67 +244,80 @@ function TrainerCard({
         >
           <Text style={styles.avatarText}>{trainer.name.slice(0, 1)}</Text>
         </View>
-        <View style={styles.cardTitleWrap}>
-          <View style={styles.cardTitleRow}>
-            <View style={styles.cardNameRow}>
-              <Text style={styles.cardName}>{trainer.name}</Text>
-              <ChevronRight color={Colors.iconMuted} size={16} />
-            </View>
-            <Pressable
-              accessibilityLabel={`${trainer.name} 찜`}
-              hitSlop={8}
-              onPress={(event) => {
-                event?.stopPropagation?.();
-                onToggleLike();
-              }}
-              style={styles.likeButton}
-            >
-              <Heart
-                color={trainer.liked ? Colors.accent : Colors.textMuted}
-                fill={trainer.liked ? Colors.accent : 'transparent'}
-                size={18}
-              />
-            </Pressable>
+
+        <View style={styles.cardInfo}>
+          <View style={styles.nameRow}>
+            <Text style={styles.trainerName}>{trainer.name}</Text>
+            <Star color={GOLD} fill={GOLD} size={12} />
+            <Text style={styles.ratingText}>
+              {Number(trainer.rating).toFixed(1)}
+            </Text>
           </View>
-          <Text style={styles.cardGym}>{trainer.gymName}</Text>
+          <Text style={styles.gymText}>{trainer.gymName}</Text>
+          <View style={styles.tagRow}>
+            {trainer.specialties.map((specialty) => (
+              <View key={specialty} style={styles.specialtyTag}>
+                <Text style={styles.specialtyTagText}>{specialty}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.actionButtons}>
+          <Pressable
+            accessibilityLabel={`${trainer.name} 찜`}
+            hitSlop={8}
+            onPress={(event) => {
+              event?.stopPropagation?.();
+              onToggleLike();
+            }}
+          >
+            <Heart
+              color={trainer.liked ? Colors.accent : Colors.textMuted}
+              fill={trainer.liked ? Colors.accent : 'transparent'}
+              size={20}
+            />
+          </Pressable>
+          <ChevronRight color={Colors.textMuted} size={18} />
         </View>
       </View>
-
-      <View style={styles.cardMetaRow}>
-        <MetaBadge
-          icon={<Star color={Colors.warning} fill={Colors.warning} size={13} />}
-          text={Number(trainer.rating).toFixed(1)}
-        />
-        <MetaBadge
-          icon={<Users color={Colors.info} size={13} />}
-          text={`회원 ${trainer.memberCount}명`}
-        />
-        <MetaBadge
-          icon={<MapPin color={Colors.textSecondary} size={13} />}
-          text={trainer.region}
-        />
-      </View>
-
-      <Text style={styles.specialtiesText}>
-        {trainer.specialties.join(' · ')}
-      </Text>
-      <Text style={styles.cardPrice}>
-        {trainer.pricePerSession} / {trainer.experienceYears}년 경력
-      </Text>
 
       {isRecommended ? (
-        <View style={styles.recommendBox}>
-          <View style={styles.recommendHeader}>
-            <Text style={styles.recommendTag}>{trainer.highlightTag}</Text>
-            <Text style={styles.recommendScore}>{trainer.matchScore}점</Text>
+        <View style={styles.matchRow}>
+          <View style={styles.highlightTag}>
+            <Zap color={GOLD} fill={GOLD} size={10} />
+            <Text style={styles.highlightTagText}>{trainer.highlightTag}</Text>
           </View>
-          <Text style={styles.recommendReason}>{trainer.matchReason}</Text>
+          <Text numberOfLines={2} style={styles.reasonText}>
+            {trainer.matchReason}
+          </Text>
         </View>
       ) : null}
 
-      {connectLabel ? (
-        <Text style={styles.connectStateText}>{connectLabel}</Text>
-      ) : null}
+      <View style={styles.cardFooter}>
+        <View style={styles.metaLeft}>
+          <Clock3 color={Colors.textMuted} size={12} />
+          <Text style={styles.metaText}>경력 {trainer.experienceYears}년</Text>
+          {trainer.certifications.map((certification) => (
+            <View key={certification} style={styles.certTag}>
+              <Text style={styles.certTagText}>{certification}</Text>
+            </View>
+          ))}
+          {connectLabel ? (
+            <View style={styles.connectStateTag}>
+              <Text style={styles.connectStateText}>{connectLabel}</Text>
+            </View>
+          ) : null}
+        </View>
+        <View style={styles.priceRow}>
+          {isRecommended ? (
+            <View style={styles.scoreChip}>
+              <Text style={styles.scoreChipText}>{trainer.matchScore}점</Text>
+            </View>
+          ) : null}
+          <Text style={styles.priceText}>{trainer.pricePerSession}/회</Text>
+        </View>
+      </View>
     </Pressable>
   );
 }
@@ -350,17 +375,13 @@ function TrainerDetailModal({
   };
 
   return (
-    <Modal onRequestClose={onClose} transparent visible>
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalCard}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>트레이너 상세</Text>
-            <Pressable onPress={onClose}>
-              <Text style={styles.modalCloseText}>닫기</Text>
-            </Pressable>
-          </View>
+    <Modal animationType="slide" onRequestClose={onClose} transparent visible>
+      <View style={styles.modalRoot}>
+        <Pressable onPress={onClose} style={styles.modalBackdrop} />
+        <View style={styles.modalSheet}>
+          <View style={styles.modalHandle} />
 
-          <View style={styles.modalProfileRow}>
+          <View style={styles.modalHeader}>
             <View
               style={[
                 styles.modalAvatar,
@@ -369,42 +390,72 @@ function TrainerDetailModal({
                 },
               ]}
             >
-              <Text style={styles.avatarText}>{trainer.name.slice(0, 1)}</Text>
-            </View>
-            <View style={styles.modalNameWrap}>
-              <Text style={styles.modalTrainerName}>{trainer.name}</Text>
-              <Text style={styles.modalTrainerMeta}>
-                {trainer.gymName} · {trainer.experienceYears}년 경력
+              <Text style={styles.modalAvatarText}>
+                {trainer.name.slice(0, 1)}
               </Text>
             </View>
+            <View style={styles.modalNameWrap}>
+              <View style={styles.modalNameRow}>
+                <Text style={styles.modalTrainerName}>{trainer.name}</Text>
+                <Star color={GOLD} fill={GOLD} size={13} />
+                <Text style={styles.modalRating}>
+                  {Number(trainer.rating).toFixed(1)}
+                </Text>
+              </View>
+              <Text style={styles.modalGym}>{trainer.gymName}</Text>
+            </View>
+            <Pressable hitSlop={10} onPress={onClose}>
+              <Text style={styles.modalCloseText}>×</Text>
+            </Pressable>
           </View>
 
           <ScrollView
             contentContainerStyle={styles.modalContent}
             showsVerticalScrollIndicator={false}
           >
-            <DetailSection
-              label="전문 분야"
-              value={trainer.specialties.join(', ')}
-            />
-            <DetailSection
-              label="집중 부위"
-              value={trainer.focusBodyParts.join(', ')}
-            />
-            <DetailSection label="소개" value={trainer.bio} />
-            <DetailSection label="경력" value={trainer.career} />
-            <DetailSection
-              label="자격 사항"
-              value={trainer.certifications.join(', ')}
-            />
-            <DetailSection label="코칭 철학" value={trainer.philosophy} />
-            <DetailSection label="세션 비용" value={trainer.pricePerSession} />
+            <View style={styles.modalSection}>
+              <Text style={styles.modalSectionTitle}>전문 분야</Text>
+              <View style={styles.modalTagRow}>
+                {trainer.specialties.map((specialty) => (
+                  <View key={specialty} style={styles.modalTag}>
+                    <Text style={styles.modalTagText}>{specialty}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.modalSection}>
+              <Text style={styles.modalSectionTitle}>경력 및 자격증</Text>
+              <Text style={styles.modalMetaText}>
+                경력 {trainer.experienceYears}년
+              </Text>
+              <View style={styles.modalTagRow}>
+                {trainer.certifications.map((certification) => (
+                  <View
+                    key={certification}
+                    style={[styles.modalTag, styles.modalCertTag]}
+                  >
+                    <Text style={styles.modalTagText}>{certification}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+
             {'matchReason' in trainer ? (
-              <DetailSection
-                label="추천 이유"
-                value={`${trainer.highlightTag} · ${trainer.matchReason}`}
-              />
+              <View style={styles.modalSection}>
+                <Text style={styles.modalSectionTitle}>AI 추천 이유</Text>
+                <Text style={styles.modalDescription}>
+                  {trainer.highlightTag} · {trainer.matchReason}
+                </Text>
+              </View>
             ) : null}
+
+            <View style={styles.modalPriceSection}>
+              <Text style={styles.modalSectionTitle}>PT 비용</Text>
+              <Text style={styles.modalPrice}>
+                {trainer.pricePerSession}/회
+              </Text>
+            </View>
           </ScrollView>
 
           <Pressable
@@ -426,24 +477,6 @@ function TrainerDetailModal({
   );
 }
 
-function DetailSection({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={styles.detailSection}>
-      <Text style={styles.detailLabel}>{label}</Text>
-      <Text style={styles.detailValue}>{value}</Text>
-    </View>
-  );
-}
-
-function MetaBadge({ icon, text }: { icon: ReactNode; text: string }) {
-  return (
-    <View style={styles.metaBadge}>
-      {icon}
-      <Text style={styles.metaBadgeText}>{text}</Text>
-    </View>
-  );
-}
-
 function resolveConnectRequestLabel(status?: string | null) {
   if (status === 'pending') {
     return '연결 요청 보냄';
@@ -461,69 +494,61 @@ function resolveConnectRequestLabel(status?: string | null) {
 }
 
 const styles = StyleSheet.create({
+  actionButtons: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    flexShrink: 0,
+    gap: 6,
+    paddingTop: 2,
+  },
   avatar: {
     alignItems: 'center',
-    borderRadius: 24,
-    height: 48,
+    borderRadius: 14,
+    flexShrink: 0,
+    height: 56,
     justifyContent: 'center',
-    width: 48,
+    width: 56,
   },
   avatarText: {
     color: Colors.white,
     fontFamily: 'Pretendard-SemiBold',
-    fontSize: 20,
+    fontSize: 22,
   },
-  card: {
-    ...iosShadow,
-    backgroundColor: Colors.card,
-    borderRadius: 18,
-    gap: 12,
-    padding: 16,
-  },
-  cardGym: {
-    color: Colors.textSecondary,
-    fontFamily: 'Pretendard-Regular',
-    fontSize: 12,
-  },
-  cardHeader: {
+  cardFooter: {
     alignItems: 'center',
-    flexDirection: 'row',
-    gap: 12,
-  },
-  cardMetaRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  cardName: {
-    color: Colors.text,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 17,
-  },
-  cardNameRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-  },
-  cardPrice: {
-    color: Colors.textSecondary,
-    fontFamily: 'Pretendard-Regular',
-    fontSize: 13,
-  },
-  cardTitleWrap: {
-    flex: 1,
-    gap: 3,
-  },
-  cardTitleRow: {
-    alignItems: 'center',
+    borderTopColor: Colors.divider,
+    borderTopWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
+    paddingTop: 10,
+  },
+  cardInfo: {
+    flex: 1,
+    gap: 4,
+  },
+  cardTop: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 10,
+  },
+  certTag: {
+    backgroundColor: `${Colors.primary}12`,
+    borderRadius: 5,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+  },
+  certTagText: {
+    color: Colors.primary,
+    fontFamily: 'Pretendard-Medium',
+    fontSize: 10,
   },
   connectButton: {
     alignItems: 'center',
     backgroundColor: Colors.accent,
-    borderRadius: 14,
+    borderRadius: 12,
     justifyContent: 'center',
-    minHeight: 52,
+    minHeight: 48,
   },
   connectButtonDisabled: {
     backgroundColor: Colors.systemGray3,
@@ -533,206 +558,298 @@ const styles = StyleSheet.create({
     fontFamily: 'Pretendard-SemiBold',
     fontSize: 15,
   },
+  connectStateTag: {
+    backgroundColor: Colors.accentLight,
+    borderRadius: 5,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+  },
   connectStateText: {
     color: Colors.accent,
     fontFamily: 'Pretendard-Medium',
-    fontSize: 12,
+    fontSize: 10,
   },
   container: {
     backgroundColor: Colors.background,
     flex: 1,
   },
   content: {
-    paddingBottom: 32,
+    paddingBottom: 104,
     paddingHorizontal: 16,
     paddingTop: 20,
   },
-  detailLabel: {
-    color: Colors.textSecondary,
-    fontFamily: 'Pretendard-Medium',
-    fontSize: 12,
+  descriptionIcon: {
+    marginTop: 3,
   },
-  detailSection: {
-    gap: 4,
+  descriptionRow: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 16,
   },
-  detailValue: {
-    color: Colors.text,
+  descriptionText: {
+    color: Colors.textMuted,
+    flex: 1,
     fontFamily: 'Pretendard-Regular',
-    fontSize: 14,
+    fontSize: 13,
     lineHeight: 20,
   },
   dropdown: {
     ...iosShadow,
     backgroundColor: Colors.card,
-    borderRadius: 14,
-    marginTop: 6,
+    borderRadius: 10,
+    minWidth: 130,
     overflow: 'hidden',
+    paddingVertical: 4,
     position: 'absolute',
     right: 0,
-    top: 44,
-    width: 120,
-    zIndex: 10,
+    top: 34,
+    zIndex: 200,
   },
   dropdownOption: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+    justifyContent: 'space-between',
     paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingVertical: 10,
   },
   dropdownOptionText: {
     color: Colors.text,
     fontFamily: 'Pretendard-Regular',
-    fontSize: 13,
+    fontSize: 14,
   },
   dropdownOptionTextActive: {
     color: Colors.accent,
     fontFamily: 'Pretendard-SemiBold',
   },
-  header: {
+  dropdownOverlay: {
+    bottom: 0,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    zIndex: 99,
+  },
+  gymText: {
+    color: Colors.textMuted,
+    fontFamily: 'Pretendard-Regular',
+    fontSize: 12,
+  },
+  highlightTag: {
     alignItems: 'center',
-    backgroundColor: Colors.card,
-    borderBottomColor: Colors.cardBorder,
-    borderBottomWidth: 1,
+    alignSelf: 'flex-start',
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    gap: 3,
   },
-  headerButton: {
-    alignItems: 'center',
-    height: 32,
-    justifyContent: 'center',
-    width: 32,
-  },
-  headerTitle: {
-    color: Colors.text,
+  highlightTagText: {
+    color: GOLD,
     fontFamily: 'Pretendard-SemiBold',
-    fontSize: 17,
+    fontSize: 11,
   },
   list: {
-    gap: 12,
+    gap: 10,
   },
-  likeButton: {
-    alignItems: 'center',
-    borderRadius: 999,
-    height: 28,
-    justifyContent: 'center',
-    width: 28,
+  matchRow: {
+    backgroundColor: `${GOLD}0D`,
+    borderRadius: 8,
+    gap: 5,
+    marginBottom: 10,
+    padding: 9,
   },
-  metaBadge: {
+  metaLeft: {
     alignItems: 'center',
-    backgroundColor: Colors.inputBg,
-    borderRadius: 999,
+    flex: 1,
     flexDirection: 'row',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 5,
+    flexWrap: 'wrap',
+    gap: 6,
   },
-  metaBadgeText: {
-    color: Colors.textSecondary,
-    fontFamily: 'Pretendard-Medium',
+  metaText: {
+    color: Colors.textMuted,
+    fontFamily: 'Pretendard-Regular',
     fontSize: 11,
   },
   modalAvatar: {
     alignItems: 'center',
-    borderRadius: 28,
+    borderRadius: 14,
     height: 56,
     justifyContent: 'center',
     width: 56,
   },
-  modalCard: {
-    backgroundColor: Colors.card,
-    borderRadius: 22,
-    gap: 16,
-    maxHeight: '80%',
-    padding: 20,
-    width: '90%',
+  modalAvatarText: {
+    color: Colors.white,
+    fontFamily: 'Pretendard-SemiBold',
+    fontSize: 22,
+  },
+  modalBackdrop: {
+    backgroundColor: '#00000055',
+    bottom: 0,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+  },
+  modalCertTag: {
+    backgroundColor: `${Colors.primary}12`,
   },
   modalCloseText: {
-    color: Colors.textSecondary,
-    fontFamily: 'Pretendard-Medium',
-    fontSize: 13,
+    color: Colors.textMuted,
+    fontFamily: 'Pretendard-Regular',
+    fontSize: 28,
+    lineHeight: 28,
   },
   modalContent: {
-    gap: 14,
+    gap: 20,
     paddingBottom: 4,
+  },
+  modalDescription: {
+    color: Colors.textSecondary,
+    fontFamily: 'Pretendard-Regular',
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  modalGym: {
+    color: Colors.textMuted,
+    fontFamily: 'Pretendard-Regular',
+    fontSize: 13,
+  },
+  modalHandle: {
+    alignSelf: 'center',
+    backgroundColor: Colors.systemGray3,
+    borderRadius: 2,
+    height: 4,
+    width: 38,
   },
   modalHeader: {
     alignItems: 'center',
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    gap: 12,
+  },
+  modalMetaText: {
+    color: Colors.textSecondary,
+    fontFamily: 'Pretendard-Regular',
+    fontSize: 13,
+  },
+  modalNameRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 6,
   },
   modalNameWrap: {
     flex: 1,
     gap: 4,
   },
-  modalOverlay: {
-    alignItems: 'center',
-    backgroundColor: '#00000066',
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 16,
+  modalPrice: {
+    color: Colors.accent,
+    fontFamily: 'Pretendard-SemiBold',
+    fontSize: 17,
   },
-  modalProfileRow: {
+  modalPriceSection: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 14,
+    justifyContent: 'space-between',
   },
-  modalTitle: {
+  modalRating: {
     color: Colors.text,
     fontFamily: 'Pretendard-SemiBold',
-    fontSize: 18,
+    fontSize: 13,
   },
-  modalTrainerMeta: {
+  modalRoot: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  modalSection: {
+    gap: 10,
+  },
+  modalSectionTitle: {
+    color: Colors.text,
+    fontFamily: 'Pretendard-SemiBold',
+    fontSize: 14,
+  },
+  modalSheet: {
+    backgroundColor: Colors.card,
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
+    gap: 18,
+    maxHeight: '82%',
+    paddingBottom: 24,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+  },
+  modalTag: {
+    backgroundColor: Colors.inputBg,
+    borderRadius: 6,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+  },
+  modalTagRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  modalTagText: {
     color: Colors.textSecondary,
     fontFamily: 'Pretendard-Regular',
-    fontSize: 13,
+    fontSize: 12,
   },
   modalTrainerName: {
     color: Colors.text,
     fontFamily: 'Pretendard-SemiBold',
     fontSize: 18,
   },
+  nameRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 5,
+  },
   pageTitle: {
     color: Colors.text,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 28,
+    fontFamily: 'Pretendard-Medium',
+    fontSize: 17,
   },
-  recommendBox: {
-    backgroundColor: Colors.accentLight,
-    borderRadius: 14,
-    gap: 6,
-    padding: 12,
-  },
-  recommendHeader: {
+  priceRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexShrink: 0,
+    gap: 6,
+    marginLeft: 8,
   },
-  recommendReason: {
+  priceText: {
+    color: Colors.accent,
+    fontFamily: 'Pretendard-SemiBold',
+    fontSize: 13,
+  },
+  ratingText: {
     color: Colors.text,
+    fontFamily: 'Pretendard-SemiBold',
+    fontSize: 13,
+  },
+  reasonText: {
+    color: Colors.textSecondary,
     fontFamily: 'Pretendard-Regular',
-    fontSize: 13,
-    lineHeight: 19,
-  },
-  recommendScore: {
-    color: Colors.accent,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 13,
-  },
-  recommendTag: {
-    color: Colors.accent,
-    fontFamily: 'Pretendard-SemiBold',
     fontSize: 12,
+    lineHeight: 17,
+  },
+  scoreChip: {
+    backgroundColor: `${GOLD}18`,
+    borderRadius: 6,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+  },
+  scoreChipText: {
+    color: GOLD,
+    fontFamily: 'Pretendard-SemiBold',
+    fontSize: 11,
   },
   sortButton: {
+    ...iosShadow,
     alignItems: 'center',
     backgroundColor: Colors.card,
-    borderColor: Colors.cardBorder,
-    borderRadius: 20,
-    borderWidth: 1,
+    borderRadius: 8,
     flexDirection: 'row',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
   },
   sortButtonText: {
     color: Colors.textSecondary,
@@ -743,23 +860,42 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     position: 'relative',
   },
-  specialtiesText: {
-    color: Colors.text,
-    fontFamily: 'Pretendard-Medium',
-    fontSize: 14,
+  specialtyTag: {
+    backgroundColor: Colors.inputBg,
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
   },
-  subtitle: {
+  specialtyTagText: {
     color: Colors.textSecondary,
     fontFamily: 'Pretendard-Regular',
-    fontSize: 13,
-    lineHeight: 19,
-    marginBottom: 16,
-    marginTop: 6,
+    fontSize: 11,
+  },
+  tagRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 5,
+    marginTop: 2,
   },
   titleRow: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 4,
+    marginBottom: 14,
+    zIndex: 100,
+  },
+  trainerCard: {
+    ...iosShadow,
+    backgroundColor: Colors.card,
+    borderRadius: 16,
+    padding: 14,
+  },
+  trainerCardPressed: {
+    opacity: 0.85,
+  },
+  trainerName: {
+    color: Colors.text,
+    fontFamily: 'Pretendard-SemiBold',
+    fontSize: 16,
   },
 });

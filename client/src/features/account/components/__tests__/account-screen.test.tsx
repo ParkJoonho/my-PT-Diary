@@ -43,6 +43,7 @@ describe('AccountScreen', () => {
     expect(screen.getByText('익명 사용자')).toBeTruthy();
     expect(screen.getByText('사용자 키')).toBeTruthy();
     expect(screen.getByText('user-key-1234')).toBeTruthy();
+    expect(screen.queryByText('PT Diary')).toBeNull();
     expect(screen.queryByText('로그아웃')).toBeNull();
   });
 });
