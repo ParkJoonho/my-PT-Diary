@@ -1,8 +1,8 @@
+import { useSafeAreaInsets } from '@granite-js/native/react-native-safe-area-context';
 import { HomeTabBar } from 'features/home/components/home-tab-bar';
 import { ShieldCheck, UserRound } from 'lucide-react-native';
 import { Image } from 'react-native';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTrackerUserKey } from 'shared/api/user-key';
 import { SuspenseSection } from 'shared/components/async-state';
 import Colors, { iosShadow } from 'shared/constants/colors';

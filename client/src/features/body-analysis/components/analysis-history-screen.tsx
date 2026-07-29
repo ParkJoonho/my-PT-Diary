@@ -1,3 +1,4 @@
+import { useSafeAreaInsets } from '@granite-js/native/react-native-safe-area-context';
 import { useNavigation } from '@granite-js/react-native';
 import {
   Accessibility,
@@ -22,7 +23,6 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { CompareAnalysisRecordsDto } from 'shared/api/generated/models';
 import { EmptyState, SuspenseSection } from 'shared/components/async-state';
 import Colors, { iosShadow } from 'shared/constants/colors';

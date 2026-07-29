@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
 import { AccountScreen } from '../account-screen';
 
-jest.mock('react-native-safe-area-context', () => ({
+jest.mock('@granite-js/native/react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ bottom: 0, left: 0, right: 0, top: 0 }),
 }));
 

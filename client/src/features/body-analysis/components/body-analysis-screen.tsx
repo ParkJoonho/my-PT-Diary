@@ -1,3 +1,4 @@
+import { useSafeAreaInsets } from '@granite-js/native/react-native-safe-area-context';
 import { useNavigation } from '@granite-js/react-native';
 import {
   ArrowLeft,
@@ -24,7 +25,6 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Colors, { iosShadow } from 'shared/constants/colors';
 import { useCreateAnalysisRecord } from '../api/analysis-records';
 import { useAnalyzeBody } from '../api/body-analysis';

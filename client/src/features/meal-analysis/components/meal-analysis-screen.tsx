@@ -1,3 +1,4 @@
+import { useSafeAreaInsets } from '@granite-js/native/react-native-safe-area-context';
 import { useNavigation } from '@granite-js/react-native';
 import { pickSingleImage } from 'features/body-analysis/lib/pick-image';
 import {
@@ -19,7 +20,6 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SuspenseSection } from 'shared/components/async-state';
 import Colors, { iosShadow } from 'shared/constants/colors';
 import { getClientTodayDate } from 'shared/lib/date';

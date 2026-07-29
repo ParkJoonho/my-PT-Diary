@@ -11,7 +11,7 @@ jest.mock('@granite-js/react-native', () => ({
   }),
 }));
 
-jest.mock('react-native-safe-area-context', () => ({
+jest.mock('@granite-js/native/react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({
     bottom: 0,
     top: 0,

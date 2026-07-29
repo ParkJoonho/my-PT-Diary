@@ -1,4 +1,4 @@
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { App } from 'supertest/types';
@@ -45,9 +45,7 @@ const ptLessonResponseSchema = z.object({
   warmUp: z.string(),
 });
 
-function createPtLessonRow(
-  overrides: Partial<PtLessonRow> = {},
-): PtLessonRow {
+function createPtLessonRow(overrides: Partial<PtLessonRow> = {}): PtLessonRow {
   return {
     body_parts: ['등', '팔'],
     comment: '등 수축이 안정적으로 잡혔어요.',
@@ -117,6 +115,13 @@ describe('PT 수업일지 컨트롤러 통합', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.useGlobalPipes(
+      new ValidationPipe({
+        forbidNonWhitelisted: true,
+        transform: true,
+        whitelist: true,
+      }),
+    );
     await app.init();
   });
 

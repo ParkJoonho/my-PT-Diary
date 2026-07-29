@@ -1,3 +1,4 @@
+import { useSafeAreaInsets } from '@granite-js/native/react-native-safe-area-context';
 import { useNavigation } from '@granite-js/react-native';
 import { useBodyAnalysisEntryStore } from 'features/body-analysis/stores/use-body-analysis-entry-store';
 import { HomeTabBar } from 'features/home/components/home-tab-bar';
@@ -11,7 +12,6 @@ import {
   Utensils,
 } from 'lucide-react-native';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { UnimplementedBadge } from 'shared/components/unimplemented-badge';
 import Colors, { iosShadow } from 'shared/constants/colors';
 

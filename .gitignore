@@ -1,2 +1,5 @@
 .DS_Store
 *.ait
+
+.env*
+!.env.example

@@ -1,9 +1,10 @@
 import { defineConfig } from 'orval';
+import { OPENAPI_SCHEMA_URL } from './config/environment';
 
 export default defineConfig({
   atPt: {
     input: {
-      target: 'http://127.0.0.1:3000/docs-json',
+      target: OPENAPI_SCHEMA_URL,
     },
     output: {
       target: './src/shared/api/generated/endpoints',
@@ -12,7 +13,9 @@ export default defineConfig({
       httpClient: 'fetch',
       mode: 'tags-split',
       clean: true,
-      baseUrl: 'http://127.0.0.1:3000',
+      baseUrl: {
+        runtime: 'import.meta.env.API_BASE_URL',
+      },
       override: {
         query: {
           signal: false,
