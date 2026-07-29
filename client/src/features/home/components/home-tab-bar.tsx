@@ -56,6 +56,11 @@ export function HomeTabBar({ activeKey = 'home' }: HomeTabBarProps) {
 
               if (tab.key === 'ai-hub') {
                 navigation.navigate({ name: '/ai-hub', params: {} });
+                return;
+              }
+
+              if (tab.key === 'condition') {
+                navigation.navigate({ name: '/condition', params: {} });
               }
             }}
             style={({ pressed }) => [styles.tab, pressed && styles.pressed]}

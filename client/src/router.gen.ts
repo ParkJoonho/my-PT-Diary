@@ -7,6 +7,7 @@ import type { Route as _AiAnalysisRoute } from '../pages/ai-analysis';
 import type { Route as _AiHubRoute } from '../pages/ai-hub';
 import type { Route as _AiTrainerMatchRoute } from '../pages/ai-trainer-match';
 import type { Route as _AnalysisHistoryRoute } from '../pages/analysis-history';
+import type { Route as _ConditionRoute } from '../pages/condition';
 import type { Route as _ConditionFormRoute } from '../pages/condition-form';
 import type { Route as _ConditionListRoute } from '../pages/condition-list';
 import type { Route as _ExerciseRoute } from '../pages/exercise';
@@ -30,6 +31,7 @@ declare module '@granite-js/react-native' {
     '/ai-trainer-match': (typeof _AiTrainerMatchRoute)['_inputType'];
     '/analysis-history': (typeof _AnalysisHistoryRoute)['_inputType'];
     '/about': (typeof _AboutRoute)['_inputType'];
+    '/condition': (typeof _ConditionRoute)['_inputType'];
     '/condition-form': (typeof _ConditionFormRoute)['_inputType'];
     '/condition-list': (typeof _ConditionListRoute)['_inputType'];
     '/exercise-guide': (typeof _ExerciseGuideRoute)['_inputType'];
@@ -54,6 +56,7 @@ declare module '@granite-js/react-native' {
     '/ai-trainer-match': (typeof _AiTrainerMatchRoute)['_outputType'];
     '/analysis-history': (typeof _AnalysisHistoryRoute)['_outputType'];
     '/about': (typeof _AboutRoute)['_outputType'];
+    '/condition': (typeof _ConditionRoute)['_outputType'];
     '/condition-form': (typeof _ConditionFormRoute)['_outputType'];
     '/condition-list': (typeof _ConditionListRoute)['_outputType'];
     '/exercise-guide': (typeof _ExerciseGuideRoute)['_outputType'];
