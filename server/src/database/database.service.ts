@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { Pool, PoolClient, QueryResult, QueryResultRow } from 'pg';
 import { DEFAULT_DATABASE_URL } from './database.constants';
 import { EXERCISE_GUIDE_CATALOG } from '../modules/exercise-guides/exercise-guides.catalog';
+import { TRAINER_CATALOG } from '../modules/trainers/trainers.catalog';
 
 export type DatabaseQueryRunner = {
   query<T extends QueryResultRow>(
@@ -232,6 +233,29 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       `);
 
       await this.pool.query(`
+        CREATE TABLE IF NOT EXISTS pt_lessons (
+          id TEXT PRIMARY KEY,
+          user_key TEXT NOT NULL,
+          lesson_date DATE NOT NULL,
+          session_number INTEGER NOT NULL,
+          body_parts JSONB NOT NULL,
+          equipment JSONB NOT NULL,
+          warm_up TEXT NOT NULL DEFAULT '',
+          exercises JSONB NOT NULL,
+          comment TEXT NOT NULL DEFAULT '',
+          summary JSONB NOT NULL,
+          weekly_completion_id TEXT REFERENCES workout_completions(id) ON DELETE SET NULL,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+      `);
+
+      await this.pool.query(`
+        CREATE INDEX IF NOT EXISTS pt_lessons_user_key_lesson_date_idx
+        ON pt_lessons (user_key, lesson_date DESC, created_at DESC)
+      `);
+
+      await this.pool.query(`
         CREATE TABLE IF NOT EXISTS condition_records (
           id TEXT PRIMARY KEY,
           user_key TEXT NOT NULL,
@@ -259,6 +283,180 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       await this.pool.query(`
         CREATE INDEX IF NOT EXISTS condition_records_user_key_checked_on_idx
         ON condition_records (user_key, checked_on DESC, created_at DESC)
+      `);
+
+      await this.pool.query(`
+        CREATE TABLE IF NOT EXISTS trainers (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          gym_name TEXT NOT NULL,
+          rating NUMERIC(3, 2) NOT NULL,
+          price_per_session TEXT NOT NULL,
+          experience_years INTEGER NOT NULL,
+          specialties JSONB NOT NULL,
+          focus_body_parts JSONB NOT NULL,
+          match_tags JSONB NOT NULL,
+          career TEXT NOT NULL,
+          certifications JSONB NOT NULL,
+          bio TEXT NOT NULL,
+          philosophy TEXT NOT NULL,
+          avatar_color TEXT NOT NULL,
+          base_member_count INTEGER NOT NULL DEFAULT 0,
+          region TEXT NOT NULL,
+          online_available BOOLEAN NOT NULL DEFAULT FALSE,
+          beginner_friendly BOOLEAN NOT NULL DEFAULT FALSE,
+          posture_friendly BOOLEAN NOT NULL DEFAULT FALSE,
+          rehab_friendly BOOLEAN NOT NULL DEFAULT FALSE,
+          approved BOOLEAN NOT NULL DEFAULT TRUE,
+          display_order INTEGER NOT NULL DEFAULT 0,
+          seeded BOOLEAN NOT NULL DEFAULT FALSE,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+      `);
+
+      await this.pool.query(`
+        CREATE INDEX IF NOT EXISTS trainers_approved_display_order_idx
+        ON trainers (approved, display_order ASC, created_at ASC)
+      `);
+
+      for (const trainer of TRAINER_CATALOG) {
+        await this.pool.query(
+          `
+            INSERT INTO trainers (
+              id,
+              name,
+              gym_name,
+              rating,
+              price_per_session,
+              experience_years,
+              specialties,
+              focus_body_parts,
+              match_tags,
+              career,
+              certifications,
+              bio,
+              philosophy,
+              avatar_color,
+              base_member_count,
+              region,
+              online_available,
+              beginner_friendly,
+              posture_friendly,
+              rehab_friendly,
+              approved,
+              display_order,
+              seeded
+            )
+            VALUES (
+              $1,
+              $2,
+              $3,
+              $4,
+              $5,
+              $6,
+              $7::jsonb,
+              $8::jsonb,
+              $9::jsonb,
+              $10,
+              $11::jsonb,
+              $12,
+              $13,
+              $14,
+              $15,
+              $16,
+              $17,
+              $18,
+              $19,
+              $20,
+              $21,
+              $22,
+              TRUE
+            )
+            ON CONFLICT (id)
+            DO UPDATE SET
+              name = EXCLUDED.name,
+              gym_name = EXCLUDED.gym_name,
+              rating = EXCLUDED.rating,
+              price_per_session = EXCLUDED.price_per_session,
+              experience_years = EXCLUDED.experience_years,
+              specialties = EXCLUDED.specialties,
+              focus_body_parts = EXCLUDED.focus_body_parts,
+              match_tags = EXCLUDED.match_tags,
+              career = EXCLUDED.career,
+              certifications = EXCLUDED.certifications,
+              bio = EXCLUDED.bio,
+              philosophy = EXCLUDED.philosophy,
+              avatar_color = EXCLUDED.avatar_color,
+              base_member_count = EXCLUDED.base_member_count,
+              region = EXCLUDED.region,
+              online_available = EXCLUDED.online_available,
+              beginner_friendly = EXCLUDED.beginner_friendly,
+              posture_friendly = EXCLUDED.posture_friendly,
+              rehab_friendly = EXCLUDED.rehab_friendly,
+              approved = EXCLUDED.approved,
+              display_order = EXCLUDED.display_order,
+              seeded = TRUE,
+              updated_at = NOW()
+          `,
+          [
+            trainer.id,
+            trainer.name,
+            trainer.gymName,
+            trainer.rating,
+            trainer.pricePerSession,
+            trainer.experienceYears,
+            JSON.stringify(trainer.specialties),
+            JSON.stringify(trainer.focusBodyParts),
+            JSON.stringify(trainer.matchTags),
+            trainer.career,
+            JSON.stringify(trainer.certifications),
+            trainer.bio,
+            trainer.philosophy,
+            trainer.avatarColor,
+            trainer.baseMemberCount,
+            trainer.region,
+            trainer.onlineAvailable,
+            trainer.beginnerFriendly,
+            trainer.postureFriendly,
+            trainer.rehabFriendly,
+            trainer.approved,
+            trainer.displayOrder,
+          ],
+        );
+      }
+
+      await this.pool.query(`
+        CREATE TABLE IF NOT EXISTS trainer_connect_requests (
+          id TEXT PRIMARY KEY,
+          user_key TEXT NOT NULL,
+          trainer_id TEXT NOT NULL REFERENCES trainers(id) ON DELETE CASCADE,
+          message TEXT,
+          status TEXT NOT NULL DEFAULT 'pending',
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          CONSTRAINT trainer_connect_requests_user_key_trainer_id_unique
+            UNIQUE (user_key, trainer_id)
+        )
+      `);
+
+      await this.pool.query(`
+        CREATE INDEX IF NOT EXISTS trainer_connect_requests_user_key_created_at_idx
+        ON trainer_connect_requests (user_key, created_at DESC)
+      `);
+
+      await this.pool.query(`
+        CREATE TABLE IF NOT EXISTS trainer_likes (
+          user_key TEXT NOT NULL,
+          trainer_id TEXT NOT NULL REFERENCES trainers(id) ON DELETE CASCADE,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          PRIMARY KEY (user_key, trainer_id)
+        )
+      `);
+
+      await this.pool.query(`
+        CREATE INDEX IF NOT EXISTS trainer_likes_user_key_created_at_idx
+        ON trainer_likes (user_key, created_at DESC)
       `);
 
       // Guide IDs currently come from a server hardcoded catalog. Add a

@@ -49,6 +49,11 @@ export function HomeTabBar({ activeKey = 'home' }: HomeTabBarProps) {
                 return;
               }
 
+              if (tab.key === 'pt-log') {
+                navigation.navigate({ name: '/pt-log', params: {} });
+                return;
+              }
+
               if (tab.key === 'ai-hub') {
                 navigation.navigate({ name: '/ai-hub', params: {} });
               }

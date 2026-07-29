@@ -10,6 +10,8 @@ import { ConditionRecordsModule } from './modules/condition-records/condition-re
 import { ExerciseGuidesModule } from './modules/exercise-guides/exercise-guides.module';
 import { MealAnalysisModule } from './modules/meal-analysis/meal-analysis.module';
 import { OutdoorWorkoutModule } from './modules/outdoor-workout/outdoor-workout.module';
+import { PtLessonsModule } from './modules/pt-lessons/pt-lessons.module';
+import { TrainersModule } from './modules/trainers/trainers.module';
 import { WeeklyTrackerModule } from './modules/weekly-tracker/weekly-tracker.module';
 import { WorkoutRecordsModule } from './modules/workout-records/workout-records.module';
 import { WorkoutReportsModule } from './modules/workout-reports/workout-reports.module';
@@ -28,6 +30,8 @@ import { WorkoutReportsModule } from './modules/workout-reports/workout-reports.
     WorkoutReportsModule,
     ExerciseGuidesModule,
     OutdoorWorkoutModule,
+    PtLessonsModule,
+    TrainersModule,
     AnalysisRecordsModule,
     BodyAnalysisModule,
     BodyComparisonModule,
