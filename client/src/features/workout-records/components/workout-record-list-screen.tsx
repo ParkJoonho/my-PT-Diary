@@ -10,6 +10,11 @@ import {
   View,
 } from 'react-native';
 import type { WorkoutRecordDto } from 'shared/api/generated/models';
+import { SuspenseSection } from 'shared/components/async-state';
+import {
+  OriginalAppIcon,
+  SemanticIcon,
+} from 'shared/components/icons/pt-diary-icons';
 import Colors from 'shared/constants/colors';
 import {
   useDeleteWorkoutRecord,
@@ -28,35 +33,39 @@ type ListItem =
   | { date: string; type: 'header' }
   | { record: WorkoutRecordDto; type: 'card' };
 
-export function WorkoutRecordListScreen() {
+export function WorkoutRecordListScreen({
+  contentBottomInset,
+  floatingActionBottomInset,
+}: {
+  contentBottomInset: number;
+  floatingActionBottomInset: number;
+}) {
   const navigation = useNavigation();
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Pressable
-          onPress={() => navigation.goBack()}
-          style={styles.headerButton}
-        >
-          <Text style={styles.headerButtonText}>닫기</Text>
-        </Pressable>
-        <Text style={styles.headerTitle}>운동 기록</Text>
-        <Pressable
-          onPress={() =>
-            navigation.navigate({ name: '/exercise-form', params: {} })
-          }
-          style={styles.headerButton}
-        >
-          <Text style={styles.headerButtonText}>작성</Text>
-        </Pressable>
-      </View>
+      <SuspenseSection errorMessage="운동 기록을 불러오지 못했어요.">
+        <WorkoutRecordListContent contentBottomInset={contentBottomInset} />
+      </SuspenseSection>
 
-      <WorkoutRecordListContent />
+      <Pressable
+        accessibilityLabel="운동 기록 작성"
+        onPress={() =>
+          navigation.navigate({ name: '/exercise-form', params: {} })
+        }
+        style={[styles.fab, { bottom: floatingActionBottomInset }]}
+      >
+        <OriginalAppIcon color={Colors.white} name="add" size={28} />
+      </Pressable>
     </View>
   );
 }
 
-function WorkoutRecordListContent() {
+function WorkoutRecordListContent({
+  contentBottomInset,
+}: {
+  contentBottomInset: number;
+}) {
   const navigation = useNavigation();
   const { data, refetch } = useWorkoutRecords();
   const deleteMutation = useDeleteWorkoutRecord();
@@ -192,28 +201,11 @@ function WorkoutRecordListContent() {
 
   return (
     <>
-      <View style={styles.filterRow}>
-        <Text style={styles.listTitle}>전체 운동기록</Text>
-        <Pressable
-          onPress={openCalendar}
-          style={[
-            styles.filterButton,
-            dateRange.start && styles.filterButtonActive,
-          ]}
-        >
-          <Text
-            style={[
-              styles.filterButtonText,
-              dateRange.start && styles.filterButtonTextActive,
-            ]}
-          >
-            {formatRangeLabel(dateRange)}
-          </Text>
-        </Pressable>
-      </View>
-
       <FlatList
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[
+          styles.listContent,
+          { paddingBottom: contentBottomInset },
+        ]}
         data={listData}
         keyExtractor={(item, index) =>
           item.type === 'header'
@@ -222,6 +214,11 @@ function WorkoutRecordListContent() {
         }
         ListEmptyComponent={
           <View style={styles.emptyState}>
+            <OriginalAppIcon
+              color={Colors.textMuted}
+              name="barbellOutline"
+              size={32}
+            />
             <Text style={styles.emptyTitle}>
               {dateRange.start
                 ? '해당 기간에 운동기록이 없어요'
@@ -229,8 +226,8 @@ function WorkoutRecordListContent() {
             </Text>
             <Text style={styles.emptySubtitle}>
               {dateRange.start
-                ? '다른 기간을 선택해 보세요.'
-                : '운동 기록을 작성해 보세요.'}
+                ? '다른 기간을 선택해 보세요'
+                : '+ 버튼을 눌러 운동을 기록하세요'}
             </Text>
           </View>
         }
@@ -240,6 +237,38 @@ function WorkoutRecordListContent() {
               <Text style={styles.loadingMoreText}>더 불러오는 중...</Text>
             </View>
           ) : null
+        }
+        ListHeaderComponent={
+          <View style={styles.filterRow}>
+            <Text style={styles.listTitle}>전체 운동기록</Text>
+            <Pressable
+              accessibilityLabel="날짜 필터"
+              onPress={openCalendar}
+              style={[
+                styles.filterButton,
+                dateRange.start && styles.filterButtonActive,
+              ]}
+            >
+              <OriginalAppIcon
+                color={dateRange.start ? Colors.accent : Colors.textSecondary}
+                name="calendarOutline"
+                size={13}
+              />
+              <Text
+                style={[
+                  styles.filterButtonText,
+                  dateRange.start && styles.filterButtonTextActive,
+                ]}
+              >
+                {formatRangeLabel(dateRange)}
+              </Text>
+              <SemanticIcon
+                color={dateRange.start ? Colors.accent : Colors.textSecondary}
+                name="chevronDown"
+                size={13}
+              />
+            </Pressable>
+          </View>
         }
         onEndReached={() => expandDisplayCount(filteredRecords.length)}
         onEndReachedThreshold={0.3}
@@ -270,8 +299,6 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: Colors.background,
     flex: 1,
-    paddingHorizontal: 16,
-    paddingTop: 16,
   },
   dateHeader: {
     alignItems: 'center',
@@ -300,6 +327,22 @@ const styles = StyleSheet.create({
     fontFamily: 'Pretendard-SemiBold',
     fontSize: 16,
   },
+  fab: {
+    alignItems: 'center',
+    backgroundColor: Colors.accent,
+    borderRadius: 26,
+    elevation: 8,
+    height: 52,
+    justifyContent: 'center',
+    position: 'absolute',
+    right: 20,
+    shadowColor: Colors.accent,
+    shadowOffset: { height: 4, width: 0 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    width: 52,
+    zIndex: 200,
+  },
   filterButton: {
     alignItems: 'center',
     backgroundColor: Colors.card,
@@ -307,6 +350,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1,
     flexDirection: 'row',
+    gap: 5,
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
@@ -328,32 +372,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 8,
   },
-  header: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 14,
-  },
-  headerButton: {
-    minWidth: 44,
-    paddingVertical: 8,
-  },
-  headerButtonText: {
-    color: Colors.accent,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 14,
-  },
-  headerTitle: {
-    color: Colors.text,
-    fontFamily: 'Pretendard-Bold',
-    fontSize: 18,
-  },
   listContent: {
-    paddingBottom: 32,
+    paddingHorizontal: 16,
+    paddingTop: 20,
   },
   listTitle: {
     color: Colors.text,
-    fontFamily: 'Pretendard-SemiBold',
+    fontFamily: 'Pretendard-Medium',
     fontSize: 17,
   },
   loadingMore: {

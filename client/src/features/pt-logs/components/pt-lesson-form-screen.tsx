@@ -1,9 +1,10 @@
 import { useNavigation } from '@granite-js/react-native';
-import { Check, CircleMinus, CirclePlus, Trash2, X } from 'lucide-react-native';
 import { type ReactNode, useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -12,6 +13,7 @@ import {
   View,
 } from 'react-native';
 import { SuspenseSection } from 'shared/components/async-state';
+import { OriginalAppIcon } from 'shared/components/icons/pt-diary-icons';
 import Colors from 'shared/constants/colors';
 import {
   useCreatePtLesson,
@@ -34,28 +36,51 @@ import {
 import { validatePtLessonForm } from '../lib/pt-lesson-validation';
 import type { PtLesson } from '../types/pt-log';
 
-export function PtLessonFormScreen({ lessonId }: { lessonId?: string }) {
+export function PtLessonFormScreen({
+  contentBottomInset,
+  lessonId,
+}: {
+  contentBottomInset: number;
+  lessonId?: string;
+}) {
   if (lessonId) {
     return (
       <SuspenseSection errorMessage="수정할 PT 수업일지를 불러오지 못했어요.">
-        <EditPtLessonForm lessonId={lessonId} />
+        <EditPtLessonForm
+          contentBottomInset={contentBottomInset}
+          lessonId={lessonId}
+        />
       </SuspenseSection>
     );
   }
 
-  return <PtLessonFormContent />;
+  return <PtLessonFormContent contentBottomInset={contentBottomInset} />;
 }
 
-function EditPtLessonForm({ lessonId }: { lessonId: string }) {
+function EditPtLessonForm({
+  contentBottomInset,
+  lessonId,
+}: {
+  contentBottomInset: number;
+  lessonId: string;
+}) {
   const { data } = usePtLesson(lessonId);
 
-  return <PtLessonFormContent initialLesson={data} lessonId={lessonId} />;
+  return (
+    <PtLessonFormContent
+      contentBottomInset={contentBottomInset}
+      initialLesson={data}
+      lessonId={lessonId}
+    />
+  );
 }
 
 function PtLessonFormContent({
+  contentBottomInset,
   initialLesson,
   lessonId,
 }: {
+  contentBottomInset: number;
   initialLesson?: PtLesson;
   lessonId?: string;
 }) {
@@ -274,30 +299,46 @@ function PtLessonFormContent({
     createPtLessonMutation.isPending || updatePtLessonMutation.isPending;
 
   return (
-    <KeyboardAvoidingView style={styles.container}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={0}
+      style={styles.container}
+    >
       <View style={styles.header}>
         <Pressable
+          accessibilityLabel="닫기"
           onPress={() => navigation.goBack()}
-          style={styles.headerButton}
         >
-          <X color={Colors.text} size={22} />
+          <OriginalAppIcon color={Colors.text} name="close" size={24} />
         </Pressable>
         <Text style={styles.headerTitle}>
           {lessonId ? '수업일지 수정' : '새 수업일지'}
         </Text>
         <Pressable
+          accessibilityLabel={isPending ? '저장 중' : '저장'}
           disabled={isPending}
           onPress={() => void handleSave()}
-          style={styles.saveButton}
+          style={({ pressed }) => [
+            styles.saveButton,
+            pressed && styles.saveButtonPressed,
+          ]}
         >
-          <Check color={Colors.white} size={20} />
+          {isPending ? (
+            <ActivityIndicator color={Colors.white} size="small" />
+          ) : (
+            <OriginalAppIcon color={Colors.white} name="checkmark" size={24} />
+          )}
         </Pressable>
       </View>
 
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: contentBottomInset },
+        ]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
+        style={styles.scroll}
       >
         <Section title="기본 정보">
           <View style={styles.row}>
@@ -309,7 +350,7 @@ function PtLessonFormContent({
                   date: value,
                 }))
               }
-              placeholder="2026-07-29"
+              placeholder="2025-01-01"
               value={lesson.date}
             />
             <InputField
@@ -371,8 +412,16 @@ function PtLessonFormContent({
 
         <Section
           action={
-            <Pressable onPress={addExercise} style={styles.sectionActionButton}>
-              <CirclePlus color={Colors.accent} size={22} />
+            <Pressable
+              accessibilityLabel="운동 추가"
+              onPress={addExercise}
+              style={styles.sectionActionButton}
+            >
+              <OriginalAppIcon
+                color={Colors.accent}
+                name="addCircle"
+                size={24}
+              />
             </Pressable>
           }
           title="운동 종목"
@@ -394,8 +443,15 @@ function PtLessonFormContent({
                     value={exercise.name}
                   />
                   {lesson.exercises.length > 1 ? (
-                    <Pressable onPress={() => removeExercise(exerciseIndex)}>
-                      <Trash2 color={Colors.danger} size={18} />
+                    <Pressable
+                      accessibilityLabel={`운동종목 ${exerciseIndex + 1} 삭제`}
+                      onPress={() => removeExercise(exerciseIndex)}
+                    >
+                      <OriginalAppIcon
+                        color={Colors.danger}
+                        name="trashOutline"
+                        size={18}
+                      />
                     </Pressable>
                   ) : null}
                 </View>
@@ -439,16 +495,18 @@ function PtLessonFormContent({
                       value={set.reps > 0 ? String(set.reps) : ''}
                     />
                     <Pressable
+                      accessibilityLabel={`${setIndex + 1}세트 삭제`}
                       onPress={() => removeSet(exerciseIndex, setIndex)}
                       style={styles.setActionCell}
                     >
-                      <CircleMinus
+                      <OriginalAppIcon
                         color={
                           exercise.sets.length > 1
                             ? Colors.danger
                             : Colors.textMuted
                         }
-                        size={18}
+                        name="removeCircleOutline"
+                        size={20}
                       />
                     </Pressable>
                   </View>
@@ -458,7 +516,7 @@ function PtLessonFormContent({
                   onPress={() => addSet(exerciseIndex)}
                   style={styles.addSetButton}
                 >
-                  <CirclePlus color={Colors.accent} size={16} />
+                  <OriginalAppIcon color={Colors.accent} name="add" size={16} />
                   <Text style={styles.addSetLabel}>세트 추가</Text>
                 </Pressable>
 
@@ -472,11 +530,12 @@ function PtLessonFormContent({
                     value={exercise.restTime}
                   />
                   <MiniField
+                    keyboardType="number-pad"
                     label="RIR"
                     onChangeText={(value) =>
                       updateExercise(exerciseIndex, 'rir', value)
                     }
-                    placeholder="2"
+                    placeholder="0"
                     value={exercise.rir}
                   />
                   <MetricLabel
@@ -487,7 +546,7 @@ function PtLessonFormContent({
                   />
                 </View>
 
-                <View style={styles.exerciseMetricsRow}>
+                <View style={styles.exerciseMetricsRowSecondary}>
                   <MetricLabel
                     accent
                     label="볼륨"
@@ -609,11 +668,13 @@ function FilterChip({
 }
 
 function MiniField({
+  keyboardType,
   label,
   onChangeText,
   placeholder,
   value,
 }: {
+  keyboardType?: 'number-pad';
   label: string;
   onChangeText: (value: string) => void;
   placeholder: string;
@@ -623,6 +684,7 @@ function MiniField({
     <View style={styles.miniField}>
       <Text style={styles.miniFieldLabel}>{label}</Text>
       <TextInput
+        keyboardType={keyboardType}
         onChangeText={onChangeText}
         placeholder={placeholder}
         placeholderTextColor={Colors.textMuted}
@@ -697,15 +759,14 @@ const styles = StyleSheet.create({
   content: {
     gap: 20,
     padding: 14,
-    paddingBottom: 32,
   },
   exerciseCard: {
     backgroundColor: Colors.card,
     borderColor: Colors.cardBorder,
     borderRadius: 12,
     borderWidth: 1,
-    gap: 8,
-    padding: 12,
+    gap: 6,
+    padding: 10,
   },
   exerciseHeader: {
     alignItems: 'center',
@@ -714,10 +775,14 @@ const styles = StyleSheet.create({
   },
   exerciseMetricsRow: {
     borderTopColor: Colors.divider,
-    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopWidth: 1,
     flexDirection: 'row',
-    gap: 8,
-    paddingTop: 8,
+    gap: 6,
+    paddingTop: 6,
+  },
+  exerciseMetricsRowSecondary: {
+    flexDirection: 'row',
+    gap: 6,
   },
   exerciseNameInput: {
     color: Colors.text,
@@ -739,12 +804,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
-  headerButton: {
-    alignItems: 'center',
-    height: 36,
-    justifyContent: 'center',
-    width: 36,
-  },
   headerTitle: {
     color: Colors.text,
     fontFamily: 'Pretendard-SemiBold',
@@ -758,7 +817,6 @@ const styles = StyleSheet.create({
     color: Colors.text,
     fontFamily: 'Pretendard-Regular',
     fontSize: 14,
-    minHeight: 46,
     padding: 12,
   },
   inputGroup: {
@@ -774,11 +832,13 @@ const styles = StyleSheet.create({
     color: Colors.text,
     fontFamily: 'Pretendard-SemiBold',
     fontSize: 13,
-    paddingVertical: 6,
+    paddingVertical: 5,
     textAlign: 'center',
   },
   metricValueAccent: {
     color: Colors.accent,
+    fontFamily: 'Pretendard-Medium',
+    fontSize: 14,
   },
   miniField: {
     flex: 1,
@@ -792,8 +852,7 @@ const styles = StyleSheet.create({
     color: Colors.text,
     fontFamily: 'Pretendard-Regular',
     fontSize: 13,
-    minHeight: 34,
-    paddingHorizontal: 6,
+    paddingHorizontal: 4,
     paddingVertical: 5,
     textAlign: 'center',
   },
@@ -814,11 +873,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 36,
   },
+  saveButtonPressed: {
+    opacity: 0.7,
+  },
+  scroll: {
+    flex: 1,
+  },
   section: {
     gap: 10,
   },
   sectionActionButton: {
-    padding: 2,
+    padding: 4,
   },
   sectionHeader: {
     alignItems: 'center',
@@ -838,7 +903,8 @@ const styles = StyleSheet.create({
   setHeader: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 6,
+    gap: 4,
+    marginTop: 2,
   },
   setHeaderLabel: {
     color: Colors.textMuted,
@@ -854,9 +920,8 @@ const styles = StyleSheet.create({
     color: Colors.text,
     fontFamily: 'Pretendard-Regular',
     fontSize: 14,
-    minHeight: 38,
     minWidth: 0,
-    paddingHorizontal: 4,
+    paddingHorizontal: 2,
     paddingVertical: 7,
     textAlign: 'center',
   },
@@ -872,13 +937,13 @@ const styles = StyleSheet.create({
   setRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 6,
+    gap: 4,
   },
   setValueCell: {
     flex: 1,
   },
   textArea: {
-    minHeight: 70,
+    minHeight: 60,
     textAlignVertical: 'top',
   },
 });

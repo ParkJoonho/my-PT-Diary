@@ -1,3 +1,4 @@
+import { useSafeAreaInsets } from '@granite-js/native/react-native-safe-area-context';
 import { useEffect, useMemo, useState } from 'react';
 import {
   Modal,
@@ -8,6 +9,7 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
+import { SemanticIcon } from 'shared/components/icons/pt-diary-icons';
 import Colors from 'shared/constants/colors';
 import { getClientTodayDate } from 'shared/lib/date';
 import {
@@ -35,6 +37,7 @@ export function WorkoutRecordCalendarModal({
   onClose: () => void;
   visible: boolean;
 }) {
+  const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const today = getClientTodayDate();
   const now = new Date();
@@ -144,16 +147,37 @@ export function WorkoutRecordCalendarModal({
           activeOpacity={1}
           onPress={(event) => event.stopPropagation()}
         >
-          <View style={[styles.sheet, { width: calendarWidth }]}>
+          <View
+            style={[
+              styles.sheet,
+              { marginTop: insets.top + 90, width: calendarWidth },
+            ]}
+          >
             <View style={styles.monthRow}>
-              <Pressable onPress={prevMonth} style={styles.navButton}>
-                <Text style={styles.navButtonText}>{'<'}</Text>
+              <Pressable
+                hitSlop={8}
+                onPress={prevMonth}
+                style={styles.navButton}
+              >
+                <SemanticIcon
+                  color={Colors.text}
+                  name="chevronLeft"
+                  size={20}
+                />
               </Pressable>
               <Text style={styles.monthTitle}>
                 {viewYear}년 {viewMonth}월
               </Text>
-              <Pressable onPress={nextMonth} style={styles.navButton}>
-                <Text style={styles.navButtonText}>{'>'}</Text>
+              <Pressable
+                hitSlop={8}
+                onPress={nextMonth}
+                style={styles.navButton}
+              >
+                <SemanticIcon
+                  color={Colors.text}
+                  name="chevronRight"
+                  size={20}
+                />
               </Pressable>
             </View>
 
@@ -176,7 +200,7 @@ export function WorkoutRecordCalendarModal({
             </View>
 
             <View style={styles.grid}>
-              {cells.map((cell) => {
+              {cells.map((cell, cellIndex) => {
                 if (!cell.day) {
                   return (
                     <View
@@ -196,6 +220,13 @@ export function WorkoutRecordCalendarModal({
                   date > localRange.start &&
                   date < localRange.end;
                 const hasRecord = markedDates.has(date);
+                const isRangeMode = Boolean(
+                  localRange.start &&
+                    localRange.end &&
+                    localRange.start !== localRange.end,
+                );
+                const isSunday = cellIndex % 7 === 0;
+                const isSaturday = cellIndex % 7 === 6;
 
                 return (
                   <View
@@ -205,6 +236,22 @@ export function WorkoutRecordCalendarModal({
                     {isInRange ? (
                       <View
                         style={[styles.rangeBackground, { width: cellWidth }]}
+                      />
+                    ) : null}
+                    {isStart && isRangeMode ? (
+                      <View
+                        style={[
+                          styles.rangeCapLeft,
+                          { left: cellWidth / 2, width: cellWidth / 2 },
+                        ]}
+                      />
+                    ) : null}
+                    {isEnd && isRangeMode ? (
+                      <View
+                        style={[
+                          styles.rangeCapRight,
+                          { right: cellWidth / 2, width: cellWidth / 2 },
+                        ]}
                       />
                     ) : null}
                     <Pressable
@@ -225,7 +272,16 @@ export function WorkoutRecordCalendarModal({
                         style={[
                           styles.dayText,
                           isSelected && styles.dayTextSelected,
+                          !isSelected && isInRange && styles.dayTextInRange,
                           !isSelected && date === today && styles.dayTextToday,
+                          !isSelected &&
+                            !isInRange &&
+                            isSunday &&
+                            styles.sundayText,
+                          !isSelected &&
+                            !isInRange &&
+                            isSaturday &&
+                            styles.saturdayText,
                         ]}
                       >
                         {cell.day}
@@ -308,6 +364,9 @@ const styles = StyleSheet.create({
     fontFamily: 'Pretendard-Regular',
     fontSize: 14,
   },
+  dayTextInRange: {
+    color: Colors.accent,
+  },
   dayTextSelected: {
     color: Colors.white,
     fontFamily: 'Pretendard-SemiBold',
@@ -351,16 +410,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 32,
   },
-  navButtonText: {
-    color: Colors.text,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 16,
-  },
   overlay: {
     alignItems: 'center',
     backgroundColor: '#00000055',
     flex: 1,
-    justifyContent: 'center',
   },
   primaryButton: {
     alignItems: 'center',
@@ -386,6 +439,20 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 4,
   },
+  rangeCapLeft: {
+    backgroundColor: `${Colors.accent}1A`,
+    bottom: 4,
+    position: 'absolute',
+    right: 0,
+    top: 4,
+  },
+  rangeCapRight: {
+    backgroundColor: `${Colors.accent}1A`,
+    bottom: 4,
+    left: 0,
+    position: 'absolute',
+    top: 4,
+  },
   saturdayText: {
     color: '#007AFF',
   },
@@ -404,6 +471,7 @@ const styles = StyleSheet.create({
   sheet: {
     backgroundColor: Colors.card,
     borderRadius: 20,
+    elevation: 16,
     padding: 16,
     shadowColor: '#000',
     shadowOffset: { height: 8, width: 0 },

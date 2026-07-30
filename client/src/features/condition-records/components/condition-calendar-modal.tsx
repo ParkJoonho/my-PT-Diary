@@ -1,3 +1,4 @@
+import { useSafeAreaInsets } from '@granite-js/native/react-native-safe-area-context';
 import { useEffect, useMemo, useState } from 'react';
 import {
   Modal,
@@ -8,7 +9,9 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
+import { SemanticIcon } from 'shared/components/icons/pt-diary-icons';
 import Colors from 'shared/constants/colors';
+import { getClientTodayDate } from 'shared/lib/date';
 import {
   DAY_KO,
   type DateRange,
@@ -34,6 +37,7 @@ export function ConditionCalendarModal({
   onClose: () => void;
   visible: boolean;
 }) {
+  const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const now = new Date();
   const [viewYear, setViewYear] = useState(now.getFullYear());
@@ -41,22 +45,10 @@ export function ConditionCalendarModal({
   const [localRange, setLocalRange] = useState<DateRange>(appliedRange);
 
   useEffect(() => {
-    if (!visible) {
-      return;
+    if (visible) {
+      setLocalRange(appliedRange);
     }
-
-    setLocalRange(appliedRange);
-
-    if (appliedRange.start) {
-      const [year, month] = appliedRange.start.split('-').map(Number);
-      setViewYear(year || now.getFullYear());
-      setViewMonth(month || now.getMonth() + 1);
-      return;
-    }
-
-    setViewYear(now.getFullYear());
-    setViewMonth(now.getMonth() + 1);
-  }, [appliedRange, now, visible]);
+  }, [appliedRange, visible]);
 
   const cells = useMemo(() => {
     const firstDay = new Date(viewYear, viewMonth - 1, 1).getDay();
@@ -92,11 +84,7 @@ export function ConditionCalendarModal({
 
   const calendarWidth = Math.min(width - 48, 360);
   const cellWidth = Math.floor((calendarWidth - 32) / 7);
-  const today = toDateString(
-    now.getFullYear(),
-    now.getMonth() + 1,
-    now.getDate(),
-  );
+  const today = getClientTodayDate();
 
   const prevMonth = () => {
     if (viewMonth === 1) {
@@ -160,16 +148,37 @@ export function ConditionCalendarModal({
           activeOpacity={1}
           onPress={(event) => event.stopPropagation()}
         >
-          <View style={[styles.sheet, { width: calendarWidth }]}>
+          <View
+            style={[
+              styles.sheet,
+              { marginTop: insets.top + 90, width: calendarWidth },
+            ]}
+          >
             <View style={styles.monthRow}>
-              <Pressable onPress={prevMonth} style={styles.navButton}>
-                <Text style={styles.navButtonText}>{'<'}</Text>
+              <Pressable
+                hitSlop={8}
+                onPress={prevMonth}
+                style={styles.navButton}
+              >
+                <SemanticIcon
+                  color={Colors.text}
+                  name="chevronLeft"
+                  size={20}
+                />
               </Pressable>
               <Text style={styles.monthTitle}>
                 {viewYear}년 {viewMonth}월
               </Text>
-              <Pressable onPress={nextMonth} style={styles.navButton}>
-                <Text style={styles.navButtonText}>{'>'}</Text>
+              <Pressable
+                hitSlop={8}
+                onPress={nextMonth}
+                style={styles.navButton}
+              >
+                <SemanticIcon
+                  color={Colors.text}
+                  name="chevronRight"
+                  size={20}
+                />
               </Pressable>
             </View>
 
@@ -192,7 +201,7 @@ export function ConditionCalendarModal({
             </View>
 
             <View style={styles.grid}>
-              {cells.map((cell) => {
+              {cells.map((cell, cellIndex) => {
                 if (!cell.day) {
                   return (
                     <View
@@ -212,6 +221,13 @@ export function ConditionCalendarModal({
                   date > localRange.start &&
                   date < localRange.end;
                 const hasRecord = markedDates.has(date);
+                const isRangeMode = Boolean(
+                  localRange.start &&
+                    localRange.end &&
+                    localRange.start !== localRange.end,
+                );
+                const isSunday = cellIndex % 7 === 0;
+                const isSaturday = cellIndex % 7 === 6;
 
                 return (
                   <View
@@ -221,6 +237,22 @@ export function ConditionCalendarModal({
                     {isInRange ? (
                       <View
                         style={[styles.rangeBackground, { width: cellWidth }]}
+                      />
+                    ) : null}
+                    {isStart && isRangeMode ? (
+                      <View
+                        style={[
+                          styles.rangeCapLeft,
+                          { left: cellWidth / 2, width: cellWidth / 2 },
+                        ]}
+                      />
+                    ) : null}
+                    {isEnd && isRangeMode ? (
+                      <View
+                        style={[
+                          styles.rangeCapRight,
+                          { right: cellWidth / 2, width: cellWidth / 2 },
+                        ]}
                       />
                     ) : null}
                     <Pressable
@@ -241,7 +273,16 @@ export function ConditionCalendarModal({
                         style={[
                           styles.dayText,
                           isSelected && styles.dayTextSelected,
+                          !isSelected && isInRange && styles.dayTextInRange,
                           !isSelected && date === today && styles.dayTextToday,
+                          !isSelected &&
+                            !isInRange &&
+                            isSunday &&
+                            styles.sundayText,
+                          !isSelected &&
+                            !isInRange &&
+                            isSaturday &&
+                            styles.saturdayText,
                         ]}
                       >
                         {cell.day}
@@ -324,6 +365,9 @@ const styles = StyleSheet.create({
     fontFamily: 'Pretendard-Regular',
     fontSize: 14,
   },
+  dayTextInRange: {
+    color: Colors.accent,
+  },
   dayTextSelected: {
     color: Colors.white,
     fontFamily: 'Pretendard-SemiBold',
@@ -367,17 +411,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 32,
   },
-  navButtonText: {
-    color: Colors.text,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 16,
-  },
   overlay: {
     alignItems: 'center',
     backgroundColor: '#00000055',
     flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 20,
   },
   primaryButton: {
     alignItems: 'center',
@@ -400,6 +437,20 @@ const styles = StyleSheet.create({
   rangeBackground: {
     backgroundColor: `${Colors.accent}1A`,
     bottom: 4,
+    position: 'absolute',
+    top: 4,
+  },
+  rangeCapLeft: {
+    backgroundColor: `${Colors.accent}1A`,
+    bottom: 4,
+    position: 'absolute',
+    right: 0,
+    top: 4,
+  },
+  rangeCapRight: {
+    backgroundColor: `${Colors.accent}1A`,
+    bottom: 4,
+    left: 0,
     position: 'absolute',
     top: 4,
   },

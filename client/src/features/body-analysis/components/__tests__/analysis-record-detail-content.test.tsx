@@ -121,4 +121,99 @@ describe('분석 이력 상세', () => {
     fireEvent.press(screen.getByText('일상 신발'));
     expect(screen.getByText('After Daily')).toBeTruthy();
   });
+
+  it('원본의 자세 분석 상세 section을 다시 표시한다', () => {
+    render(
+      <AnalysisRecordDetailContent
+        record={{
+          analysisType: 'posture',
+          analyzedAt: '2026-07-28T01:23:45.000Z',
+          createdAt: '2026-07-28T01:23:45.000Z',
+          id: 'record_posture',
+          rawResult: {
+            accuracy: {
+              grade: 'A',
+              summary: '동작 정확도가 좋아요.',
+            },
+            corrections: [
+              {
+                area: '무릎',
+                fix: '발끝 방향으로 무릎을 정렬하세요.',
+                issue: '무릎이 안쪽으로 모여요.',
+                priority: '높음',
+              },
+            ],
+            exerciseName: '백 스쿼트',
+            formCheck: {
+              headPosition: { note: '중립을 유지해요.', score: 4 },
+              kneePosition: { note: '조금 안쪽으로 모여요.', score: 3 },
+            },
+            goodPoints: ['척추 중립을 잘 유지했어요.'],
+            injuryRisk: {
+              details: '무릎 정렬을 보완하면 좋아요.',
+              level: '보통',
+              score: 5,
+              vulnerableAreas: ['무릎'],
+            },
+            recommendations: ['고관절 가동성 운동을 추가하세요.'],
+            summary: '전체 동작은 안정적이에요.',
+          },
+        }}
+      />,
+    );
+
+    expect(screen.getByText('백 스쿼트')).toBeTruthy();
+    expect(screen.getByText('폼 체크')).toBeTruthy();
+    expect(screen.getByText('부상 위험도')).toBeTruthy();
+    expect(screen.getByText('교정 사항')).toBeTruthy();
+    expect(screen.getByText('잘하고 있는 점')).toBeTruthy();
+    expect(screen.getByText('추천사항')).toBeTruthy();
+    expect(
+      screen.queryByText('이 분석 타입의 상세 렌더링은 아직 준비 중이에요.'),
+    ).toBeNull();
+  });
+
+  it('원본의 통합 분석 상세 section을 다시 표시한다', () => {
+    render(
+      <AnalysisRecordDetailContent
+        record={{
+          analysisType: 'state-vector',
+          analyzedAt: '2026-07-28T01:23:45.000Z',
+          createdAt: '2026-07-28T01:23:45.000Z',
+          id: 'record_state_vector',
+          rawResult: {
+            compositeGrade: 'B',
+            compositeScore: 74,
+            correctionProgram: ['코어 안정화 운동'],
+            dimensionScores: {
+              bodyShape: 72,
+              condition: { score: 68 },
+              nutrition: 80,
+            },
+            injuryRiskAssessment: '허리 과사용에 주의하세요.',
+            nutritionPlan: ['단백질 섭취를 유지하세요.'],
+            predictions: {
+              threeMonths: '자세 안정성이 좋아질 수 있어요.',
+            },
+            summary: '현재 루틴을 꾸준히 유지하세요.',
+            weeklyPlan: [
+              { day: '월요일', description: '상체 운동' },
+              '화요일은 가벼운 유산소',
+            ],
+          },
+        }}
+      />,
+    );
+
+    expect(screen.getByText('종합 피트니스 점수')).toBeTruthy();
+    expect(screen.getByText('항목별 점수')).toBeTruthy();
+    expect(screen.getByText('주간 운동 계획')).toBeTruthy();
+    expect(screen.getByText('교정 프로그램')).toBeTruthy();
+    expect(screen.getByText('영양 계획')).toBeTruthy();
+    expect(screen.getByText('부상 위험 평가')).toBeTruthy();
+    expect(screen.getByText('체형 변화 예측')).toBeTruthy();
+    expect(
+      screen.queryByText('이 분석 타입의 상세 렌더링은 아직 준비 중이에요.'),
+    ).toBeNull();
+  });
 });

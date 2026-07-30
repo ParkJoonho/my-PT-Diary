@@ -1,15 +1,4 @@
 import {
-  AlertTriangle,
-  Bike,
-  CheckCircle2,
-  Footprints,
-  Gauge,
-  Lightbulb,
-  RefreshCw,
-  Save,
-  Utensils,
-} from 'lucide-react-native';
-import {
   ActivityIndicator,
   Pressable,
   StyleSheet,
@@ -17,6 +6,10 @@ import {
   View,
 } from 'react-native';
 import type { MealAnalysisResultDto } from 'shared/api/generated/models';
+import {
+  OriginalAppIcon,
+  type OriginalAppIconName,
+} from 'shared/components/icons/pt-diary-icons';
 import Colors, { iosShadow } from 'shared/constants/colors';
 import {
   formatEatingDuration,
@@ -48,7 +41,7 @@ function ResultSummary({ result }: { result: MealAnalysisResultDto }) {
   return (
     <SectionCard>
       <View style={styles.resultHeader}>
-        <Utensils color={Colors.accent} size={24} strokeWidth={2.1} />
+        <OriginalAppIcon color={Colors.accent} name="foodVariant" size={24} />
         <Text style={styles.resultTitle}>분석 결과</Text>
       </View>
 
@@ -129,12 +122,7 @@ function RecognizedFoods({ result }: { result: MealAnalysisResultDto }) {
         return (
           <View
             key={`${food.name}-${food.estimatedWeight}-${index}`}
-            style={[
-              styles.foodItem,
-              index === result.foods.length - 1
-                ? styles.lastBorderlessItem
-                : undefined,
-            ]}
+            style={styles.foodItem}
           >
             <View style={styles.foodHeader}>
               <Text style={styles.foodName}>{food.name}</Text>
@@ -177,19 +165,19 @@ function ExerciseOffset({ result }: { result: MealAnalysisResultDto }) {
   const exercises = [
     {
       color: Colors.info,
-      icon: Footprints,
+      icon: 'walk' as OriginalAppIconName,
       label: '걷기',
       value: result.exerciseToOffset.walking,
     },
     {
       color: Colors.accent,
-      icon: Gauge,
+      icon: 'run' as OriginalAppIconName,
       label: '달리기',
       value: result.exerciseToOffset.running,
     },
     {
       color: '#8B5CF6',
-      icon: Bike,
+      icon: 'bike' as OriginalAppIconName,
       label: '자전거',
       value: result.exerciseToOffset.cycling,
     },
@@ -201,7 +189,11 @@ function ExerciseOffset({ result }: { result: MealAnalysisResultDto }) {
       <View style={styles.exerciseRow}>
         {exercises.map((exercise) => (
           <View key={exercise.label} style={styles.exerciseItem}>
-            <exercise.icon color={exercise.color} size={24} strokeWidth={2} />
+            <OriginalAppIcon
+              color={exercise.color}
+              name={exercise.icon}
+              size={24}
+            />
             <Text style={styles.exerciseTime}>
               {formatExerciseDuration(exercise.value)}
             </Text>
@@ -223,7 +215,11 @@ function DietaryAdvice({ result }: { result: MealAnalysisResultDto }) {
       <Text style={styles.sectionTitle}>식단 개선 조언</Text>
       {result.dietaryAdvice.map((advice) => (
         <View key={advice} style={styles.adviceItem}>
-          <Lightbulb color={Colors.accent} size={16} strokeWidth={2} />
+          <OriginalAppIcon
+            color={Colors.accent}
+            name="lightbulbOutline"
+            size={16}
+          />
           <Text style={styles.adviceText}>{advice}</Text>
         </View>
       ))}
@@ -254,7 +250,7 @@ function EatingSpeed({ result }: { result: MealAnalysisResultDto }) {
   return (
     <SectionCard>
       <View style={styles.speedHeader}>
-        <Gauge color={color} size={20} strokeWidth={2.1} />
+        <OriginalAppIcon color={color} name="speedometerOutline" size={20} />
         <Text style={styles.speedTitle}>식사 속도 분석</Text>
         <View style={[styles.speedBadge, { backgroundColor: color }]}>
           <Text style={styles.speedBadgeText}>{label}</Text>
@@ -267,7 +263,11 @@ function EatingSpeed({ result }: { result: MealAnalysisResultDto }) {
 
       {speed.healthRisks.map((risk) => (
         <View key={risk} style={styles.speedListItem}>
-          <AlertTriangle color={Colors.danger} size={14} strokeWidth={2} />
+          <OriginalAppIcon
+            color={Colors.danger}
+            name="warningOutline"
+            size={14}
+          />
           <Text style={[styles.speedListText, { color: Colors.danger }]}>
             {risk}
           </Text>
@@ -275,7 +275,11 @@ function EatingSpeed({ result }: { result: MealAnalysisResultDto }) {
       ))}
       {speed.tips.map((tip) => (
         <View key={tip} style={styles.speedListItem}>
-          <CheckCircle2 color={Colors.success} size={14} strokeWidth={2} />
+          <OriginalAppIcon
+            color={Colors.success}
+            name="checkmarkCircle"
+            size={14}
+          />
           <Text style={[styles.speedListText, { color: Colors.success }]}>
             {tip}
           </Text>
@@ -312,12 +316,16 @@ export function MealAnalysisResult({
           {isSaving ? (
             <ActivityIndicator color={Colors.white} size="small" />
           ) : (
-            <Save color={Colors.white} size={20} strokeWidth={2.1} />
+            <OriginalAppIcon
+              color={Colors.white}
+              name="saveOutline"
+              size={20}
+            />
           )}
           <Text style={styles.saveButtonText}>기록 저장</Text>
         </Pressable>
         <Pressable onPress={onReset} style={styles.retryButton}>
-          <RefreshCw color={Colors.accent} size={19} strokeWidth={2.1} />
+          <OriginalAppIcon color={Colors.accent} name="refresh" size={20} />
           <Text style={styles.retryButtonText}>다시 분석</Text>
         </Pressable>
       </View>
@@ -405,7 +413,6 @@ const styles = StyleSheet.create({
   },
   exerciseItem: {
     alignItems: 'center',
-    flex: 1,
     gap: 4,
   },
   exerciseLabel: {
@@ -475,9 +482,6 @@ const styles = StyleSheet.create({
     color: Colors.white,
     fontFamily: 'Pretendard-Medium',
     fontSize: 14,
-  },
-  lastBorderlessItem: {
-    borderBottomWidth: 0,
   },
   macroItem: {
     backgroundColor: Colors.inputBg,

@@ -1,13 +1,9 @@
-import {
-  ArrowDown,
-  ArrowUp,
-  Heart,
-  Minus,
-  TrendingDown,
-  TrendingUp,
-} from 'lucide-react-native';
 import { StyleSheet, Text, View } from 'react-native';
-import Colors, { iosShadow } from 'shared/constants/colors';
+import {
+  OriginalAppIcon,
+  type OriginalAppIconName,
+} from 'shared/components/icons/pt-diary-icons';
+import Colors from 'shared/constants/colors';
 import type { AnalysisRecordComparison } from '../types/body-analysis';
 
 const BODY_TYPE_COLORS: Record<string, string> = {
@@ -42,7 +38,7 @@ function getPostureChangeVisual(change?: string) {
     return {
       accessibilityLabel: '개선',
       color: Colors.success,
-      Icon: ArrowUp,
+      icon: 'arrowUp' as OriginalAppIconName,
     };
   }
 
@@ -50,14 +46,14 @@ function getPostureChangeVisual(change?: string) {
     return {
       accessibilityLabel: '악화',
       color: Colors.danger,
-      Icon: ArrowDown,
+      icon: 'arrowDown' as OriginalAppIconName,
     };
   }
 
   return {
     accessibilityLabel: '유지',
     color: Colors.textMuted,
-    Icon: Minus,
+    icon: 'remove' as OriginalAppIconName,
   };
 }
 
@@ -68,13 +64,13 @@ export function AnalysisRecordComparisonResult({
 }) {
   return (
     <View style={styles.container}>
-      <View style={[styles.card, iosShadow]}>
+      <View style={styles.card}>
         <Text style={styles.cardTitle}>전체 변화</Text>
         <Text style={styles.cardText}>{result.overallChange ?? '-'}</Text>
       </View>
 
       {result.bodyTypeChange ? (
-        <View style={[styles.card, iosShadow]}>
+        <View style={styles.card}>
           <Text style={styles.cardTitle}>체형 변화</Text>
           <View style={styles.bodyTypeRow}>
             <View
@@ -91,7 +87,11 @@ export function AnalysisRecordComparisonResult({
                 {result.bodyTypeChange.from ?? '-'}
               </Text>
             </View>
-            <Text style={styles.bodyTypeArrow}>→</Text>
+            <OriginalAppIcon
+              color={Colors.textMuted}
+              name="arrowForward"
+              size={20}
+            />
             <View
               style={[
                 styles.bodyTypeBadge,
@@ -114,11 +114,15 @@ export function AnalysisRecordComparisonResult({
       ) : null}
 
       {result.improvements?.length ? (
-        <View style={[styles.card, iosShadow]}>
+        <View style={styles.card}>
           <Text style={styles.cardTitle}>개선된 점</Text>
           {result.improvements.map((item) => (
             <View key={item} style={styles.bulletRow}>
-              <TrendingUp color={Colors.success} size={16} strokeWidth={2.1} />
+              <OriginalAppIcon
+                color={Colors.success}
+                name="trendingUpOutline"
+                size={16}
+              />
               <Text style={styles.bulletText}>{item}</Text>
             </View>
           ))}
@@ -126,11 +130,15 @@ export function AnalysisRecordComparisonResult({
       ) : null}
 
       {result.declines?.length ? (
-        <View style={[styles.card, iosShadow]}>
+        <View style={styles.card}>
           <Text style={styles.cardTitle}>주의 필요</Text>
           {result.declines.map((item) => (
             <View key={item} style={styles.bulletRow}>
-              <TrendingDown color={Colors.danger} size={16} strokeWidth={2.1} />
+              <OriginalAppIcon
+                color={Colors.danger}
+                name="trendingDownOutline"
+                size={16}
+              />
               <Text style={styles.bulletText}>{item}</Text>
             </View>
           ))}
@@ -138,43 +146,36 @@ export function AnalysisRecordComparisonResult({
       ) : null}
 
       {result.postureChanges?.length ? (
-        <View style={[styles.card, iosShadow]}>
+        <View style={styles.card}>
           <Text style={styles.cardTitle}>자세 점수 변화</Text>
           {result.postureChanges.map((item, index) => {
-            const {
-              accessibilityLabel,
-              color,
-              Icon: ChangeIcon,
-            } = getPostureChangeVisual(item.change);
+            const { accessibilityLabel, color, icon } = getPostureChangeVisual(
+              item.change,
+            );
 
             return (
               <View key={`${item.area}-${index}`} style={styles.postureRow}>
-                <View style={styles.postureHeader}>
-                  <Text style={styles.postureArea}>{item.area ?? '-'}</Text>
-                  <View style={styles.scoreChangeRow}>
-                    <Text
-                      style={[
-                        styles.scoreText,
-                        { color: getScoreColor(item.before) },
-                      ]}
-                    >
-                      {item.before ?? '-'}
-                    </Text>
-                    <ChangeIcon
-                      accessibilityLabel={accessibilityLabel}
-                      color={color}
-                      size={14}
-                      strokeWidth={2.1}
-                    />
-                    <Text
-                      style={[
-                        styles.scoreText,
-                        { color: getScoreColor(item.after) },
-                      ]}
-                    >
-                      {item.after ?? '-'}
-                    </Text>
+                <Text style={styles.postureArea}>{item.area ?? '-'}</Text>
+                <View style={styles.scoreChangeRow}>
+                  <Text
+                    style={[
+                      styles.scoreText,
+                      { color: getScoreColor(item.before) },
+                    ]}
+                  >
+                    {item.before ?? '-'}
+                  </Text>
+                  <View accessibilityLabel={accessibilityLabel}>
+                    <OriginalAppIcon color={color} name={icon} size={14} />
                   </View>
+                  <Text
+                    style={[
+                      styles.scoreText,
+                      { color: getScoreColor(item.after) },
+                    ]}
+                  >
+                    {item.after ?? '-'}
+                  </Text>
                 </View>
                 {item.note ? (
                   <Text style={styles.cardText}>{item.note}</Text>
@@ -186,7 +187,7 @@ export function AnalysisRecordComparisonResult({
       ) : null}
 
       {result.quantitativeChanges?.length ? (
-        <View style={[styles.card, iosShadow]}>
+        <View style={styles.card}>
           <Text style={styles.cardTitle}>정량 변화</Text>
           {result.quantitativeChanges.map((item, index) => (
             <View key={`${item.metric}-${index}`} style={styles.quantRow}>
@@ -205,7 +206,7 @@ export function AnalysisRecordComparisonResult({
       ) : null}
 
       {result.recommendations?.length ? (
-        <View style={[styles.card, iosShadow]}>
+        <View style={styles.card}>
           <Text style={styles.cardTitle}>추천사항</Text>
           {result.recommendations.map((item, index) => (
             <View key={item} style={styles.recommendationRow}>
@@ -219,8 +220,8 @@ export function AnalysisRecordComparisonResult({
       ) : null}
 
       {result.motivationalNote ? (
-        <View style={[styles.card, styles.motivationCard, iosShadow]}>
-          <Heart color={Colors.accent} size={20} strokeWidth={2.1} />
+        <View style={[styles.card, styles.motivationCard]}>
+          <OriginalAppIcon color={Colors.accent} name="heart" size={20} />
           <Text style={styles.motivationText}>{result.motivationalNote}</Text>
         </View>
       ) : null}
@@ -229,81 +230,82 @@ export function AnalysisRecordComparisonResult({
 }
 
 const styles = StyleSheet.create({
-  bodyTypeArrow: {
-    color: Colors.textMuted,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 16,
-  },
   bodyTypeBadge: {
     alignItems: 'center',
-    borderRadius: 999,
-    height: 34,
+    borderRadius: 22,
+    height: 44,
     justifyContent: 'center',
-    width: 34,
+    width: 44,
   },
   bodyTypeBadgeText: {
     color: Colors.white,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 16,
+    fontFamily: 'Pretendard-Medium',
+    fontSize: 20,
   },
   bodyTypeRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 10,
+    gap: 12,
+    marginBottom: 10,
   },
   bulletRow: {
     alignItems: 'flex-start',
     flexDirection: 'row',
-    gap: 8,
+    gap: 10,
+    marginBottom: 8,
   },
   bulletText: {
-    color: Colors.textSecondary,
+    color: Colors.text,
     flex: 1,
     fontFamily: 'Pretendard-Regular',
-    fontSize: 13,
-    lineHeight: 19,
+    fontSize: 14,
+    lineHeight: 20,
   },
   card: {
     backgroundColor: Colors.card,
-    borderRadius: 16,
-    gap: 10,
+    borderColor: Colors.cardBorder,
+    borderRadius: 14,
+    borderWidth: 1,
+    marginBottom: 10,
+    marginHorizontal: 16,
     padding: 16,
   },
   cardText: {
     color: Colors.textSecondary,
     fontFamily: 'Pretendard-Regular',
-    fontSize: 13,
-    lineHeight: 19,
+    fontSize: 14,
+    lineHeight: 22,
   },
   cardTitle: {
     color: Colors.text,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 16,
+    fontFamily: 'Pretendard-Medium',
+    fontSize: 15,
+    marginBottom: 10,
   },
-  container: {
-    gap: 12,
-  },
+  container: {},
   motivationCard: {
-    backgroundColor: '#FFF7E0',
+    alignItems: 'center',
+    borderColor: Colors.accent,
+    flexDirection: 'row',
+    gap: 12,
   },
   motivationText: {
     color: Colors.text,
     fontFamily: 'Pretendard-Medium',
     fontSize: 14,
-    lineHeight: 20,
+    lineHeight: 22,
   },
   postureArea: {
     color: Colors.text,
     fontFamily: 'Pretendard-Medium',
     fontSize: 14,
-  },
-  postureHeader: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    marginBottom: 4,
   },
   postureRow: {
-    gap: 6,
+    borderBottomColor: Colors.divider,
+    borderBottomWidth: 1,
+    marginBottom: 12,
+    paddingBottom: 12,
   },
   quantHeader: {
     alignItems: 'center',
@@ -337,8 +339,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   recommendationRow: {
+    alignItems: 'flex-start',
     flexDirection: 'row',
-    gap: 8,
+    gap: 10,
+    marginBottom: 8,
   },
   scoreChangeRow: {
     alignItems: 'center',

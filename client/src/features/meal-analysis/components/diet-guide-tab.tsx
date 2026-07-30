@@ -1,13 +1,4 @@
 import {
-  Apple,
-  Bot,
-  Lightbulb,
-  PieChart,
-  RefreshCw,
-  Star,
-  Utensils,
-} from 'lucide-react-native';
-import {
   ActivityIndicator,
   Pressable,
   StyleSheet,
@@ -15,6 +6,7 @@ import {
   View,
 } from 'react-native';
 import type { DietGuideResponseDto } from 'shared/api/generated/models';
+import { OriginalAppIcon } from 'shared/components/icons/pt-diary-icons';
 import Colors, { iosShadow } from 'shared/constants/colors';
 
 type DietGuideTabProps = {
@@ -44,7 +36,7 @@ export function DietGuideTab({
   if (!guide) {
     return (
       <View style={[styles.ctaCard, iosShadow]}>
-        <Apple color={Colors.accent} size={52} strokeWidth={1.8} />
+        <OriginalAppIcon color={Colors.accent} name="foodApple" size={52} />
         <Text style={styles.ctaTitle}>AI 식단 가이드</Text>
         <Text style={styles.ctaDescription}>
           {recordCount > 0
@@ -52,7 +44,7 @@ export function DietGuideTab({
             : '식사를 기록하면 AI가 맞춤 식단 가이드를 제공합니다.'}
         </Text>
         <Pressable onPress={onGenerate} style={styles.ctaButton}>
-          <Bot color={Colors.white} size={20} strokeWidth={2.1} />
+          <OriginalAppIcon color={Colors.white} name="robot" size={20} />
           <Text style={styles.ctaButtonText}>
             {recordCount > 0 ? 'AI 가이드 생성' : 'AI 가이드 미리 보기'}
           </Text>
@@ -64,14 +56,16 @@ export function DietGuideTab({
   return (
     <View style={styles.container}>
       <GuideCard
-        icon={<Star color={Colors.accent} size={24} strokeWidth={2} />}
+        icon={
+          <OriginalAppIcon color={Colors.accent} name="starCircle" size={24} />
+        }
         title="오늘 식단 평가"
       >
         <Text style={styles.overallText}>{guide.guide.overallAssessment}</Text>
       </GuideCard>
 
       <GuideCard
-        icon={<PieChart color={Colors.info} size={22} strokeWidth={2} />}
+        icon={<OriginalAppIcon color={Colors.info} name="pieChart" size={22} />}
         title="목표 영양소"
       >
         <View style={styles.macroRow}>
@@ -102,7 +96,9 @@ export function DietGuideTab({
       </GuideCard>
 
       <GuideCard
-        icon={<Utensils color={Colors.accent} size={22} strokeWidth={2} />}
+        icon={
+          <OriginalAppIcon color={Colors.accent} name="restaurant" size={22} />
+        }
         title="추천 식사 구성"
       >
         {guide.guide.mealPlan.map((meal, index) => (
@@ -125,7 +121,9 @@ export function DietGuideTab({
       </GuideCard>
 
       <GuideCard
-        icon={<Lightbulb color={Colors.warning} size={22} strokeWidth={2} />}
+        icon={
+          <OriginalAppIcon color={Colors.warning} name="lightbulb" size={22} />
+        }
         title="오늘의 식단 팁"
       >
         {guide.guide.tips.map((tip) => (
@@ -137,7 +135,7 @@ export function DietGuideTab({
       </GuideCard>
 
       <Pressable onPress={onGenerate} style={styles.regenerateButton}>
-        <RefreshCw color={Colors.accent} size={18} strokeWidth={2.1} />
+        <OriginalAppIcon color={Colors.accent} name="refresh" size={18} />
         <Text style={styles.regenerateText}>다시 생성</Text>
       </Pressable>
     </View>
@@ -263,17 +261,16 @@ const styles = StyleSheet.create({
   },
   macroPill: {
     alignItems: 'center',
-    backgroundColor: Colors.inputBg,
+    backgroundColor: Colors.primaryLight,
     borderRadius: 10,
     flex: 1,
-    minWidth: '45%',
     paddingHorizontal: 10,
     paddingVertical: 8,
   },
   macroRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: 10,
+    marginBottom: 4,
   },
   macroValue: {
     fontFamily: 'Pretendard-Medium',

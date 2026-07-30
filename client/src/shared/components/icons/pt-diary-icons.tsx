@@ -12,41 +12,114 @@ export type SemanticIconName =
 
 export type OriginalAppIconName =
   | 'add'
+  | 'addCircle'
   | 'accessibilityOutline'
   | 'analyticsOutline'
+  | 'arrowDown'
+  | 'arrowForward'
+  | 'arrowUp'
+  | 'armFlexOutline'
   | 'barbell'
   | 'barbellOutline'
+  | 'bike'
   | 'body'
   | 'bodyOutline'
+  | 'brain'
   | 'calendar'
   | 'calendarOutline'
+  | 'camera'
+  | 'cameraOutline'
   | 'cafeOutline'
+  | 'chartBoxOutline'
   | 'chatbubbleEllipsesOutline'
   | 'checkmarkCircle'
+  | 'checkmark'
   | 'close'
+  | 'closeCircle'
   | 'clipboardOutline'
+  | 'compare'
+  | 'compareHorizontal'
   | 'documentText'
+  | 'fitness'
   | 'fitnessOutline'
+  | 'foodApple'
+  | 'foodAppleOutline'
+  | 'foodVariant'
+  | 'footsteps'
   | 'footstepsOutline'
+  | 'helpCircleOutline'
   | 'heart'
   | 'heartOutline'
+  | 'human'
+  | 'humanHandsDown'
+  | 'humanHandsUp'
+  | 'humanMaleBoard'
+  | 'humanMaleHeight'
+  | 'images'
+  | 'informationCircle'
+  | 'lightbulb'
   | 'lightbulbOutline'
+  | 'lightningBolt'
+  | 'location'
   | 'logOutOutline'
+  | 'medicalBag'
   | 'mic'
+  | 'moonOutline'
   | 'person'
+  | 'personOutline'
+  | 'pieChart'
   | 'pulse'
   | 'refresh'
+  | 'remove'
+  | 'removeCircleOutline'
+  | 'restaurant'
   | 'restaurantOutline'
+  | 'robot'
+  | 'run'
+  | 'saveOutline'
   | 'searchOutline'
+  | 'shoePrint'
+  | 'star'
+  | 'starCircle'
+  | 'speedometerOutline'
+  | 'sunnyOutline'
   | 'timeOutline'
   | 'trendingUpOutline'
+  | 'trendingDownOutline'
+  | 'trashOutline'
   | 'videocam'
   | 'volumeHigh'
   | 'walk'
-  | 'walkOutline';
+  | 'walkOutline'
+  | 'warningOutline'
+  | 'weightLifter';
 
 type SemanticIconProps = IconProps & {
   name: SemanticIconName;
+};
+
+const MATERIAL_ICON_PATHS: Partial<Record<OriginalAppIconName, string>> = {
+  brain:
+    'M21.33 12.91c.09 1.55-.62 3.04-1.89 3.95l.77 1.49c.23.45.26.98.06 1.45-.19.47-.58.84-1.06 1l-.79.25c-.17.06-.36.09-.54.09-.51 0-.99-.23-1.32-.64L14.44 18A5.3 5.3 0 0 1 12 16.9a5.21 5.21 0 0 1-4-.56 5.48 5.48 0 0 1-3.92-.23 4 4 0 0 1-2.43-3.61 4.53 4.53 0 0 1 .35-2.11 3.8 3.8 0 0 1-.07-2.33 4.36 4.36 0 0 1 1.94-2.24A4.07 4.07 0 0 1 7.87 3.12a4.48 4.48 0 0 1 5.83-.37 5.13 5.13 0 0 1 4.8 1.47 4.72 4.72 0 0 1 3.58 4.47 5.4 5.4 0 0 1-.86 3.13c.07.36.11.72.11 1.09M16.33 11.5c.57.07 1.02.5 1.02 1.07a1 1 0 0 1-1 1h-.63a5.44 5.44 0 0 1-1.62 2.29c.25.09.51.14.77.21 5.13-.07 4.53-3.2 4.53-3.25a2.59 2.59 0 0 0-2.69-2.49 1 1 0 0 1 0-2c1.23.03 2.41.49 3.33 1.3.05-.29.08-.59.08-.89-.06-1.24-.62-2.32-2.87-2.53C16 3.25 12.85 4.89 12.85 5.81c-.03.23.21.72.25.75a1 1 0 0 1 0 2 2.34 2.34 0 0 1-1.43-.56 3.9 3.9 0 0 1-1.6.56 1 1 0 0 1-.19-2c.16-.02.94-.14.94-.77 0-.66.25-1.29.68-1.79-.92-.25-1.91.08-2.91 1.29C6.75 5 6 5.25 5.45 7.2 4.5 7.67 4 8 3.78 9c1.08-.22 2.19-.13 3.22.25.5.19.78.75.59 1.29-.19.52-.77.78-1.29.59A3.32 3.32 0 0 0 4 11.07c-.32.27-.32.83-.32 1.27 0 .74.37 1.43 1 1.83.53.27 1.12.41 1.71.4-.15-.26-.28-.53-.39-.81a1 1 0 1 1 1.96-.68 3.04 3.04 0 0 0 2.62 2.05A3.82 3.82 0 0 0 13.77 13c.23-1.38 1.34-1.5 2.56-1.5m2 7.47-.62-1.3-.71.16 1 1.25.33-.11M13.68 10.36a1 1 0 0 0-.91-1.03 2.92 2.92 0 0 0-2.77 2.86 1 1 0 1 0 2 0c0-.27.07-.54.23-.76.12-.1.27-.15.43-.15.55.03 1.02-.38 1.02-.92Z',
+  compare:
+    'M19 3h-5v2h5v13l-5-6v9h5a2 2 0 0 0 2-2V5c0-1.11-.9-2-2-2M10 18H5l5-6m0-9H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h5v2h2V1h-2v2Z',
+  compareHorizontal: 'M9 7 5 11h3v2H5l4 4v-3h6v3l4-4h-3v-2h3l-4-4v3H9V7Z',
+  human:
+    'M21 9h-6v13h-2v-6h-2v6H9V9H3V7h18M12 2a2 2 0 0 1 2 2 2 2 0 0 1-2 2c-1.11 0-2-.9-2-2 0-1.11.89-2 2-2Z',
+  humanHandsDown:
+    'M12 1c-1.11 0-2 .9-2 2 0 1.11.89 2 2 2 1.11 0 2-.89 2-2a2 2 0 0 0-2-2m-2 5c-.27 0-.5.11-.69.28H9.3L4 11.59 5.42 13 9 9.41V22h2v-7h2v7h2V9.41L18.58 13 20 11.59l-5.3-5.31C14.5 6.11 14.27 6 14 6',
+  humanHandsUp:
+    'M5 1c0 2.7 1.56 5.16 4 6.32V22h2v-7h2v7h2V7.31C17.44 6.16 19 3.7 19 1h-2a5 5 0 0 1-5 5 5 5 0 0 1-5-5m5 0c-1.11 0-2 .89-2 2s.89 2 2 2 2-.89 2-2-.89-2-2-2Z',
+  humanMaleBoard:
+    'M20 17a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H9.46C9.81 2.61 10 3.3 10 4h10v11h-9v2m4-10v2H9v13H7v-6H5v6H3v-8H1.5V9a2 2 0 0 1 2-2H15M8 4a2 2 0 0 1-2 2 2 2 0 0 1-2-2 2 2 0 0 1 2-2 2 2 0 0 1 2 2Z',
+  humanMaleHeight:
+    'M7 2c1.78 0 2.67 2.16 1.42 3.42C7.16 6.67 5 5.78 5 4a2 2 0 0 1 2-2M5.5 7h3a2 2 0 0 1 2 2v5.5H9V22H5v-7.5H3.5V9a2 2 0 0 1 2-2M21 8h-6v2h6m0 1h-3v2h3m0-11h-6v2h6m0 1h-3v2h3m0 7h-6v2h6m0 4h-6v2h6m0-5h-3v2h3',
+  medicalBag:
+    'M10 3 8 5v2H5c-1.15 0-1.88 1-2 2L2 19c-.12 1 .54 2 2 2h16c1.46 0 2.12-1 2-2L21 9c-.12-1-.94-2-2-2h-3V5l-2-2h-4m0 2h4v2h-4V5m1 5h2v3h3v2h-3v3h-2v-3H8v-2h3v-3Z',
+  shoePrint:
+    'M10.74 11.72c.47 1.23.42 2.51-.99 3.02-2.9 1.07-3.55-1.74-3.59-1.88l4.58-1.14M5.71 10.91l4.32-1.07c-.19-1.05.1-2.1.1-3.34 0-1.68-1.33-4.97-3.45-4.44C4.26 2.66 3.91 5.35 4 6.65c.12 1.3 1.64 4.08 1.71 4.26m12.14 8.94c-.03.15-.69 2.95-3.59 1.89-1.4-.52-1.46-1.8-.99-3.03l4.58 1.14M20 13.65c.1-1.3-.24-4-2.67-4.6-2.11-.55-3.44 2.76-3.44 4.45 0 1.23.28 2.28.11 3.33l4.3 1.07c.08-.18 1.59-2.96 1.7-4.25Z',
+  weightLifter:
+    'M7 6.5a2.5 2.5 0 1 1 5 0 2.5 2.5 0 0 1-5 0M1 8h2v3h2V9h2v2h5V9h2v2h2V8h2v8h-2v-3h-2v2h-2v-2H7v2H5v-2H3v3H1V8m7 7h3l2 7h-3l-1.5-4L7 22H4l2.5-7H8Z',
 };
 
 export function SemanticIcon({
@@ -92,6 +165,659 @@ export function OriginalAppIcon({
   name,
   size = 20,
 }: IconProps & { name: OriginalAppIconName }) {
+  const materialPath = MATERIAL_ICON_PATHS[name];
+
+  if (materialPath) {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 24 24">
+        <Path d={materialPath} fill={color} />
+      </Svg>
+    );
+  }
+
+  if (name === 'arrowForward') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 512 512" fill="none">
+        <Line
+          x1="80"
+          y1="256"
+          x2="432"
+          y2="256"
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="48"
+        />
+        <Polyline
+          points="288 112 432 256 288 400"
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="48"
+        />
+      </Svg>
+    );
+  }
+
+  if (name === 'arrowUp' || name === 'arrowDown') {
+    const points =
+      name === 'arrowUp'
+        ? '112 272 256 128 400 272'
+        : '112 240 256 384 400 240';
+
+    return (
+      <Svg width={size} height={size} viewBox="0 0 512 512" fill="none">
+        <Line
+          x1="256"
+          y1={name === 'arrowUp' ? '416' : '96'}
+          x2="256"
+          y2={name === 'arrowUp' ? '128' : '384'}
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="48"
+        />
+        <Polyline
+          points={points}
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="48"
+        />
+      </Svg>
+    );
+  }
+
+  if (name === 'remove') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 512 512">
+        <Line
+          x1="80"
+          y1="256"
+          x2="432"
+          y2="256"
+          stroke={color}
+          strokeLinecap="round"
+          strokeWidth="48"
+        />
+      </Svg>
+    );
+  }
+
+  if (name === 'trendingDownOutline') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 512 512" fill="none">
+        <Polyline
+          points="352 368 464 368 464 256"
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={32}
+        />
+        <Path
+          d="m48 144 121.37 121.37a32 32 0 0 0 45.26 0l50.74-50.74a32 32 0 0 1 45.26 0L448 352"
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={32}
+        />
+      </Svg>
+    );
+  }
+
+  if (name === 'chartBoxOutline') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <Rect
+          x="3"
+          y="3"
+          width="18"
+          height="18"
+          rx="2"
+          stroke={color}
+          strokeWidth="2"
+        />
+        <Line
+          x1="8"
+          y1="17"
+          x2="8"
+          y2="12"
+          stroke={color}
+          strokeLinecap="round"
+          strokeWidth="2"
+        />
+        <Line
+          x1="12"
+          y1="17"
+          x2="12"
+          y2="8"
+          stroke={color}
+          strokeLinecap="round"
+          strokeWidth="2"
+        />
+        <Line
+          x1="16"
+          y1="17"
+          x2="16"
+          y2="10"
+          stroke={color}
+          strokeLinecap="round"
+          strokeWidth="2"
+        />
+      </Svg>
+    );
+  }
+
+  if (name === 'camera') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 512 512">
+        <Circle cx="256" cy="272" r="64" fill={color} />
+        <Path
+          d="M432 144h-59c-3 0-6.72-1.94-9.62-5l-25.94-40.94a15.52 15.52 0 0 0-1.37-1.85C327.11 85.76 315 80 302 80h-92c-13 0-25.11 5.76-34.07 16.21a15.52 15.52 0 0 0-1.37 1.85l-25.94 41c-2.22 2.42-5.34 5-8.62 5v-8a16 16 0 0 0-16-16h-24a16 16 0 0 0-16 16v8h-4a48.05 48.05 0 0 0-48 48v192a48.05 48.05 0 0 0 48 48h352a48.05 48.05 0 0 0 48-48V192a48.05 48.05 0 0 0-48-48ZM256 368a96 96 0 1 1 96-96 96.11 96.11 0 0 1-96 96Z"
+          fill={color}
+        />
+      </Svg>
+    );
+  }
+
+  if (name === 'cameraOutline') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 512 512" fill="none">
+        <Circle cx="256" cy="272" r="64" stroke={color} strokeWidth="32" />
+        <Path
+          d="M432 144h-59c-3 0-7-2-9-5l-26-41c-9-11-22-18-36-18h-92c-14 0-27 7-36 18l-26 41c-2 3-6 5-9 5H80a48 48 0 0 0-48 48v192a48 48 0 0 0 48 48h352a48 48 0 0 0 48-48V192a48 48 0 0 0-48-48Z"
+          stroke={color}
+          strokeLinejoin="round"
+          strokeWidth="32"
+        />
+      </Svg>
+    );
+  }
+
+  if (name === 'foodApple' || name === 'foodAppleOutline') {
+    const filled = name === 'foodApple';
+
+    return (
+      <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <Path
+          d="M12 8c-1.7-1.6-4.1-2-6-.8C3.9 8.5 3 10.8 3.3 13.2 3.8 17.4 6.2 21 9 21c1 0 1.8-.5 3-.5s2 .5 3 .5c2.8 0 5.2-3.6 5.7-7.8.3-2.4-.6-4.7-2.7-6-1.9-1.2-4.3-.8-6 .8Z"
+          fill={filled ? color : 'none'}
+          stroke={color}
+          strokeLinejoin="round"
+          strokeWidth={filled ? 0 : 1.8}
+        />
+        <Path
+          d="M12 8c0-2.8 1.5-4.5 4.5-5"
+          stroke={color}
+          strokeLinecap="round"
+          strokeWidth="1.8"
+        />
+      </Svg>
+    );
+  }
+
+  if (name === 'sunnyOutline') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 512 512" fill="none">
+        <Circle cx="256" cy="256" r="80" stroke={color} strokeWidth="32" />
+        {[
+          [256, 48, 256, 96],
+          [256, 416, 256, 464],
+          [48, 256, 96, 256],
+          [416, 256, 464, 256],
+          [109, 109, 143, 143],
+          [369, 369, 403, 403],
+          [109, 403, 143, 369],
+          [369, 143, 403, 109],
+        ].map(([x1, y1, x2, y2]) => (
+          <Line
+            key={`${x1}-${y1}`}
+            x1={x1}
+            y1={y1}
+            x2={x2}
+            y2={y2}
+            stroke={color}
+            strokeLinecap="round"
+            strokeWidth="32"
+          />
+        ))}
+      </Svg>
+    );
+  }
+
+  if (name === 'moonOutline') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 512 512" fill="none">
+        <Path
+          d="M264 480A232 232 0 0 1 32 248C32 154 88 70 174 34a16 16 0 0 1 21 20c-10 30-12 60-6 90 18 88 103 145 191 127 24-5 46-15 66-30a16 16 0 0 1 25 14c-4 125-106 225-231 225Z"
+          stroke={color}
+          strokeLinejoin="round"
+          strokeWidth="32"
+        />
+      </Svg>
+    );
+  }
+
+  if (name === 'restaurant') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 512 512">
+        <Path
+          d="m57 48 369 368a37 37 0 1 1-53 53l-90-92a32 32 0 0 1-9-22v-6a32 32 0 0 0-10-22l-11-11a32 32 0 0 0-30-8 49 49 0 0 1-47-12l-85-86C40 160 22 83 57 48Zm343-16-77 77a64 64 0 0 0-19 46v14a16 16 0 0 1-5 12l-27 27 32 32 27-27a16 16 0 0 1 12-5h14a64 64 0 0 0 46-19L480 112l-23-23-80 80a16 16 0 0 1-23-23l80-80-34-34ZM200 368 100 468a40 40 0 1 1-56-56l84-84 72 40Z"
+          fill={color}
+        />
+      </Svg>
+    );
+  }
+
+  if (name === 'bike') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 512 512" fill="none">
+        <Circle cx="112" cy="352" r="80" stroke={color} strokeWidth="32" />
+        <Circle cx="400" cy="352" r="80" stroke={color} strokeWidth="32" />
+        <Path
+          d="m112 352 80-160h96l112 160M192 192l96 160H112m176 0 48-224h56"
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="32"
+        />
+      </Svg>
+    );
+  }
+
+  if (name === 'foodVariant') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 24 24">
+        <Path
+          d="M6 2v8c0 1.1.9 2 2 2v10h2V12c1.1 0 2-.9 2-2V2h-2v6H9V2H7v6H6V2m10 0c-1.66 0-3 1.34-3 3v7h2v10h2V2h-1Z"
+          fill={color}
+        />
+      </Svg>
+    );
+  }
+
+  if (name === 'speedometerOutline') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 512 512" fill="none">
+        <Path
+          d="M96 416a192 192 0 1 1 320 0"
+          stroke={color}
+          strokeLinecap="round"
+          strokeWidth="32"
+        />
+        <Line
+          x1="256"
+          y1="320"
+          x2="368"
+          y2="176"
+          stroke={color}
+          strokeLinecap="round"
+          strokeWidth="32"
+        />
+        <Circle cx="256" cy="320" r="24" fill={color} />
+      </Svg>
+    );
+  }
+
+  if (name === 'saveOutline') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 512 512" fill="none">
+        <Path
+          d="M96 48h272l48 48v368H96V48Z"
+          stroke={color}
+          strokeLinejoin="round"
+          strokeWidth="32"
+        />
+        <Rect
+          x="160"
+          y="48"
+          width="176"
+          height="112"
+          stroke={color}
+          strokeWidth="32"
+        />
+        <Circle cx="256" cy="320" r="72" stroke={color} strokeWidth="32" />
+      </Svg>
+    );
+  }
+
+  if (name === 'warningOutline') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 512 512" fill="none">
+        <Path
+          d="M256 48 32 448h448L256 48Z"
+          stroke={color}
+          strokeLinejoin="round"
+          strokeWidth="32"
+        />
+        <Line
+          x1="256"
+          y1="176"
+          x2="256"
+          y2="304"
+          stroke={color}
+          strokeLinecap="round"
+          strokeWidth="32"
+        />
+        <Circle cx="256" cy="376" r="16" fill={color} />
+      </Svg>
+    );
+  }
+
+  if (name === 'robot') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 24 24">
+        <Path
+          d="M10 2h4v2h-1v2h4a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V9a3 3 0 0 1 3-3h4V4h-1V2m-2 8a2 2 0 1 0 0 4 2 2 0 0 0 0-4m8 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4M8 17h8v-2H8v2Z"
+          fill={color}
+        />
+      </Svg>
+    );
+  }
+
+  if (name === 'starCircle') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 24 24">
+        <Circle cx="12" cy="12" r="10" fill={color} />
+        <Path
+          d="m12 5 2.1 4.25 4.69.68-3.4 3.31.8 4.68L12 15.7l-4.19 2.22.8-4.68-3.4-3.31 4.69-.68L12 5Z"
+          fill="#FFFFFF"
+        />
+      </Svg>
+    );
+  }
+
+  if (name === 'pieChart') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 512 512">
+        <Path d="M256 32v224h224C480 132.29 379.71 32 256 32Z" fill={color} />
+        <Path
+          d="M224 64C100.29 64 0 164.29 0 288s100.29 224 224 224 224-100.29 224-224H224V64Z"
+          fill={color}
+        />
+      </Svg>
+    );
+  }
+
+  if (name === 'lightbulb') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 24 24">
+        <Path
+          d="M9 21h6v-1H9v1m3-19a7 7 0 0 0-4 12.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26A7 7 0 0 0 12 2Z"
+          fill={color}
+        />
+      </Svg>
+    );
+  }
+
+  if (name === 'images') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 512 512">
+        <Path
+          d="M450.29 112H142c-34 0-62 27.51-62 61.33v245.34C80 452.49 108 480 142 480h308c34 0 62-26.18 62-60V173.33c0-33.82-27.68-61.33-61.71-61.33Zm-77.15 61.34a46 46 0 1 1-46.28 46 46.19 46.19 0 0 1 46.28-46Zm-231.55 276c-17 0-29.86-13.75-29.86-30.66v-64.82l90.46-80.79a46.54 46.54 0 0 1 63.44 1.83L328.27 337l-113 112.33ZM480 418.67a30.67 30.67 0 0 1-30.71 30.66H259L376.08 333a46.24 46.24 0 0 1 59.44-.16L480 370.59Z"
+          fill={color}
+        />
+        <Path
+          d="M384 32H64A64 64 0 0 0 0 96v256a64.11 64.11 0 0 0 48 62V152a72 72 0 0 1 72-72h326A64.11 64.11 0 0 0 384 32Z"
+          fill={color}
+        />
+      </Svg>
+    );
+  }
+
+  if (name === 'fitness') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 512 512">
+        <Path
+          d="M193.69 152.84a16 16 0 0 1 29.64 2.56l36.4 121.36 30-59.92a16 16 0 0 1 28.62 0L345.89 272h96.76A213.08 213.08 0 0 0 464 176.65C463.37 114.54 413.54 64 352.92 64c-48.09 0-80 29.54-96.92 51-16.88-21.49-48.83-51-96.92-51C98.46 64 48.63 114.54 48 176.65A211.13 211.13 0 0 0 56.93 240h93.18Z"
+          fill={color}
+        />
+        <Path
+          d="M321.69 295.16 304 259.78l-33.69 67.38A16 16 0 0 1 256 336q-.67 0-1.38-.06a16 16 0 0 1-14-11.34l-36.4-121.36-30 59.92A16 16 0 0 1 160 272H69.35q14 29.29 37.27 57.66c18.77 22.88 52.8 59.46 131.39 112.81a31.84 31.84 0 0 0 36 0c78.59-53.35 112.62-89.93 131.39-112.81A316.79 316.79 0 0 0 424.4 304H336a16 16 0 0 1-14.31-8.84ZM464 272h-21.35a260.11 260.11 0 0 1-18.25 32H464a16 16 0 0 0 0-32ZM48 240a16 16 0 0 0 0 32h21.35a225.22 225.22 0 0 1-12.42-32Z"
+          fill={color}
+        />
+      </Svg>
+    );
+  }
+
+  if (name === 'footsteps') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 512 512">
+        <Path
+          d="M133.83 361.27c-22.61 0-41-8.17-54.79-24.39S56.2 296.59 50.93 261.57c-7.76-51.61-.06-95.11 21.68-122.48 12.8-16.12 29.6-25.44 48.58-26.94 16.25-1.3 40.54 5.29 64 44 14.69 24.24 25.86 56.44 30.65 88.34 5.79 38.51 1.48 66.86-13.18 86.65-11.64 15.72-29.54 25.46-53.21 29a106.46 106.46 0 0 1-15.62 1.13ZM173 496c-13.21 0-26.6-4.23-38.66-12.36a79.79 79.79 0 0 1-33.52-50.6c-2.85-14.66-1.14-26.31 5.22-35.64 10.33-15.15 28.87-18.56 48.49-22.18 2.07-.38 4.17-.76 6.3-1.17 4.52-.86 9.14-2 13.62-3.11 16.78-4.14 34.14-8.43 48.47 1.75 9.59 6.8 15 18.36 16.62 35.32 1.84 19.57-2.36 39.1-11.83 55-10.19 17.11-25.47 28.42-43 31.86A61 61 0 0 1 173 496ZM378.17 265.27a106.69 106.69 0 0 1-15.6-1.2c-23.66-3.5-41.56-13.25-53.2-29-14.66-19.79-19-48.13-13.18-86.65 4.79-31.93 15.93-64.1 30.55-88.25 23.34-38.57 47.66-45.26 64-44.08 18.92 1.38 35.69 10.57 48.51 26.6 21.89 27.37 29.65 71 21.86 122.84-5.27 35-14.2 58.95-28.11 75.31s-32.22 24.43-54.83 24.43ZM339 400a61 61 0 0 1-11.68-1.13c-17.56-3.44-32.84-14.75-43-31.86-9.47-15.9-13.67-35.43-11.83-55 1.6-17 7-28.52 16.62-35.33 14.33-10.17 31.69-5.89 48.47-1.74 4.48 1.1 9.1 2.24 13.62 3.11l6.29 1.17c19.63 3.61 38.17 7 48.5 22.17 6.36 9.33 8.07 21 5.22 35.64a79.78 79.78 0 0 1-33.52 50.61C365.56 395.78 352.17 400 339 400Z"
+          fill={color}
+        />
+      </Svg>
+    );
+  }
+
+  if (name === 'star') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 512 512">
+        <Path
+          d="M394 480a16 16 0 0 1-9.39-3L256 383.76 127.39 477a16 16 0 0 1-24.55-18.08L153 310.35 23 221.2A16 16 0 0 1 32 192h160.38l48.4-148.95a16 16 0 0 1 30.44 0l48.4 149H480a16 16 0 0 1 9.05 29.2L359 310.35l50.13 148.53A16 16 0 0 1 394 480Z"
+          fill={color}
+        />
+      </Svg>
+    );
+  }
+
+  if (name === 'lightningBolt') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 24 24">
+        <Path d="M11 15H6L13 1V9H18L11 23V15Z" fill={color} />
+      </Svg>
+    );
+  }
+
+  if (name === 'informationCircle') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 512 512">
+        <Path
+          d="M256 56C145.72 56 56 145.72 56 256s89.72 200 200 200 200-89.72 200-200S366.28 56 256 56Zm0 82a26 26 0 1 1-26 26 26 26 0 0 1 26-26Zm48 226h-88a16 16 0 0 1 0-32h28v-88h-16a16 16 0 0 1 0-32h32a16 16 0 0 1 16 16v104h28a16 16 0 0 1 0 32Z"
+          fill={color}
+        />
+      </Svg>
+    );
+  }
+
+  if (name === 'helpCircleOutline') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 512 512" fill="none">
+        <Circle
+          cx="256"
+          cy="256"
+          r="176"
+          stroke={color}
+          strokeMiterlimit={10}
+          strokeWidth={32}
+        />
+        <Path
+          d="M200 202.29s.84-17.5 19.57-32.57C230.68 160.77 244 158.18 256 158c10.93-.14 20.69 1.67 26.53 4.45C292.53 167.21 312 178.83 312 203.54c0 26-17 37.81-36.37 50.8S251 281.43 251 296"
+          stroke={color}
+          strokeLinecap="round"
+          strokeMiterlimit={10}
+          strokeWidth={28}
+        />
+        <Circle cx="250" cy="348" r="20" fill={color} />
+      </Svg>
+    );
+  }
+
+  if (name === 'closeCircle') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 512 512">
+        <Path
+          d="M256 48C141.31 48 48 141.31 48 256s93.31 208 208 208 208-93.31 208-208S370.69 48 256 48Zm75.31 260.69a16 16 0 1 1-22.62 22.62L256 278.63l-52.69 52.68a16 16 0 0 1-22.62-22.62L233.37 256l-52.68-52.69a16 16 0 0 1 22.62-22.62L256 233.37l52.69-52.68a16 16 0 0 1 22.62 22.62L278.63 256Z"
+          fill={color}
+        />
+      </Svg>
+    );
+  }
+
+  if (name === 'location') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 512 512">
+        <Circle cx="256" cy="192" r="32" fill={color} />
+        <Path
+          d="M256 32C167.78 32 96 100.65 96 185c0 40.17 18.31 93.59 54.42 158.78 29 52.34 62.55 99.67 80 123.22a31.75 31.75 0 0 0 51.22 0c17.42-23.55 51-70.88 80-123.22C397.69 278.61 416 225.19 416 185 416 100.65 344.22 32 256 32Zm0 224a64 64 0 1 1 64-64 64.07 64.07 0 0 1-64 64Z"
+          fill={color}
+        />
+      </Svg>
+    );
+  }
+
+  if (name === 'armFlexOutline') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 24 24">
+        <Path
+          d="M7 7.76V16.25H11.08L11.68 15.34C12.84 13.55 14.93 12.75 16.47 12.75C17 12.75 17.45 12.84 17.79 13C18.7 13.41 18.95 14.18 19 14.74C19.08 15.87 18.5 17.03 17.5 17.71C16.6 18.33 14.44 19 11.87 19C10.12 19 7.61 18.69 5.12 17.3C5.41 14.85 6 10.88 7 7.76M7 3C4 7.09 3 18.34 3 18.34C5.9 20.31 9.08 21 11.87 21C14.86 21 17.39 20.21 18.64 19.36C21.64 17.32 21.94 12.71 18.64 11.18C18 10.89 17.26 10.75 16.47 10.75C14.17 10.75 11.5 11.96 10 14.25H9V7.09H11L12 4L7 3Z"
+          fill={color}
+        />
+      </Svg>
+    );
+  }
+
+  if (name === 'run') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 24 24">
+        <Path
+          d="M13.5 5.5C14.59 5.5 15.5 4.58 15.5 3.5C15.5 2.38 14.59 1.5 13.5 1.5C12.39 1.5 11.5 2.38 11.5 3.5C11.5 4.58 12.39 5.5 13.5 5.5M9.89 19.38L10.89 15L13 17V23H15V15.5L12.89 13.5L13.5 10.5C14.79 12 16.79 13 19 13V11C17.09 11 15.5 10 14.69 8.58L13.69 7C13.29 6.38 12.69 6 12 6C11.69 6 11.5 6.08 11.19 6.08L6 8.28V13H8V9.58L9.79 8.88L8.19 17L3.29 16L2.89 18L9.89 19.38Z"
+          fill={color}
+        />
+      </Svg>
+    );
+  }
+
+  if (name === 'addCircle') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 512 512">
+        <Path
+          d="M256 48C141.31 48 48 141.31 48 256s93.31 208 208 208 208-93.31 208-208S370.69 48 256 48Zm80 224h-64v64a16 16 0 0 1-32 0v-64h-64a16 16 0 0 1 0-32h64v-64a16 16 0 0 1 32 0v64h64a16 16 0 0 1 0 32Z"
+          fill={color}
+        />
+      </Svg>
+    );
+  }
+
+  if (name === 'checkmark') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 512 512" fill="none">
+        <Polyline
+          points="416 128 192 384 96 288"
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={32}
+        />
+      </Svg>
+    );
+  }
+
+  if (name === 'removeCircleOutline') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 512 512" fill="none">
+        <Path
+          d="M448 256c0-106-86-192-192-192S64 150 64 256s86 192 192 192 192-86 192-192Z"
+          stroke={color}
+          strokeMiterlimit={10}
+          strokeWidth={32}
+        />
+        <Line
+          x1="336"
+          y1="256"
+          x2="176"
+          y2="256"
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={32}
+        />
+      </Svg>
+    );
+  }
+
+  if (name === 'trashOutline') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 512 512" fill="none">
+        <Path
+          d="m112 112 20 320c.95 18.49 14.4 32 32 32h184c17.67 0 30.87-13.51 32-32l20-320"
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={32}
+        />
+        <Line
+          x1="80"
+          y1="112"
+          x2="432"
+          y2="112"
+          stroke={color}
+          strokeLinecap="round"
+          strokeMiterlimit={10}
+          strokeWidth={32}
+        />
+        <Path
+          d="M192 112V72a23.93 23.93 0 0 1 24-24h80a23.93 23.93 0 0 1 24 24v40"
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={32}
+        />
+        <Line
+          x1="256"
+          y1="176"
+          x2="256"
+          y2="400"
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={32}
+        />
+        <Line
+          x1="184"
+          y1="176"
+          x2="192"
+          y2="400"
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={32}
+        />
+        <Line
+          x1="328"
+          y1="176"
+          x2="320"
+          y2="400"
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={32}
+        />
+      </Svg>
+    );
+  }
+
+  if (name === 'personOutline') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 512 512" fill="none">
+        <Path
+          d="M344 144c-3.92 52.87-44 96-88 96s-84.15-43.12-88-96c-4-55 35-96 88-96s92 42 88 96Z"
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={32}
+        />
+        <Path
+          d="M256 304c-87 0-175.3 48-191.64 138.6C62.39 453.52 68.57 464 80 464h352c11.44 0 17.62-10.48 15.65-21.4C431.3 352 343 304 256 304Z"
+          stroke={color}
+          strokeMiterlimit={10}
+          strokeWidth={32}
+        />
+      </Svg>
+    );
+  }
+
   if (name === 'add') {
     return (
       <Svg width={size} height={size} viewBox="0 0 512 512" fill="none">
@@ -795,7 +1521,7 @@ export function OriginalAppIcon({
     );
   }
 
-  const filledPath = {
+  const filledPath: Partial<Record<OriginalAppIconName, string>> = {
     barbell:
       'M467 176a29.94 29.94 0 0 0-25.32 12.5 2 2 0 0 1-3.64-1.14v-36.65c0-20.75-16.34-38.21-37.08-38.7A38 38 0 0 0 362 150v82a2 2 0 0 1-2 2H152a2 2 0 0 1-2-2v-81.29c0-20.75-16.34-38.21-37.08-38.7A38 38 0 0 0 74 150v37.38a2 2 0 0 1-3.64 1.14A29.94 29.94 0 0 0 45 176c-16.3.51-29 14.31-29 30.62v98.72c0 16.31 12.74 30.11 29 30.62a29.94 29.94 0 0 0 25.32-12.5A2 2 0 0 1 74 324.62v36.67C74 382 90.34 399.5 111.08 400A38 38 0 0 0 150 362v-82a2 2 0 0 1 2-2h208a2 2 0 0 1 2 2v81.29c0 20.75 16.34 38.21 37.08 38.7A38 38 0 0 0 438 362v-37.38a2 2 0 0 1 3.64-1.14A29.94 29.94 0 0 0 467 336c16.3-.51 29-14.31 29-30.62v-98.74C496 190.33 483.26 176.53 467 176Z',
     body: 'M437 128H75a27 27 0 0 0 0 54h101.88c6.91 0 15 3.09 19.58 15 5.35 13.83 2.73 40.54-.57 61.23l-4.32 24.45a.42.42 0 0 1-.12.35l-34.6 196.81A27.43 27.43 0 0 0 179 511.58a27.06 27.06 0 0 0 31.42-22.29l23.91-136.8S242 320 256 320c14.23 0 21.74 32.49 21.74 32.49l23.91 136.92a27.24 27.24 0 1 0 53.62-9.6L320.66 283a.45.45 0 0 0-.11-.35l-4.33-24.45c-3.3-20.69-5.92-47.4-.57-61.23 4.56-11.88 12.91-15 19.28-15H437a27 27 0 0 0 0-54Z',
@@ -803,12 +1529,12 @@ export function OriginalAppIcon({
       'M256 448a32 32 0 0 1-18-5.57c-78.59-53.35-112.62-89.93-131.39-112.8-40-48.75-59.15-98.8-58.61-153C48.63 114.52 98.46 64 159.08 64c44.08 0 74.61 24.83 92.39 45.51a6 6 0 0 0 9.06 0C278.31 88.81 308.84 64 352.92 64 413.54 64 463.37 114.52 464 176.64c.54 54.21-18.63 104.26-58.61 153-18.77 22.87-52.8 59.45-131.39 112.8A32 32 0 0 1 256 448Z',
     pulse:
       'M432 272a48.09 48.09 0 0 0-45.25 32h-39.22l-28.35-85.06a16 16 0 0 0-30.56.66l-44.51 155.76-52.33-314a16 16 0 0 0-31.3-1.25L99.51 304H48a16 16 0 0 0 0 32h64a16 16 0 0 0 15.52-12.12l45.34-181.37 51.36 308.12A16 16 0 0 0 239.1 464c.3 0 .6 0 .91 0a16 16 0 0 0 15.37-11.6l49.8-174.28 15.64 46.94A16 16 0 0 0 336 336h50.75A48 48 0 1 0 432 272Z',
-  }[name];
+  };
 
   return (
     <Svg width={size} height={size} viewBox="0 0 512 512">
       {name === 'body' ? <Circle cx="256" cy="56" r="56" fill={color} /> : null}
-      <Path d={filledPath} fill={color} />
+      <Path d={filledPath[name] ?? ''} fill={color} />
     </Svg>
   );
 }

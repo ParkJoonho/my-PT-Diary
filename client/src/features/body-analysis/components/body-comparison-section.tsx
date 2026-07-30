@@ -1,14 +1,18 @@
-import {
-  ArrowRight,
-  Camera,
-  FolderOpen,
-  GitCompareArrows,
-  X,
-} from 'lucide-react-native';
 import { useState } from 'react';
-import { Alert, Image, Pressable, StyleSheet, Text, View } from 'react-native';
-import { SemanticIcon } from 'shared/components/icons/pt-diary-icons';
-import Colors, { iosShadow } from 'shared/constants/colors';
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import {
+  OriginalAppIcon,
+  SemanticIcon,
+} from 'shared/components/icons/pt-diary-icons';
+import Colors from 'shared/constants/colors';
 import { useCreateAnalysisRecord } from '../api/analysis-records';
 import { useAnalyzeBodyComparison } from '../api/body-comparison';
 import { buildBodyComparisonRecordPayload } from '../lib/analysis-record-payload';
@@ -26,7 +30,6 @@ function ComparisonSlot({
   image,
   label,
   onPickAlbum,
-  onPickCamera,
   onRemove,
   shortLabel,
 }: {
@@ -34,7 +37,6 @@ function ComparisonSlot({
   image?: PickedImage;
   label: string;
   onPickAlbum: () => void;
-  onPickCamera: () => void;
   onRemove: () => void;
   shortLabel: string;
 }) {
@@ -55,28 +57,18 @@ function ComparisonSlot({
             style={styles.thumb}
           />
           <Pressable hitSlop={8} onPress={onRemove} style={styles.removeButton}>
-            <X color={Colors.white} size={16} strokeWidth={2.1} />
+            <OriginalAppIcon
+              color={Colors.danger}
+              name="closeCircle"
+              size={22}
+            />
           </Pressable>
         </View>
       ) : (
-        <View style={styles.placeholder}>
-          <FolderOpen color={accentColor} size={26} strokeWidth={2.1} />
+        <Pressable onPress={onPickAlbum} style={styles.placeholder}>
+          <OriginalAppIcon color={accentColor} name="images" size={28} />
           <Text style={styles.placeholderText}>갤러리에서{'\n'}선택</Text>
-          <View style={styles.actionRow}>
-            <Pressable style={styles.actionButton} onPress={onPickCamera}>
-              <Camera color={accentColor} size={16} strokeWidth={2.1} />
-              <Text style={[styles.actionText, { color: accentColor }]}>
-                카메라
-              </Text>
-            </Pressable>
-            <Pressable style={styles.actionButton} onPress={onPickAlbum}>
-              <FolderOpen color={accentColor} size={16} strokeWidth={2.1} />
-              <Text style={[styles.actionText, { color: accentColor }]}>
-                앨범
-              </Text>
-            </Pressable>
-          </View>
-        </View>
+        </Pressable>
       )}
     </View>
   );
@@ -193,13 +185,13 @@ export function BodyComparisonSection({
   };
 
   return (
-    <View style={[styles.card, iosShadow]}>
+    <View style={styles.card}>
       <Pressable
         onPress={() => onOpenChange(!open)}
         style={styles.toggleButton}
       >
         <View style={styles.toggleLeft}>
-          <GitCompareArrows color="#10B981" size={18} strokeWidth={2.1} />
+          <OriginalAppIcon color="#10B981" name="compare" size={18} />
           <Text style={styles.toggleTitle}>전/후 비교 분석</Text>
           {selectedCount > 0 ? (
             <View style={styles.countBadge}>
@@ -222,76 +214,75 @@ export function BodyComparisonSection({
 
       {open && !result ? (
         <>
-          <View style={styles.comparisonRow}>
-            <ComparisonSlot
-              accentColor="#6366F1"
-              image={images.before}
-              label="Before"
-              onPickAlbum={() =>
-                void handlePickImage({ target: 'before', useCamera: false })
-              }
-              onPickCamera={() =>
-                void handlePickImage({ target: 'before', useCamera: true })
-              }
-              onRemove={() => {
-                setImages((previous) => ({ ...previous, before: undefined }));
-                resetResultState();
-              }}
-              shortLabel="전"
-            />
-            <View style={styles.arrowWrap}>
-              <ArrowRight
-                color={Colors.textMuted}
-                size={22}
-                strokeWidth={2.1}
+          <View style={styles.comparisonContainer}>
+            <View style={styles.comparisonRow}>
+              <ComparisonSlot
+                accentColor="#6366F1"
+                image={images.before}
+                label="Before"
+                onPickAlbum={() =>
+                  void handlePickImage({ target: 'before', useCamera: false })
+                }
+                onRemove={() => {
+                  setImages((previous) => ({ ...previous, before: undefined }));
+                  resetResultState();
+                }}
+                shortLabel="전"
+              />
+              <View style={styles.arrowWrap}>
+                <OriginalAppIcon
+                  color={Colors.textMuted}
+                  name="arrowForward"
+                  size={24}
+                />
+              </View>
+              <ComparisonSlot
+                accentColor="#10B981"
+                image={images.after}
+                label="After"
+                onPickAlbum={() =>
+                  void handlePickImage({ target: 'after', useCamera: false })
+                }
+                onRemove={() => {
+                  setImages((previous) => ({ ...previous, after: undefined }));
+                  resetResultState();
+                }}
+                shortLabel="후"
               />
             </View>
-            <ComparisonSlot
-              accentColor="#10B981"
-              image={images.after}
-              label="After"
-              onPickAlbum={() =>
-                void handlePickImage({ target: 'after', useCamera: false })
-              }
-              onPickCamera={() =>
-                void handlePickImage({ target: 'after', useCamera: true })
-              }
-              onRemove={() => {
-                setImages((previous) => ({ ...previous, after: undefined }));
-                resetResultState();
-              }}
-              shortLabel="후"
-            />
-          </View>
-
-          <Pressable
-            disabled={
-              !images.before?.base64 ||
-              !images.after?.base64 ||
-              analyzeComparison.isPending
-            }
-            onPress={() => void handleAnalyze()}
-            style={[
-              styles.analyzeButton,
-              (!images.before?.base64 ||
+            <Pressable
+              disabled={
+                !images.before?.base64 ||
                 !images.after?.base64 ||
-                analyzeComparison.isPending) &&
-                styles.analyzeButtonDisabled,
-            ]}
-          >
-            <GitCompareArrows
-              color={Colors.white}
-              size={16}
-              strokeWidth={2.1}
-            />
-            <Text style={styles.analyzeButtonText}>
-              {analyzeComparison.isPending
-                ? '비교 분석 중...'
-                : images.before?.base64 && images.after?.base64
-                  ? 'AI 전/후 비교 분석'
-                  : '전/후 사진을 모두 선택하세요'}
-            </Text>
-          </Pressable>
+                analyzeComparison.isPending
+              }
+              onPress={() => void handleAnalyze()}
+              style={[
+                styles.analyzeButton,
+                (!images.before?.base64 ||
+                  !images.after?.base64 ||
+                  analyzeComparison.isPending) &&
+                  styles.analyzeButtonDisabled,
+              ]}
+            >
+              {analyzeComparison.isPending ? (
+                <ActivityIndicator color={Colors.white} size="small" />
+              ) : (
+                <OriginalAppIcon
+                  color={Colors.white}
+                  name="compareHorizontal"
+                  size={20}
+                />
+              )}
+              <Text style={styles.analyzeButtonText}>
+                {analyzeComparison.isPending
+                  ? '비교 분석 중...'
+                  : images.before?.base64 && images.after?.base64
+                    ? 'AI 전/후 비교 분석'
+                    : '전/후 사진을 모두 선택하세요'}
+              </Text>
+            </Pressable>
+          </View>
         </>
       ) : null}
 
@@ -327,25 +318,6 @@ export function BodyComparisonSection({
 }
 
 const styles = StyleSheet.create({
-  actionButton: {
-    alignItems: 'center',
-    backgroundColor: Colors.white,
-    borderRadius: 10,
-    flex: 1,
-    flexDirection: 'row',
-    gap: 4,
-    justifyContent: 'center',
-    minHeight: 36,
-  },
-  actionRow: {
-    flexDirection: 'row',
-    gap: 8,
-    width: '100%',
-  },
-  actionText: {
-    fontFamily: 'Pretendard-Medium',
-    fontSize: 12,
-  },
   analyzeButton: {
     alignItems: 'center',
     backgroundColor: '#10B981',
@@ -353,7 +325,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
     justifyContent: 'center',
-    minHeight: 52,
+    marginTop: 14,
+    paddingVertical: 14,
   },
   analyzeButtonDisabled: {
     opacity: 0.55,
@@ -370,39 +343,44 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
   arrowWrap: {
-    justifyContent: 'center',
-    paddingTop: 28,
+    paddingTop: 24,
   },
   card: {
     backgroundColor: Colors.card,
+    borderColor: Colors.cardBorder,
     borderRadius: 16,
-    gap: 12,
+    borderWidth: 1,
+    marginBottom: 16,
+    marginHorizontal: 16,
     padding: 16,
   },
   collapsedDescription: {
     color: Colors.textMuted,
     fontFamily: 'Pretendard-Regular',
-    fontSize: 12,
-    lineHeight: 18,
+    fontSize: 13,
+    marginBottom: 12,
+  },
+  comparisonContainer: {
+    gap: 12,
+    marginTop: 12,
   },
   comparisonRow: {
-    alignItems: 'stretch',
+    alignItems: 'center',
     flexDirection: 'row',
     gap: 8,
   },
   countBadge: {
     alignItems: 'center',
     backgroundColor: '#10B981',
-    borderRadius: 999,
-    height: 18,
+    borderRadius: 10,
+    height: 20,
     justifyContent: 'center',
-    minWidth: 18,
-    paddingHorizontal: 6,
+    width: 20,
   },
   countBadgeText: {
     color: Colors.white,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 10,
+    fontFamily: 'Pretendard-Medium',
+    fontSize: 11,
   },
   placeholder: {
     alignItems: 'center',
@@ -410,11 +388,10 @@ const styles = StyleSheet.create({
     borderColor: Colors.cardBorder,
     borderRadius: 12,
     borderStyle: 'dashed',
-    borderWidth: 1,
-    gap: 10,
-    height: 180,
+    borderWidth: 2,
+    gap: 6,
+    height: 140,
     justifyContent: 'center',
-    padding: 12,
   },
   placeholderText: {
     color: Colors.textMuted,
@@ -426,34 +403,30 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   removeButton: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(15, 23, 42, 0.55)',
-    borderRadius: 999,
-    height: 26,
-    justifyContent: 'center',
     position: 'absolute',
-    right: 8,
-    top: 8,
-    width: 26,
+    right: -8,
+    top: -8,
   },
   slot: {
     flex: 1,
-    gap: 8,
   },
   slotBadge: {
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    alignItems: 'center',
+    borderRadius: 12,
+    height: 24,
+    justifyContent: 'center',
+    width: 24,
   },
   slotBadgeText: {
     color: Colors.white,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 11,
+    fontFamily: 'Pretendard-Medium',
+    fontSize: 12,
   },
   slotHeader: {
     alignItems: 'center',
     flexDirection: 'row',
     gap: 6,
+    marginBottom: 8,
   },
   slotLabel: {
     color: Colors.textSecondary,
@@ -462,13 +435,14 @@ const styles = StyleSheet.create({
   },
   thumb: {
     borderRadius: 12,
-    height: 180,
+    height: 140,
     width: '100%',
   },
   toggleButton: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
+    paddingVertical: 4,
   },
   toggleLeft: {
     alignItems: 'center',
@@ -478,6 +452,6 @@ const styles = StyleSheet.create({
   toggleTitle: {
     color: Colors.text,
     fontFamily: 'Pretendard-SemiBold',
-    fontSize: 16,
+    fontSize: 15,
   },
 });

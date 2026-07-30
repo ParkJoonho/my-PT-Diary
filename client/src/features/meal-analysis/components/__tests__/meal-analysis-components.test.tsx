@@ -7,7 +7,7 @@ import type {
 } from 'shared/api/generated/models';
 import { DietGuideTab } from '../diet-guide-tab';
 import { MealAnalysisResult } from '../meal-analysis-result';
-import { MealPhotoSection } from '../meal-photo-section';
+import { MealDurationCard, MealPhotoSection } from '../meal-photo-section';
 
 jest.mock('lucide-react-native', () => {
   const { Text } = require('react-native');
@@ -130,7 +130,7 @@ describe('식단 분석 원본 UI 구성', () => {
     expect(screen.getByText('다시 생성')).toBeTruthy();
   });
 
-  it('사진 입력은 원본 구조를 유지하고 EXIF 제약만 미구현으로 표시한다', () => {
+  it('사진 입력은 원본의 전/후 촬영 구조를 유지한다', () => {
     const onPick = jest.fn();
 
     render(<MealPhotoSection onPick={onPick} onRemove={jest.fn()} />);
@@ -139,8 +139,7 @@ describe('식단 분석 원본 UI 구성', () => {
     expect(screen.getByText('식사 후')).toBeTruthy();
     expect(screen.getByText('필수')).toBeTruthy();
     expect(screen.getByText('선택')).toBeTruthy();
-    expect(screen.getByText('촬영 시간으로 식사 속도 자동 계산')).toBeTruthy();
-    expect(screen.getByText('미구현')).toBeTruthy();
+    expect(screen.queryByText('미구현')).toBeNull();
 
     const addPhotoButton = screen.getAllByText('사진 추가').at(0);
 
@@ -150,5 +149,13 @@ describe('식단 분석 원본 UI 구성', () => {
 
     fireEvent.press(addPhotoButton);
     expect(onPick).toHaveBeenCalledWith('before', false);
+  });
+
+  it('카메라 촬영 시각 차이가 있으면 원본 식사 소요 시간 card를 표시한다', () => {
+    render(<MealDurationCard durationMinutes={12} />);
+
+    expect(screen.getByText('식사 소요 시간')).toBeTruthy();
+    expect(screen.getByText('12분')).toBeTruthy();
+    expect(screen.getByText('조금 빠름')).toBeTruthy();
   });
 });

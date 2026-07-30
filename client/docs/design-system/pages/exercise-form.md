@@ -7,17 +7,12 @@
 - 상태 정렬: 부분 완료
 - 시각 규칙 추출: 완료
 - 공통화 판정: 완료
-- 코드 반영: 미진행
+- 코드 반영: 완료
 - 동일 상태 실기 검증: 미진행
 
-이 페이지는 기록 계열에서 원본에 가장 가까운 축 중 하나다. section 순서, 입력 필드 계열,
-운동 종목 카드 구조가 대부분 유지돼 있다. 차이는 주로
-
-1. 상단 chrome
-2. add/remove affordance
-3. 일부 액션 버튼의 icon → text 전환
-
-에 몰려 있다.
+section 순서와 기본 input system은 유지하고, 원본 icon header와 운동 종목 편집
+affordance를 복원했다. 기존 문서에서 동일하다고 판단했던 운동 카드 내부 mini field,
+footer 구분선, gap에도 실제 값 차이가 있어 함께 정렬했다.
 
 ## 실제 코드 경로
 
@@ -58,37 +53,41 @@ ExerciseFormScreen
 
 ```text
 ai-pt
-ManualWorkoutFormScreen
-├── text header
-│   ├── 닫기
-│   ├── title
-│   └── 저장
-└── ScrollView
-    ├── 기본 정보
-    ├── 유산소
-    ├── 컨디션 체크
-    ├── 체성분
-    ├── 식단 체크
-    ├── 운동 종목
-    │   ├── 운동 추가 text action
-    │   ├── 삭제 text actions
-    │   ├── set rows
-    │   └── mini stats
-    └── 하루 일과 보고
+TabPageLayout(activeKey=null)
+└── ManualWorkoutFormScreen
+    ├── edit query용 SuspenseSection
+    └── icon header
+        ├── close icon
+        ├── title
+        └── accent save icon button
+    └── ScrollView
+        ├── 기본 정보
+        ├── 유산소
+        ├── 컨디션 체크
+        ├── 체성분
+        ├── 식단 체크
+        ├── 운동 종목
+        │   ├── add-circle icon
+        │   ├── trash/remove-circle icons
+        │   ├── set rows
+        │   └── mini fields/stats
+        └── 하루 일과 보고
 ```
 
-폼의 본문 정보 구조는 거의 같고, 상단/액션 affordance만 상당 부분 텍스트화됐다.
+작성은 query 없이 바로 렌더링하고, 수정 query의 Suspense 경계는 edit 소비처 바로
+위에 유지한다.
 
 ## 상태 매트릭스
 
 | 상태 | 원본 실제 코드 | `ai-pt` 실제 코드 | 비교 가능 | 판정 |
 |---|---|---|---|---|
-| 새 기록 작성 | 있음 | 있음 | 가능 | 거의 동일 |
-| 기존 기록 수정 | 있음 | 있음 | 가능 | 거의 동일 |
+| 새 기록 작성 | 있음 | 있음 | 가능 | 동일 구조 |
+| 기존 기록 수정 | 있음 | 있음 | 가능 | 동일 구조 |
 | 기본 정보 입력 | 있음 | 있음 | 가능 | 동일 |
 | 유산소/체성분/식단 | 있음 | 있음 | 가능 | 동일 |
-| 운동 종목 편집 | 있음 | 있음 | 가능 | 액션 affordance 다름 |
-| 저장 | 있음 | 있음 | 가능 | header button 체계 다름 |
+| 운동 종목 편집 | icon add/delete, set 추가/삭제 | 동일 | 가능 | 일치 |
+| 저장 | accent icon button | accent icon button | 가능 | 일치 |
+| 저장 중 | 별도 상태 없음 | 동일 위치 spinner + disabled | 부분 가능 | 현재 기능 보완 |
 
 ## 실제 시각 규칙 대조
 
@@ -97,14 +96,15 @@ ManualWorkoutFormScreen
 | 영역 | 원본 실제 값 | `ai-pt` 실제 값 | 판정 |
 |---|---|---|---|
 | background chrome | `ParallaxBackground` 있음 | 없음 | 다름 |
-| header bg | white | `Colors.card`/white | 거의 일치 |
+| header bg | white | white | 일치 |
 | title | `17` SemiBold | 동일 | 일치 |
-| left action | close icon | `닫기` text | 다름 |
-| right action | accent filled icon button | `저장` text | 다름 |
-| save pending 표현 | pressed opacity 중심 | `저장 중` text | 다름 |
+| left action | close icon `24` | 동일 SVG icon | 일치 |
+| right action | accent `36×36`, radius `10`, check `24` | 동일 | 일치 |
+| pressed opacity | `0.7` | `0.7` | 일치 |
+| save pending 표현 | 별도 상태 없음 | button 내부 spinner | 현재 기능 보완 |
 
-상단은 구조보다 affordance 감도가 달라졌다. 원본은 compact icon header이고, 현재는
-일반 텍스트 header다.
+원본의 compact icon header를 복원했다. mutation pending 상태는 button의 위치와 크기를
+유지한 채 spinner만 표시한다.
 
 ### 2. section / input system
 
@@ -123,25 +123,31 @@ ManualWorkoutFormScreen
 
 | 영역 | 원본 실제 값 | `ai-pt` 실제 값 | 판정 |
 |---|---|---|---|
-| card shell | bordered card radius `12`, padding `10` | 동일 | 일치 |
+| card shell | bordered card radius `12`, padding `10`, gap `6` | 동일 | 일치 |
 | 운동명 input | `15` SemiBold | 동일 | 일치 |
 | set header | `10` Medium muted | 동일 | 일치 |
 | set input | radius `8`, centered, bordered | 동일 | 일치 |
-| footer mini fields | 동일 계열 | 동일 | 일치 |
-| 총 볼륨 helper | `12` Regular muted | 동일 | 일치 |
+| 첫 footer | top border `1`, paddingTop `6`, gap `6` | 동일 | 일치 |
+| 둘째 footer | 별도 row, gap `6` | 동일 | 일치 |
+| mini input | radius `6`, `4/5`, centered, label `10` muted | 동일 | 일치 |
+| mini stat | `13` SemiBold, volume만 `14` Medium accent | 동일 | 일치 |
+| 전체 총 볼륨 helper | 없음 | 없음 | 일치 |
 
-여기는 원본 재현도가 높다. 기록 폼 공통화 기준은 이 페이지에서 뽑는 게 맞다.
+기존 현재 코드의 mini input은 radius `8`, `10/8`, label `11`이었고, 두 footer 모두
+같은 padding을 사용했다. 실제 원본 값으로 정렬하고 현재에만 있던 전체 총 볼륨 문구는
+제거했다.
 
 ### 4. 액션 affordance
 
 | 영역 | 원본 실제 값 | `ai-pt` 실제 값 | 판정 |
 |---|---|---|---|
-| 운동 추가 | add-circle icon | `운동 추가` text | 다름 |
-| 운동 삭제 | trash icon | `삭제` text | 다름 |
-| 세트 삭제 | remove-circle-outline icon | `삭제` text | 다름 |
-| 세트 추가 | plus icon + text | text만 | 다름 |
+| 운동 추가 | add-circle icon `24` | 동일 SVG icon | 일치 |
+| 운동 삭제 | trash icon `18` | 동일 SVG icon | 일치 |
+| 세트 header 마지막 칸 | 빈 공간 `22` | 빈 공간 `22` | 일치 |
+| 세트 삭제 | remove-circle-outline `20`, 마지막 set muted | 동일 | 일치 |
+| 세트 추가 | plus `16` + text | 동일 | 일치 |
 
-현재는 동작은 같지만, 원본보다 훨씬 문서형/관리형 폼처럼 보인다.
+모든 추가·삭제 동작은 기존 zustand form store에 그대로 연결했다.
 
 ## 공통화 판정
 
@@ -158,32 +164,37 @@ ManualWorkoutFormScreen
 
 | 후보 | 분류 | 판정 | 이유 |
 |---|---|---|---|
-| 현재 text-only header actions | reject | 기준 header action 금지 | 원본은 icon affordance 중심 |
-| 현재 text-only add/remove actions | reject | 전역 destructive/add 규칙 금지 | 원본 affordance와 다름 |
+| text-only header actions | reject | 기준 header action 금지 | icon header로 교체 완료 |
+| text-only add/remove actions | reject | 전역 destructive/add 규칙 금지 | icon action으로 교체 완료 |
 
 ## 시스템 관점 결론
 
-이 페이지는 기록 계열 design system의 기준을 세우기 좋은 화면이다.
+section rhythm과 input shell은 원본 및 현재 코드에서 안정적으로 반복되며, nested
+exercise editor는 이 페이지 전용 pattern으로 유지했다. 조건/수업일지 form의 실제
+구조는 각각 P-15, P-16에서 확인한 뒤에만 공통 form primitive로 올린다.
 
-왜냐하면:
+## 반영 결과
 
-1. section 구조가 안정적이고
-2. input shell이 원본과 거의 같고
-3. exercise editor card도 대부분 유지돼 있기 때문이다.
+1. 선택 상태 없는 하단 탭 shell과 tab-safe scroll bottom inset 반영
+2. 원본 close/check SVG 기반 icon header 복원
+3. pending save는 동일 `36×36` button 내부 spinner로 표현
+4. KeyboardAvoidingView의 iOS/기타 플랫폼 behavior 복원
+5. add-circle, trash, remove-circle, plus action 복원
+6. 세트 header의 text `삭제`를 원본 빈 `22` column으로 변경
+7. exercise card gap, footer border/row, mini input/stat 값을 원본으로 정렬
+8. 현재에만 있던 전체 총 볼륨 helper 제거
+9. 원본 날짜 placeholder와 RIR number keyboard 복원
+10. header/action/pending 상태를 고정하는 컴포넌트 테스트 추가
 
-즉 기록/컨디션/PT 작성 화면 공통화는 이 페이지에서
+## 잔여 차이와 검증
 
-- form section rhythm
-- input shell
-- nested card editor
-- mini stat row
-
-를 뽑아가는 방식이 맞다.
-
-## 수정 후보
-
-이 문서는 코드 수정 범위를 확정하기 위한 점검 결과이며 아직 구현하지 않았다.
-
-1. form section/input/exercise card shell은 공통 form primitive 후보로 승격
-2. 상단 save/close affordance는 원본 icon 기준으로 복원 검토
-3. add/remove/set-delete 액션 affordance를 원본 icon 기반으로 복원
+- 원본 `ParallaxBackground`의 사용자 체형 이미지는 현재 account API 계약에 없어
+  반영하지 않았다.
+- 원본의 native scroll bottom은 safe area + `80`이고 현재도 tab `60` + 여유 `20`으로
+  동일하다. web에서는 원본 `80`이 tab 아래로 가릴 수 있어 tab 높이 + `20`으로
+  보정했다.
+- 저장 validation과 Orval create/update mutation은 현재 서버 계약에 맞게 유지했다.
+- Apps in Toss 동일 상태 실기 캡처는 아직 수행하지 않았다.
+- `npm test -- --runInBand src/features/workout-records`: 6 suites, 16 tests 통과
+- `npm run typecheck`: 통과
+- `git diff --check`: 통과

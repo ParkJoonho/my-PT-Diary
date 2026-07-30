@@ -1,11 +1,14 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { WorkoutRecordDto } from 'shared/api/generated/models';
+import {
+  OriginalAppIcon,
+  type OriginalAppIconName,
+} from 'shared/components/icons/pt-diary-icons';
 import Colors, { iosShadow } from 'shared/constants/colors';
 import { getExerciseNameSummary } from '../lib/manual-workout-form';
 import {
   formatWorkoutDuration,
   formatWorkoutVolume,
-  getWorkoutRecordSummaryLine,
 } from '../lib/workout-record-format';
 
 type WorkoutRecordCardProps = {
@@ -26,9 +29,14 @@ export function WorkoutRecordCard({
       style={({ pressed }) => [styles.card, pressed && styles.pressed]}
     >
       <View style={styles.metricRow}>
-        <Metric label="운동시간" value={formatWorkoutDuration(record)} />
+        <Metric
+          icon="timeOutline"
+          label="운동시간"
+          value={formatWorkoutDuration(record)}
+        />
         <View style={styles.metricDivider} />
         <Metric
+          icon="run"
           label="운동종목"
           value={
             record.source === 'manual'
@@ -37,19 +45,31 @@ export function WorkoutRecordCard({
           }
         />
         <View style={styles.metricDivider} />
-        <Metric label="총 중량" value={formatWorkoutVolume(record)} />
+        <Metric
+          icon="armFlexOutline"
+          label="총 중량"
+          value={formatWorkoutVolume(record)}
+        />
       </View>
-      <Text style={styles.summary} numberOfLines={2}>
-        {getWorkoutRecordSummaryLine(record)}
-      </Text>
     </Pressable>
   );
 }
 
-function Metric({ label, value }: { label: string; value: string }) {
+function Metric({
+  icon,
+  label,
+  value,
+}: {
+  icon: OriginalAppIconName;
+  label: string;
+  value: string;
+}) {
   return (
     <View style={styles.metric}>
-      <Text style={styles.metricLabel}>{label}</Text>
+      <View style={styles.metricTop}>
+        <OriginalAppIcon color={Colors.textMuted} name={icon} size={13} />
+        <Text style={styles.metricLabel}>{label}</Text>
+      </View>
       <Text numberOfLines={1} style={styles.metricValue}>
         {value}
       </Text>
@@ -62,7 +82,6 @@ const styles = StyleSheet.create({
     ...iosShadow,
     backgroundColor: Colors.card,
     borderRadius: 14,
-    gap: 10,
     marginBottom: 10,
     paddingHorizontal: 16,
     paddingVertical: 14,
@@ -86,6 +105,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
   },
+  metricTop: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 4,
+  },
   metricValue: {
     color: Colors.text,
     fontFamily: 'Pretendard-SemiBold',
@@ -93,11 +117,5 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.85,
-  },
-  summary: {
-    color: Colors.textSecondary,
-    fontFamily: 'Pretendard-Regular',
-    fontSize: 12,
-    lineHeight: 18,
   },
 });

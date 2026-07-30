@@ -1,16 +1,6 @@
-import { useSafeAreaInsets } from '@granite-js/native/react-native-safe-area-context';
 import { useNavigation } from '@granite-js/react-native';
 import { pickSingleImage } from 'features/body-analysis/lib/pick-image';
-import {
-  Apple,
-  Camera,
-  ChevronLeft,
-  Coffee,
-  Moon,
-  Sparkles,
-  Sun,
-  Utensils,
-} from 'lucide-react-native';
+import { Suspense, useMemo } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -20,7 +10,12 @@ import {
   Text,
   View,
 } from 'react-native';
-import { SuspenseSection } from 'shared/components/async-state';
+import { AsyncErrorBoundary } from 'shared/components/async-state';
+import {
+  OriginalAppIcon,
+  type OriginalAppIconName,
+  SemanticIcon,
+} from 'shared/components/icons/pt-diary-icons';
 import Colors, { iosShadow } from 'shared/constants/colors';
 import { getClientTodayDate } from 'shared/lib/date';
 import {
@@ -39,31 +34,34 @@ import {
 } from '../types/meal-analysis';
 import { DietGuideTab } from './diet-guide-tab';
 import { MealAnalysisResult } from './meal-analysis-result';
-import { MealPhotoSection } from './meal-photo-section';
+import { MealDurationCard, MealPhotoSection } from './meal-photo-section';
 import { DailyMealSummary, TodayMealRecords } from './meal-today-sections';
 
 const MEAL_TYPE_ICONS = {
-  breakfast: Sun,
-  dinner: Moon,
-  lunch: Utensils,
-  snack: Coffee,
-} as const;
+  breakfast: 'sunnyOutline',
+  dinner: 'moonOutline',
+  lunch: 'restaurantOutline',
+  snack: 'cafeOutline',
+} satisfies Record<MealType, OriginalAppIconName>;
 
-export function MealAnalysisScreen() {
+export function MealAnalysisScreen({
+  contentBottomInset,
+}: {
+  contentBottomInset: number;
+}) {
   const navigation = useNavigation();
-  const insets = useSafeAreaInsets();
   const activeTab = useMealAnalysisStore((state) => state.activeTab);
   const setActiveTab = useMealAnalysisStore((state) => state.setActiveTab);
 
   return (
     <View style={styles.container}>
-      <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
+      <View style={styles.header}>
         <Pressable
           hitSlop={8}
           onPress={() => navigation.goBack()}
           style={styles.headerSide}
         >
-          <ChevronLeft color={Colors.text} size={24} strokeWidth={2.1} />
+          <SemanticIcon color={Colors.text} name="chevronLeft" size={24} />
         </Pressable>
         <Text style={styles.headerTitle}>AI 식단 분석</Text>
         <View style={styles.headerSide} />
@@ -72,22 +70,22 @@ export function MealAnalysisScreen() {
       <View style={[styles.tabBar, iosShadow]}>
         <TabButton
           active={activeTab === 'analysis'}
-          icon={Camera}
+          activeIcon="camera"
+          inactiveIcon="cameraOutline"
           label="식단 분석"
           onPress={() => setActiveTab('analysis')}
         />
         <TabButton
           active={activeTab === 'guide'}
-          icon={Apple}
+          activeIcon="foodApple"
+          inactiveIcon="foodAppleOutline"
           label="식단 가이드"
           onPress={() => setActiveTab('guide')}
         />
       </View>
 
       <View style={styles.content}>
-        <SuspenseSection errorMessage="식단 기록을 불러오지 못했어요.">
-          <MealAnalysisScreenData />
-        </SuspenseSection>
+        <MealAnalysisScreenData contentBottomInset={contentBottomInset} />
       </View>
     </View>
   );
@@ -95,12 +93,14 @@ export function MealAnalysisScreen() {
 
 function TabButton({
   active,
-  icon: Icon,
+  activeIcon,
+  inactiveIcon,
   label,
   onPress,
 }: {
   active: boolean;
-  icon: typeof Camera;
+  activeIcon: OriginalAppIconName;
+  inactiveIcon: OriginalAppIconName;
   label: string;
   onPress: () => void;
 }) {
@@ -109,10 +109,10 @@ function TabButton({
       onPress={onPress}
       style={[styles.tabButton, active && styles.tabButtonActive]}
     >
-      <Icon
+      <OriginalAppIcon
         color={active ? Colors.accent : Colors.textMuted}
+        name={active ? activeIcon : inactiveIcon}
         size={16}
-        strokeWidth={2.1}
       />
       <Text style={[styles.tabText, active && styles.tabTextActive]}>
         {label}
@@ -121,11 +121,12 @@ function TabButton({
   );
 }
 
-function MealAnalysisScreenData() {
-  const insets = useSafeAreaInsets();
+function MealAnalysisScreenData({
+  contentBottomInset,
+}: {
+  contentBottomInset: number;
+}) {
   const today = getClientTodayDate();
-  const { data: records } = useMealRecords(today);
-  const { data: dailySummary } = useDailyMealSummary(today);
   const analyzeMeal = useAnalyzeMeal();
   const createMealRecord = useCreateMealRecord(today);
   const generateDietGuide = useGenerateDietGuide();
@@ -143,6 +144,20 @@ function MealAnalysisScreenData() {
   const setDietGuide = useMealAnalysisStore((state) => state.setDietGuide);
   const setMealType = useMealAnalysisStore((state) => state.setMealType);
   const setPhoto = useMealAnalysisStore((state) => state.setPhoto);
+  const eatingDurationMinutes = useMemo(() => {
+    if (!beforePhoto?.capturedAt || !afterPhoto?.capturedAt) {
+      return undefined;
+    }
+
+    const differenceMinutes =
+      (new Date(afterPhoto.capturedAt).getTime() -
+        new Date(beforePhoto.capturedAt).getTime()) /
+      60_000;
+
+    return differenceMinutes > 0 && differenceMinutes < 300
+      ? differenceMinutes
+      : undefined;
+  }, [afterPhoto?.capturedAt, beforePhoto?.capturedAt]);
 
   const handlePickPhoto = async (
     target: MealPhotoTarget,
@@ -168,6 +183,10 @@ function MealAnalysisScreenData() {
     try {
       const response = await analyzeMeal.mutateAsync({
         afterImageBase64: afterPhoto?.base64,
+        eatingDurationMinutes:
+          eatingDurationMinutes === undefined
+            ? undefined
+            : Math.round(eatingDurationMinutes),
         imageBase64: beforePhoto.base64,
         mealType,
       });
@@ -224,13 +243,17 @@ function MealAnalysisScreenData() {
     <ScrollView
       contentContainerStyle={[
         styles.scrollContent,
-        { paddingBottom: insets.bottom + 20 },
+        { paddingBottom: contentBottomInset },
       ]}
       showsVerticalScrollIndicator={false}
     >
       {activeTab === 'analysis' ? (
         <>
-          <DailyMealSummary summary={dailySummary} />
+          <AsyncErrorBoundary message="오늘의 영양 섭취를 불러오지 못했어요.">
+            <Suspense fallback={null}>
+              <DailyMealSummaryData date={today} />
+            </Suspense>
+          </AsyncErrorBoundary>
           <MealTypeSelector
             mealType={mealType}
             onSelectMealType={setMealType}
@@ -251,6 +274,9 @@ function MealAnalysisScreenData() {
                 onPick={handlePickPhoto}
                 onRemove={removePhoto}
               />
+              {eatingDurationMinutes !== undefined ? (
+                <MealDurationCard durationMinutes={eatingDurationMinutes} />
+              ) : null}
               <Pressable
                 disabled={!beforePhoto || analyzeMeal.isPending}
                 onPress={handleAnalyze}
@@ -263,7 +289,11 @@ function MealAnalysisScreenData() {
                 {analyzeMeal.isPending ? (
                   <ActivityIndicator color={Colors.white} size="small" />
                 ) : (
-                  <Sparkles color={Colors.white} size={20} strokeWidth={2.1} />
+                  <OriginalAppIcon
+                    color={Colors.white}
+                    name="foodApple"
+                    size={20}
+                  />
                 )}
                 <Text style={styles.analyzeButtonText}>
                   {analyzeMeal.isPending
@@ -276,17 +306,69 @@ function MealAnalysisScreenData() {
             </>
           )}
 
-          <TodayMealRecords records={records} />
+          <AsyncErrorBoundary message="오늘의 식단 기록을 불러오지 못했어요.">
+            <Suspense fallback={null}>
+              <TodayMealRecordsData date={today} />
+            </Suspense>
+          </AsyncErrorBoundary>
         </>
       ) : (
-        <DietGuideTab
-          guide={dietGuide}
-          isLoading={generateDietGuide.isPending}
-          onGenerate={handleGenerateGuide}
-          recordCount={records.length}
-        />
+        <AsyncErrorBoundary message="오늘의 식단 기록을 불러오지 못했어요.">
+          <Suspense
+            fallback={
+              <DietGuideTab
+                guide={dietGuide}
+                isLoading={generateDietGuide.isPending}
+                onGenerate={handleGenerateGuide}
+                recordCount={0}
+              />
+            }
+          >
+            <DietGuideTabData
+              date={today}
+              guide={dietGuide}
+              isLoading={generateDietGuide.isPending}
+              onGenerate={handleGenerateGuide}
+            />
+          </Suspense>
+        </AsyncErrorBoundary>
       )}
     </ScrollView>
+  );
+}
+
+function DailyMealSummaryData({ date }: { date: string }) {
+  const { data } = useDailyMealSummary(date);
+
+  return <DailyMealSummary summary={data} />;
+}
+
+function TodayMealRecordsData({ date }: { date: string }) {
+  const { data } = useMealRecords(date);
+
+  return <TodayMealRecords records={data} />;
+}
+
+function DietGuideTabData({
+  date,
+  guide,
+  isLoading,
+  onGenerate,
+}: {
+  date: string;
+  guide: ReturnType<typeof useMealAnalysisStore.getState>['dietGuide'];
+  isLoading: boolean;
+  onGenerate: () => void;
+}) {
+  const { data } = useMealRecords(date);
+
+  return (
+    <DietGuideTab
+      guide={guide}
+      isLoading={isLoading}
+      onGenerate={onGenerate}
+      recordCount={data.length}
+    />
   );
 }
 
@@ -300,7 +382,7 @@ function MealTypeSelector({
   return (
     <View style={styles.mealTypeRow}>
       {MEAL_TYPES.map((type) => {
-        const Icon = MEAL_TYPE_ICONS[type];
+        const icon = MEAL_TYPE_ICONS[type];
         const selected = mealType === type;
 
         return (
@@ -313,10 +395,10 @@ function MealTypeSelector({
               selected && styles.mealTypeButtonActive,
             ]}
           >
-            <Icon
+            <OriginalAppIcon
               color={selected ? Colors.white : Colors.textSecondary}
+              name={icon}
               size={18}
-              strokeWidth={2}
             />
             <Text
               style={[
@@ -362,11 +444,10 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    backgroundColor: Colors.card,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingBottom: 12,
     paddingHorizontal: 16,
+    paddingVertical: 12,
   },
   headerSide: {
     alignItems: 'center',

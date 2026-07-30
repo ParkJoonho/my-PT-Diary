@@ -1,4 +1,4 @@
-import { describe, expect, it } from '@jest/globals';
+import { describe, expect, it, jest } from '@jest/globals';
 import { render, screen } from '@testing-library/react-native';
 import type { ConditionRecordDto } from 'shared/api/generated/models';
 import {
@@ -6,6 +6,17 @@ import {
   MUSCLE_SORENESS_LABELS,
 } from '../../lib/condition-record-metadata';
 import { ConditionRecordCard } from '../condition-record-card';
+
+jest.mock('shared/components/icons/pt-diary-icons', () => {
+  const { Text: MockText } =
+    jest.requireActual<typeof import('react-native')>('react-native');
+
+  return {
+    OriginalAppIcon: ({ name }: { name: string }) => (
+      <MockText>{`icon:${name}`}</MockText>
+    ),
+  };
+});
 
 function createConditionRecord(): ConditionRecordDto {
   return {
@@ -36,6 +47,9 @@ describe('컨디션 기록 카드', () => {
     render(<ConditionRecordCard record={createConditionRecord()} />);
 
     expect(screen.getByText('컨디션')).toBeTruthy();
+    expect(screen.getByText('icon:personOutline')).toBeTruthy();
+    expect(screen.getByText('icon:walkOutline')).toBeTruthy();
+    expect(screen.getByText('icon:armFlexOutline')).toBeTruthy();
     expect(screen.getByText('3.5')).toBeTruthy();
     expect(screen.getByText('보통')).toBeTruthy();
     expect(screen.getByText('2.5')).toBeTruthy();

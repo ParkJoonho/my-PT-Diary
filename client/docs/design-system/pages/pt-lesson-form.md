@@ -7,17 +7,12 @@
 - 상태 정렬: 부분 완료
 - 시각 규칙 추출: 완료
 - 공통화 판정: 완료
-- 코드 반영: 미진행
+- 코드 반영: 완료
 - 동일 상태 실기 검증: 미진행
 
 이 페이지는 [`exercise-form`](exercise-form.md)과 함께 기록 입력 계열의 핵심 기준
-화면이다. 실제 코드 기준으로 보면 구조와 값이 거의 그대로 따라왔고, 차이는 주로
-
-1. 상단 chrome에서의 패럴랙스 제거
-2. 아이콘 소스 차이
-3. 일부 입력 높이와 카드 내부 gap의 미세 조정
-
-에 몰려 있다.
+화면이다. 서버 CRUD와 PT 계산 로직은 유지하고, Lucide 대체 아이콘과 입력·운동
+카드의 미세 값을 원본 실제 코드로 정렬했다.
 
 ## 실제 코드 경로
 
@@ -57,37 +52,39 @@ PTLessonFormScreen
 
 ```text
 ai-pt
-PtLessonFormScreen
-├── icon header
-│   ├── close icon
-│   ├── title
-│   └── accent save icon button
-└── ScrollView
-    ├── 기본 정보
-    ├── 운동 부위
-    ├── 사용 도구
-    ├── 웜업
-    ├── 운동 종목
-    │   ├── add icon
-    │   ├── delete icons
-    │   ├── set rows
-    │   └── mini stats
-    └── 오늘의 한마디
+TabPageLayout(activeKey=null)
+└── PtLessonFormScreen
+    ├── edit query SuspenseSection
+    └── KeyboardAvoidingView
+        ├── icon header
+        │   ├── close icon
+        │   ├── title
+        │   └── accent save icon / pending spinner
+        └── ScrollView
+            ├── 기본 정보
+            ├── 운동 부위
+            ├── 사용 도구
+            ├── 웜업
+            ├── 운동 종목
+            │   ├── add/delete icons
+            │   ├── set rows
+            │   └── mini stats
+            └── 오늘의 한마디
 ```
 
-구조만 보면 거의 1:1이다. 이 페이지는 “현재 `ai-pt`가 전반적으로 다르다”는 문제의
-대표 사례가 아니라, 오히려 원본 구조를 꽤 잘 유지한 편이다.
+수정 조회는 Orval이 생성한 Suspense query를 사용하고, 경계는 수정 데이터를
+소비하는 `EditPtLessonForm` 가까이에 유지했다.
 
 ## 상태 매트릭스
 
 | 상태 | 원본 실제 코드 | `ai-pt` 실제 코드 | 비교 가능 | 판정 |
 |---|---|---|---|---|
-| 새 수업일지 작성 | 있음 | 있음 | 가능 | 거의 동일 |
-| 기존 수업일지 수정 | 있음 | 있음 | 가능 | 거의 동일 |
-| 부위/도구 선택 | 있음 | 있음 | 가능 | 동일 |
-| 운동 종목 추가/삭제 | 있음 | 있음 | 가능 | 동일 |
-| 세트 추가/삭제 | 있음 | 있음 | 가능 | 동일 |
-| 저장 | 있음 | 있음 | 가능 | 거의 동일 |
+| 새 수업일지 작성 | 있음 | 있음 | 가능 | 코드 기준 정렬 |
+| 기존 수업일지 수정 | 있음 | 있음 | 가능 | Suspense + 서버 수정 유지 |
+| 부위/도구 선택 | 있음 | 있음 | 가능 | 코드 기준 정렬 |
+| 운동 종목 추가/삭제 | 있음 | 있음 | 가능 | 원본 SVG 정렬 |
+| 세트 추가/삭제 | 있음 | 있음 | 가능 | 크기·disabled color 정렬 |
+| 저장 | 있음 | 있음 | 가능 | icon / pending 상태 정렬 |
 
 ## 실제 시각 규칙 대조
 
@@ -96,23 +93,26 @@ PtLessonFormScreen
 | 영역 | 원본 실제 값 | `ai-pt` 실제 값 | 판정 |
 |---|---|---|---|
 | background chrome | `ParallaxBackground` 있음 | 없음 | 다름 |
-| header bg | `white`, borderBottom `1`, horizontal `16`, vertical `12` | 동일 | 거의 일치 |
+| header bg | `white`, borderBottom `1`, horizontal `16`, vertical `12` | 동일 | 일치 |
 | title | `17` SemiBold | 동일 | 일치 |
 | save action | `36x36`, radius `10`, accent fill | 동일 | 일치 |
-| left/right action | icon affordance | icon affordance | 일치 |
+| close/save icon | Ionicons `24` | 동일 path의 공통 SVG `24` | 일치 |
+| pressed/pending | pressed opacity `0.7` | `0.7`, pending spinner | 서버 상태 확장 |
 
-header 자체는 현재 범위 밖이지만, 실제 코드상으로도 이 화면은 기존 기록 폼들보다
-원본에 더 가깝다. 최소한 text button으로 무너진 상태는 아니다.
+원본 global header의 safe-area 공간은 Apps in Toss 네이티브 상단 헤더 제외 정책에
+따라 복제하지 않았다. 원본 사용자 체형 asset에 대응하는 현재 계정 필드가 없어
+`ParallaxBackground`도 임의 이미지로 대체하지 않는다.
 
 ### 2. section / input system
 
 | 영역 | 원본 실제 값 | `ai-pt` 실제 값 | 판정 |
 |---|---|---|---|
-| content gap | `padding 14`, `gap 20` | `padding 14`, `gap 20`, bottom `32` | 거의 일치 |
+| content gap | `padding 14`, `gap 20` | 동일 | 일치 |
+| content bottom | global tab·safe area 회피 | `TabPageLayout` 계산값 | 일치 |
 | section gap | `10` | `10` | 일치 |
 | label | `12` Medium | `12` Medium | 일치 |
-| input shell | `inputBg`, border `1`, radius `10`, padding `12`, text `14` | 동일 + `minHeight 46` | 거의 일치 |
-| textarea | minHeight `60` | minHeight `70` | 미세 차이 |
+| input shell | `inputBg`, border `1`, radius `10`, padding `12`, text `14` | 동일, 임의 minHeight 제거 | 일치 |
+| textarea | minHeight `60` | 동일 | 일치 |
 | chip shell | horizontal `14`, vertical `8`, radius `20` | 동일 | 일치 |
 
 폼 입력 시스템은 거의 그대로다. 이 계열은 이미 원본에 맞는 primitive 후보로 볼 수
@@ -122,12 +122,14 @@ header 자체는 현재 범위 밖이지만, 실제 코드상으로도 이 화�
 
 | 영역 | 원본 실제 값 | `ai-pt` 실제 값 | 판정 |
 |---|---|---|---|
-| card shell | radius `12`, border `1`, padding `10`, gap `6` | radius `12`, border `1`, padding `12`, gap `8` | 거의 일치 |
+| card shell | radius `12`, border `1`, padding `10`, gap `6` | 동일 | 일치 |
 | 운동명 input | `15` SemiBold | 동일 | 일치 |
-| set row | gap `4` | gap `6` | 미세 차이 |
-| set input | radius `8`, centered, paddingY `7` | 동일 + `minHeight 38` | 거의 일치 |
-| mini field | label `10`, input `13`, radius `6` | 동일 | 일치 |
-| metric text | `13` / accent `14` | `13` / accent color 유지 | 거의 일치 |
+| set header/row | gap `4`, header top `2` | 동일 | 일치 |
+| set input | radius `8`, centered, `2/7`, 임의 minHeight 없음 | 동일 | 일치 |
+| first mini row | gap `6`, top border/padding `6` | 동일 | 일치 |
+| second mini row | gap `6`, border/padding 없음 | 동일 | 일치 |
+| mini field | label `10`, input `13`, radius `6`, `4/5` | 동일 | 일치 |
+| metric text | normal `13` SemiBold, accent `14` Medium | 동일 | 일치 |
 
 현재 구현은 값 일부를 조금 정리했지만, 원본 editor card의 성격은 유지하고 있다.
 
@@ -135,12 +137,12 @@ header 자체는 현재 범위 밖이지만, 실제 코드상으로도 이 화�
 
 | 영역 | 원본 실제 값 | `ai-pt` 실제 값 | 판정 |
 |---|---|---|---|
-| 운동 추가 | add-circle icon | `CirclePlus` icon | 의미 동일 |
-| 운동 삭제 | trash-outline icon | `Trash2` icon | 의미 동일 |
-| 세트 삭제 | remove-circle-outline icon | `CircleMinus` icon | 의미 동일 |
-| 세트 추가 | plus icon + text | plus icon + text | 동일 |
+| 운동 추가 | add-circle `24` | 동일 SVG | 일치 |
+| 운동 삭제 | trash-outline `18` | 동일 SVG | 일치 |
+| 세트 삭제 | remove-circle-outline `20` | 동일 SVG | 일치 |
+| 세트 추가 | add `16` + text | 동일 SVG + text | 일치 |
 
-여기는 `exercise-form`보다도 원본 affordance 보존도가 높다.
+RIR 입력도 원본처럼 `number-pad`, placeholder `0`으로 복원했다.
 
 ## 공통화 판정
 
@@ -148,31 +150,23 @@ header 자체는 현재 범위 밖이지만, 실제 코드상으로도 이 화�
 
 | 후보 | 분류 | 판정 | 이유 |
 |---|---|---|---|
-| PT/form input shell | primitive 후보 | 가능 | `exercise-form`, `condition-form`, 이 페이지가 같은 축을 공유함 |
-| section title + gap system | primitive 후보 | 가능 | 원본과 현재가 안정적으로 일치 |
-| chip selector | primitive 후보 | 가능 | 부위/도구 선택에서 반복됨 |
-| nested exercise editor card | pattern 후보 | 가능 | 기록 입력 계열 핵심 반복 구조 |
-| set table row + mini metric row | pattern 후보 | 가능 | 폼 내부에서 재사용성이 높음 |
+| PT/form input shell | primitive 후보 | 근거 확인 | `exercise-form`, `condition-form`, 이 페이지가 같은 축을 공유함 |
+| section title + gap system | primitive 후보 | 근거 확인 | 원본과 현재가 안정적으로 일치 |
+| chip selector | feature primitive | 유지 | PT 부위/도구에서 반복 |
+| nested exercise editor card | pattern 후보 | 근거 확인 | `exercise-form`과 같은 원본 조립 규칙 |
+| set table row + mini metric row | pattern 후보 | 근거 확인 | 두 기록 폼에서 반복 |
 
 ### 공통화하면 안 되는 항목
 
 | 후보 | 분류 | 판정 | 이유 |
 |---|---|---|---|
-| `ParallaxBackground` 유무 | reject | 전역 기준 금지 | 헤더/앱 셸 범위와 섞이면 안 됨 |
+| 임의 `ParallaxBackground` | reject | 데이터 없는 창작 금지 | 현재 계정 API에 대응 asset 필드가 없음 |
 | PT 전용 요약 계산 로직 | page-only | 시각 시스템 대상 아님 | 디자인 시스템이 아니라 도메인 동작임 |
 
 ## 시스템 관점 결론
 
-이 페이지는 “원본을 정확하게 붙이기 위한 디자인 시스템” 관점에서 좋은 기준 화면이다.
-
-이유는:
-
-1. section rhythm이 안정적이고
-2. input/chip/card primitive가 원본과 거의 같고
-3. add/remove/set affordance도 icon 기반으로 유지됐기 때문이다.
-
-즉 PT/운동 기록 작성 계열 공통화는 이 페이지와 [`exercise-form`](exercise-form.md)
-을 묶어서
+PT/운동 기록 작성 계열 공통화는 이 페이지와 [`exercise-form`](exercise-form.md)을
+묶어서
 
 - form section rhythm
 - input shell
@@ -180,13 +174,20 @@ header 자체는 현재 범위 밖이지만, 실제 코드상으로도 이 화�
 - nested exercise editor card
 - set row / mini metric row
 
-를 공통 primitive/pattern으로 뽑는 방식이 맞다.
+를 공통 primitive/pattern으로 뽑는 방식이 맞다. 다만 두 feature의 폼 상태와
+payload 계산은 서로 다른 도메인이므로 이번에는 수치와 공통 SVG registry만
+정렬했다. 조립 컴포넌트 추출은 도메인 로직을 받지 않는 독립 API를 먼저 설계해야 한다.
 
-## 수정 후보
+## 반영과 검증
 
-이 문서는 코드 수정 범위를 확정하기 위한 점검 결과이며 아직 구현하지 않았다.
+- [`pt-lesson-form.tsx`](../../../src/pages/pt-lesson-form.tsx)에 하단 탭·safe area 회피 shell을 적용했다.
+- [`pt-lesson-form-screen.tsx`](../../../src/features/pt-logs/components/pt-lesson-form-screen.tsx)에 원본 KeyboardAvoiding 동작, icon header, pending spinner와 원본 content 값을 반영했다.
+- Lucide 대체 아이콘을 공통 원본 SVG의 close/checkmark/addCircle/trashOutline/removeCircleOutline/add로 교체했다.
+- input·textarea의 임의 minHeight를 제거하고 exercise card, set row, 두 metric row,
+  RIR 키보드와 placeholder를 원본 값으로 맞췄다.
+- `src/features/pt-logs` Jest `3` suites, `8` tests와 전체 TypeScript typecheck,
+  `git diff --check`를 통과했다.
 
-1. `exercise-form`과 함께 기록 입력 공통 form primitive 기준 화면으로 승격
-2. textarea/card/set-row의 미세 값 차이는 공통 primitive 추출 시 하나로 정리 검토
-3. PT 입력 계열은 현재 `ai-pt` 쪽이 이미 원본 충실도가 높으므로, 다른 입력 화면을 이
-   패턴에 맞추는 방향이 적절
+동일 상태의 원본·Apps in Toss 실행 캡처는 아직 남아 있으므로 `실기 검증`은
+완료로 표시하지 않는다. 캡처에서는 작은 화면의 마지막 textarea가 하단 탭 위까지
+스크롤되는지와 체형 배경 플랫폼 예외를 확인한다.

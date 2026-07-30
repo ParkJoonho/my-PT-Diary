@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { OriginalAppIcon } from 'shared/components/icons/pt-diary-icons';
 import Colors from 'shared/constants/colors';
 
 export function ConditionScoreRow({
@@ -67,12 +68,14 @@ export function MuscleSorenessScoreRow({
   return (
     <View style={styles.scoreRow}>
       <Pressable onPress={onInfoPress} style={styles.muscleLabelButton}>
-        <Text numberOfLines={1} style={styles.scoreLabel}>
+        <Text numberOfLines={1} style={styles.muscleLabelText}>
           {label}
         </Text>
-        <View style={styles.helpBadge}>
-          <Text style={styles.helpBadgeText}>?</Text>
-        </View>
+        <OriginalAppIcon
+          color={Colors.info}
+          name="helpCircleOutline"
+          size={16}
+        />
       </Pressable>
       <View style={styles.scoreButtons}>
         {Array.from({ length: maxScore }, (_, index) => index + 1).map(
@@ -105,32 +108,25 @@ export function MuscleSorenessScoreRow({
 }
 
 const styles = StyleSheet.create({
-  helpBadge: {
-    alignItems: 'center',
-    backgroundColor: `${Colors.info}16`,
-    borderRadius: 999,
-    height: 18,
-    justifyContent: 'center',
-    width: 18,
-  },
-  helpBadgeText: {
-    color: Colors.info,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 11,
-  },
   muscleLabelButton: {
     alignItems: 'center',
     flex: 1,
     flexDirection: 'row',
-    gap: 6,
+    gap: 4,
     marginRight: 8,
+  },
+  muscleLabelText: {
+    color: Colors.text,
+    flexShrink: 1,
+    fontFamily: 'Pretendard-Medium',
+    fontSize: 13,
   },
   scoreButton: {
     alignItems: 'center',
     backgroundColor: Colors.inputBg,
     borderColor: Colors.inputBorder,
     borderRadius: 8,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderWidth: 1,
     height: 32,
     justifyContent: 'center',
     width: 32,
@@ -158,7 +154,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.card,
     borderColor: Colors.cardBorder,
     borderRadius: 12,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: 14,

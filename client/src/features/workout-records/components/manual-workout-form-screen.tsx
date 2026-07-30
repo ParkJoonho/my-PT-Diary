@@ -1,8 +1,10 @@
 import { useNavigation } from '@granite-js/react-native';
 import { type ReactNode, useEffect } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -12,45 +14,64 @@ import {
 } from 'react-native';
 import type { WorkoutRecordDto } from 'shared/api/generated/models';
 import { SuspenseSection } from 'shared/components/async-state';
+import { OriginalAppIcon } from 'shared/components/icons/pt-diary-icons';
 import Colors from 'shared/constants/colors';
 import {
   useCreateManualWorkoutRecord,
   useUpdateManualWorkoutRecord,
   useWorkoutRecord,
 } from '../api/workout-records';
-import {
-  calculateManualWorkoutVolume,
-  validateManualWorkoutForm,
-} from '../lib/manual-workout-form';
+import { validateManualWorkoutForm } from '../lib/manual-workout-form';
 import { buildManualWorkoutPayload } from '../lib/manual-workout-form';
 import { useManualWorkoutFormStore } from '../stores/use-manual-workout-form-store';
 
 const MEAL_LABELS = ['MEAL 1', 'MEAL 2', 'MEAL 3', 'MEAL 4'] as const;
 
-export function ManualWorkoutFormScreen({ recordId }: { recordId?: string }) {
+export function ManualWorkoutFormScreen({
+  contentBottomInset,
+  recordId,
+}: {
+  contentBottomInset: number;
+  recordId?: string;
+}) {
   if (recordId) {
     return (
       <SuspenseSection errorMessage="수정할 운동 기록을 불러오지 못했어요.">
-        <EditManualWorkoutForm recordId={recordId} />
+        <EditManualWorkoutForm
+          contentBottomInset={contentBottomInset}
+          recordId={recordId}
+        />
       </SuspenseSection>
     );
   }
 
-  return <ManualWorkoutFormContent />;
+  return <ManualWorkoutFormContent contentBottomInset={contentBottomInset} />;
 }
 
-function EditManualWorkoutForm({ recordId }: { recordId: string }) {
+function EditManualWorkoutForm({
+  contentBottomInset,
+  recordId,
+}: {
+  contentBottomInset: number;
+  recordId: string;
+}) {
   const { data } = useWorkoutRecord(recordId);
 
   return (
-    <ManualWorkoutFormContent initialRecord={data} initialRecordId={recordId} />
+    <ManualWorkoutFormContent
+      contentBottomInset={contentBottomInset}
+      initialRecord={data}
+      initialRecordId={recordId}
+    />
   );
 }
 
 function ManualWorkoutFormContent({
+  contentBottomInset,
   initialRecord,
   initialRecordId,
 }: {
+  contentBottomInset: number;
   initialRecord?: WorkoutRecordDto;
   initialRecordId?: string;
 }) {
@@ -134,30 +155,43 @@ function ManualWorkoutFormContent({
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   return (
-    <KeyboardAvoidingView style={styles.container}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={0}
+      style={styles.container}
+    >
       <View style={styles.header}>
         <Pressable
+          accessibilityLabel="닫기"
           onPress={() => navigation.goBack()}
-          style={styles.headerButton}
         >
-          <Text style={styles.headerButtonText}>닫기</Text>
+          <OriginalAppIcon color={Colors.text} name="close" size={24} />
         </Pressable>
         <Text style={styles.headerTitle}>
           {initialRecordId ? '운동기록 수정' : '새 운동기록'}
         </Text>
         <Pressable
+          accessibilityLabel={isPending ? '저장 중' : '저장'}
           disabled={isPending}
           onPress={handleSave}
-          style={styles.headerButton}
+          style={({ pressed }) => [
+            styles.saveButton,
+            pressed && styles.saveButtonPressed,
+          ]}
         >
-          <Text style={styles.headerButtonText}>
-            {isPending ? '저장 중' : '저장'}
-          </Text>
+          {isPending ? (
+            <ActivityIndicator color={Colors.white} size="small" />
+          ) : (
+            <OriginalAppIcon color={Colors.white} name="checkmark" size={24} />
+          )}
         </Pressable>
       </View>
 
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: contentBottomInset },
+        ]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
@@ -166,7 +200,7 @@ function ManualWorkoutFormContent({
             <InputField
               label="날짜"
               onChangeText={setPerformedOn}
-              placeholder="2026-07-24"
+              placeholder="2025-01-01"
               value={form.performedOn}
             />
             <InputField
@@ -306,8 +340,16 @@ function ManualWorkoutFormContent({
 
         <Section
           action={
-            <Pressable onPress={addStrengthExercise}>
-              <Text style={styles.actionText}>운동 추가</Text>
+            <Pressable
+              accessibilityLabel="운동 추가"
+              onPress={addStrengthExercise}
+              style={styles.addExerciseButton}
+            >
+              <OriginalAppIcon
+                color={Colors.accent}
+                name="addCircle"
+                size={24}
+              />
             </Pressable>
           }
           title="운동 종목"
@@ -326,9 +368,14 @@ function ManualWorkoutFormContent({
                 />
                 {form.strengthExercises.length > 1 ? (
                   <Pressable
+                    accessibilityLabel={`운동종목 ${exerciseIndex + 1} 삭제`}
                     onPress={() => removeStrengthExercise(exerciseIndex)}
                   >
-                    <Text style={styles.removeText}>삭제</Text>
+                    <OriginalAppIcon
+                      color={Colors.danger}
+                      name="trashOutline"
+                      size={18}
+                    />
                   </Pressable>
                 ) : null}
               </View>
@@ -343,9 +390,7 @@ function ManualWorkoutFormContent({
                 <Text style={[styles.setHeaderText, styles.setFieldHeader]}>
                   횟수
                 </Text>
-                <Text style={[styles.setHeaderText, styles.setActionHeader]}>
-                  삭제
-                </Text>
+                <View style={styles.setActionHeader} />
               </View>
 
               {exercise.sets.map((set, setIndex) => (
@@ -371,8 +416,19 @@ function ManualWorkoutFormContent({
                     style={styles.setInput}
                     value={set.reps}
                   />
-                  <Pressable onPress={() => removeSet(exerciseIndex, setIndex)}>
-                    <Text style={styles.setDeleteText}>삭제</Text>
+                  <Pressable
+                    accessibilityLabel={`${setIndex + 1}세트 삭제`}
+                    onPress={() => removeSet(exerciseIndex, setIndex)}
+                  >
+                    <OriginalAppIcon
+                      color={
+                        exercise.sets.length > 1
+                          ? Colors.danger
+                          : Colors.textMuted
+                      }
+                      name="removeCircleOutline"
+                      size={20}
+                    />
                   </Pressable>
                 </View>
               ))}
@@ -381,6 +437,7 @@ function ManualWorkoutFormContent({
                 onPress={() => addSet(exerciseIndex)}
                 style={styles.addSetButton}
               >
+                <OriginalAppIcon color={Colors.accent} name="add" size={16} />
                 <Text style={styles.addSetText}>세트 추가</Text>
               </Pressable>
 
@@ -400,6 +457,7 @@ function ManualWorkoutFormContent({
                   }
                   placeholder="0"
                   value={exercise.rir}
+                  keyboardType="number-pad"
                 />
                 <MiniStat
                   label="LB"
@@ -407,8 +465,9 @@ function ManualWorkoutFormContent({
                 />
               </View>
 
-              <View style={styles.exerciseFooter}>
+              <View style={styles.exerciseFooter2}>
                 <MiniStat
+                  accent
                   label="볼륨"
                   value={
                     exercise.volume > 0
@@ -433,13 +492,6 @@ function ManualWorkoutFormContent({
               </View>
             </View>
           ))}
-          <Text style={styles.helperText}>
-            총 볼륨{' '}
-            {calculateManualWorkoutVolume(
-              form.strengthExercises,
-            ).toLocaleString()}
-            kg
-          </Text>
         </Section>
 
         <Section title="하루 일과 보고">
@@ -506,11 +558,13 @@ function InputField({
 }
 
 function MiniField({
+  keyboardType,
   label,
   onChangeText,
   placeholder,
   value,
 }: {
+  keyboardType?: 'number-pad';
   label: string;
   onChangeText: (value: string) => void;
   placeholder: string;
@@ -520,6 +574,7 @@ function MiniField({
     <View style={styles.miniField}>
       <Text style={styles.miniLabel}>{label}</Text>
       <TextInput
+        keyboardType={keyboardType}
         onChangeText={onChangeText}
         placeholder={placeholder}
         placeholderTextColor={Colors.textMuted}
@@ -530,23 +585,34 @@ function MiniField({
   );
 }
 
-function MiniStat({ label, value }: { label: string; value: string }) {
+function MiniStat({
+  accent = false,
+  label,
+  value,
+}: {
+  accent?: boolean;
+  label: string;
+  value: string;
+}) {
   return (
     <View style={styles.miniField}>
       <Text style={styles.miniLabel}>{label}</Text>
-      <Text style={styles.miniStat}>{value}</Text>
+      <Text style={accent ? styles.miniStatAccent : styles.miniStat}>
+        {value}
+      </Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  actionText: {
-    color: Colors.accent,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 13,
+  addExerciseButton: {
+    padding: 4,
   },
   addSetButton: {
     alignItems: 'center',
+    flexDirection: 'row',
+    gap: 4,
+    justifyContent: 'center',
     paddingVertical: 4,
   },
   addSetText: {
@@ -561,20 +627,25 @@ const styles = StyleSheet.create({
   content: {
     gap: 20,
     padding: 14,
-    paddingBottom: 36,
   },
   exerciseCard: {
     backgroundColor: Colors.card,
     borderColor: Colors.cardBorder,
     borderRadius: 12,
     borderWidth: 1,
-    gap: 8,
+    gap: 6,
     padding: 10,
   },
   exerciseFooter: {
+    borderTopColor: Colors.divider,
+    borderTopWidth: 1,
     flexDirection: 'row',
     gap: 6,
     paddingTop: 6,
+  },
+  exerciseFooter2: {
+    flexDirection: 'row',
+    gap: 6,
   },
   exerciseHeader: {
     alignItems: 'center',
@@ -598,23 +669,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
-  headerButton: {
-    minWidth: 52,
-  },
-  headerButtonText: {
-    color: Colors.accent,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 14,
-  },
   headerTitle: {
     color: Colors.text,
     fontFamily: 'Pretendard-SemiBold',
     fontSize: 17,
-  },
-  helperText: {
-    color: Colors.textMuted,
-    fontFamily: 'Pretendard-Regular',
-    fontSize: 12,
   },
   input: {
     backgroundColor: Colors.inputBg,
@@ -637,34 +695,38 @@ const styles = StyleSheet.create({
   },
   miniField: {
     flex: 1,
-    gap: 4,
+    gap: 2,
   },
   miniInput: {
     backgroundColor: Colors.inputBg,
     borderColor: Colors.inputBorder,
-    borderRadius: 8,
+    borderRadius: 6,
     borderWidth: 1,
     color: Colors.text,
     fontFamily: 'Pretendard-Regular',
     fontSize: 13,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
+    paddingHorizontal: 4,
+    paddingVertical: 5,
+    textAlign: 'center',
   },
   miniLabel: {
-    color: Colors.textSecondary,
+    color: Colors.textMuted,
     fontFamily: 'Pretendard-Medium',
-    fontSize: 11,
+    fontSize: 10,
   },
   miniStat: {
     color: Colors.text,
     fontFamily: 'Pretendard-SemiBold',
     fontSize: 13,
-    paddingTop: 8,
+    paddingVertical: 5,
+    textAlign: 'center',
   },
-  removeText: {
-    color: Colors.danger,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 12,
+  miniStatAccent: {
+    color: Colors.accent,
+    fontFamily: 'Pretendard-Medium',
+    fontSize: 14,
+    paddingVertical: 5,
+    textAlign: 'center',
   },
   row: {
     flexDirection: 'row',
@@ -684,13 +746,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   setActionHeader: {
-    width: 36,
-  },
-  setDeleteText: {
-    color: Colors.danger,
-    fontFamily: 'Pretendard-Medium',
-    fontSize: 11,
-    width: 36,
+    width: 22,
   },
   setFieldHeader: {
     flex: 1,
@@ -735,6 +791,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     gap: 4,
+  },
+  saveButton: {
+    alignItems: 'center',
+    backgroundColor: Colors.accent,
+    borderRadius: 10,
+    height: 36,
+    justifyContent: 'center',
+    width: 36,
+  },
+  saveButtonPressed: {
+    opacity: 0.7,
   },
   textArea: {
     minHeight: 100,

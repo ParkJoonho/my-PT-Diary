@@ -7,10 +7,15 @@
 - 상태 정렬: 부분 완료
 - 시각 규칙 추출: 완료
 - 공통화 판정: 완료
-- 코드 반영: 미진행
+- 코드 반영: 완료
 - 동일 상태 실기 검증: 미진행
 
-이 페이지도 전체 인상은 원본과 많이 다르지 않다. 실제 코드 기준으로는
+원본 실제 코드에 맞춰 상세 route shell, 고정 header, 상단 tab, 식사 타입 순서,
+사진·결과·가이드 아이콘을 정렬했다. 원본에 없던 상시 `미구현` 행은 제거하고 카메라로
+전/후 사진을 촬영한 경우 실제 촬영 시각 차이를 계산해 식사 소요 시간 card와 서버
+분석 payload에 반영한다.
+
+이 페이지는 실제 코드 기준으로
 
 1. 상단 탭
 2. 식사 타입 선택 row
@@ -18,8 +23,8 @@
 4. 전/후 사진 분석 card
 5. 결과/가이드 card
 
-가 대부분 그대로 유지돼 있다. 큰 차이는 사진 촬영 시간 기반 보조 기능과 일부
-세부 상태가 아직 미완성이라는 점이다.
+를 feature component로 분리한 구조다. 앨범 사진의 EXIF 시각은 Apps in Toss API가
+제공하지 않는 기술 제약으로 남아 있다.
 
 ## 실제 코드 경로
 
@@ -58,18 +63,21 @@ MealAnalysisScreen
 
 ```text
 ai-pt
-MealAnalysisScreen
-├── header
-├── top tab bar
-├── analysis tab
-│   ├── DailyMealSummary
-│   ├── MealTypeSelector
-│   ├── MealPhotoSection
-│   ├── analyze CTA
-│   ├── MealAnalysisResult
-│   └── TodayMealRecords
-└── guide tab
-    └── DietGuideTab
+TabPageLayout(activeKey=null)
+└── MealAnalysisScreen
+    ├── fixed header
+    ├── fixed top tab bar
+    ├── ScrollView
+    │   ├── analysis tab
+    │   │   ├── summary-local Suspense boundary
+    │   │   ├── MealTypeSelector
+    │   │   ├── MealPhotoSection
+    │   │   ├── conditional MealDurationCard
+    │   │   ├── analyze CTA / MealAnalysisResult
+    │   │   └── records-local Suspense boundary
+    │   └── guide tab
+    │       └── guide-local Suspense boundary / DietGuideTab
+    └── MemberTabBar
 ```
 
 현재는 원본의 큰 화면을 subcomponent로 분해했을 뿐, 본문 조립 방식은 거의 같다.
@@ -81,7 +89,9 @@ MealAnalysisScreen
 | 분석 탭 기본 | 있음 | 있음 | 가능 | 거의 동일 |
 | 가이드 탭 기본 | 있음 | 있음 | 가능 | 거의 동일 |
 | 식사 전 사진만 선택 | 있음 | 있음 | 가능 | 동일 |
-| 식사 전/후 사진 선택 | 있음 | 있음 | 가능 | 현재 일부 부가기능 미구현 |
+| 식사 전/후 사진 선택 | 있음 | 있음 | 가능 | 동일 |
+| 카메라 전/후 촬영 시간 | 있음 | 있음 | 가능 | 복원 완료 |
+| 앨범 EXIF 촬영 시간 | 있음 | 없음 | 부분 | 플랫폼 API 제약 |
 | 분석 결과 표시 | 있음 | 있음 | 가능 | 거의 동일 |
 | 오늘 기록/summary | 있음 | 있음 | 가능 | 동일 |
 
@@ -94,10 +104,13 @@ MealAnalysisScreen
 | top tab shell | card bg, radius `14`, padding `4` | 동일 | 일치 |
 | active tab | primary bg | 동일 | 일치 |
 | tab label | `14` SemiBold | 동일 | 일치 |
+| tab icon | camera / food-apple filled·outline `16` | 원본 SVG 계열 `16` | 일치 |
 | meal type chip | card bg, radius `12`, paddingY `10` | 동일 | 일치 |
 | active meal chip | accent fill + white text | 동일 | 일치 |
+| meal type 순서 | 아침 → 점심 → 저녁 → 간식 | 동일 | 일치 |
 
-이 상단 선택 계열은 현재 구현이 원본과 거의 1:1이다.
+header는 H `16`, V `12`, title `18` Medium, chevron `24`로 복원하고 query
+boundary 밖에 두었다.
 
 ### 2. summary / history card
 
@@ -121,18 +134,23 @@ summary/history 계열은 이미 공통 card system 안에 잘 들어가 있다.
 | empty photo | dashed border, radius `12` | 동일 | 일치 |
 | action buttons | filled + outline pair | 동일 | 일치 |
 | help text | centered muted `12` | 동일 | 일치 |
-| duration/speed 보조상태 | 실제 계산/표시 존재 | `UnimplementedBadge`로 보류 | 다름 |
+| duration card | 값이 있을 때만 H `16`, MB `12`, padding `12`, radius `12` | 동일 | 일치 |
+| duration label/value | `12` Medium / `16` Medium | 동일 | 일치 |
+| speed hint | 너무 빠름/조금 빠름/적정/충분 | 동일 | 일치 |
 
-이 영역도 기본 primitive는 맞다. 현재 눈에 띄는 차이는 시각값보다 “시간 기반 분석
-부가기능”이 아직 완전히 복원되지 않았다는 점이다.
+카메라 응답 시각을 `PickedImage.capturedAt`으로 저장한다. 두 촬영 시각 차이가
+`0분 초과 300분 미만`이면 원본과 같은 duration card를 표시하고
+`eatingDurationMinutes`를 Orval mutation에 전달한다. 앨범 API는 EXIF를 반환하지
+않으므로 앨범 선택만으로는 duration card를 만들지 않는다.
 
 ### 4. 분석 / 저장 CTA
 
 | 영역 | 원본 실제 값 | `ai-pt` 실제 값 | 판정 |
 |---|---|---|---|
-| analyze button | primary filled, radius `14`, `16`급 label | 거의 동일 | 거의 일치 |
-| save / retry row | filled + outline CTA pair | 동일 계열 | 일치 |
-| loading CTA | spinner + same shell | 동일 계열 | 일치 |
+| analyze button | primary, PV `16`, radius `14`, label `16` Medium | 동일 | 일치 |
+| analyze icon | food-apple `20` | 원본 SVG path `20` | 일치 |
+| save / retry row | `2:1`, PV `14`, radius `14` | 동일 | 일치 |
+| loading CTA | spinner + 동일 shell | 동일 | 일치 |
 
 CTA 계열도 큰 drift가 없다.
 
@@ -142,11 +160,13 @@ CTA 계열도 큰 drift가 없다.
 |---|---|---|---|
 | result card shell | radius `16`, padding `16` | 동일 | 일치 |
 | calorie hero | `48` accent value + unit | 동일 | 일치 |
-| macro row | 4열 stat block | 동일 | 일치 |
+| result macro row | 3열 stat block | 동일 | 일치 |
 | guide CTA card | radius `20`, centered | 동일 | 일치 |
 | guide content card | radius `20`, padding `20` | 동일 | 일치 |
+| guide macro row | 4열 stat block | wrap 없는 4열로 복원 | 일치 |
 
-결과와 가이드도 card system이 잘 유지돼 있다.
+food-variant, walk/run/bike, speedometer, save, food-apple, robot,
+star-circle, pie-chart 등 원본 icon affordance를 공통 SVG registry로 교체했다.
 
 ## 공통화 판정
 
@@ -164,35 +184,34 @@ CTA 계열도 큰 drift가 없다.
 
 | 후보 | 분류 | 판정 | 이유 |
 |---|---|---|---|
-| 식사 시간/속도 보조 상태 | 보류 | 현재 공통화 금지 | 원본은 구현, 현재는 미완성 |
+| 식사 시간/속도 보조 상태 | page-only | 공통화 금지 | 사진 source와 식사 도메인 계산에 종속 |
 | 식단 영양 해석 문구 | page-only | 도메인 전용 | 식단 분석만의 의미 구조임 |
 
-## 시스템 관점 결론
+## 반영 결과
 
-이 화면은 전반적인 디자인 시스템 drift의 핵심 원인 화면은 아니다.
+- [`meal-analysis.tsx`](../../../src/pages/meal-analysis.tsx)에 상세 route용
+  `TabPageLayout(activeKey=null)`과 탭 하단 inset을 연결했다.
+- [`meal-analysis-screen.tsx`](../../../src/features/meal-analysis/components/meal-analysis-screen.tsx)는
+  원본 고정 header/tab과 식사 타입 순서를 복원하고 summary, records, guide Suspense
+  boundary를 각 query 소비처 가까이 분리했다.
+- [`pick-image.ts`](../../../src/features/body-analysis/lib/pick-image.ts)는 카메라
+  응답에 `capturedAt`을 기록하고,
+  [`meal-photo-section.tsx`](../../../src/features/meal-analysis/components/meal-photo-section.tsx)는
+  실제 차이가 있을 때만 원본 duration card를 렌더링한다.
+- [`meal-analysis-result.tsx`](../../../src/features/meal-analysis/components/meal-analysis-result.tsx),
+  [`diet-guide-tab.tsx`](../../../src/features/meal-analysis/components/diet-guide-tab.tsx),
+  [`meal-today-sections.tsx`](../../../src/features/meal-analysis/components/meal-today-sections.tsx)의
+  원본 icon과 행·divider 상태를 정렬했다.
+- AI 결과/가이드의 내용 구조는 식단 도메인 feature에 유지하고, 탭 shell과 원본 icon
+  registry만 공통 체계를 사용했다.
+- [`meal-analysis-screen.test.tsx`](../../../src/features/meal-analysis/components/__tests__/meal-analysis-screen.test.tsx)를
+  추가하고 구성 테스트를 확장했다. meal-analysis 4개 suite, 13개 test,
+  `tsc --noEmit`, `git diff --check`를 통과했다.
 
-실제 차이는 대부분
+## 남은 범위
 
-- component 분해
-- 부가 기능 미구현
-- 일부 상태 표현 보류
-
-에서 오고, 본문 card / selector / CTA primitive는 원본과 매우 가깝다.
-
-즉 여기서는 새 디자인 시스템을 만드는 것보다, 이미 맞아 있는
-
-- top tab shell
-- meal type selector
-- summary/history card
-- dual photo card
-- result/guide card
-
-를 공통 패턴으로 추출하는 게 우선이다.
-
-## 수정 후보
-
-이 문서는 코드 수정 범위를 확정하기 위한 점검 결과이며 아직 구현하지 않았다.
-
-1. `meal-analysis`의 top tab / selector / summary / result shell을 AI 결과 계열 공통 후보로 정리
-2. 전/후 사진 시간 계산과 식사 속도 보조 상태는 디자인 문제가 아니라 기능 복원 항목으로 분리
-3. 현재 `UnimplementedBadge`가 붙은 보조 상태는 전역 primitive 기준으로 승격하지 말고 미구현 예외로 유지
+1. Apps in Toss의 `fetchAlbumPhotos`/`openCamera` 응답은 EXIF를 제공하지 않는다.
+   따라서 앨범 사진의 원본 촬영 시각 기반 계산은 별도 native picker 확장 전까지
+   복원할 수 없다.
+2. 카메라 전/후 촬영은 앱 응답 시각으로 원본 시간 분석을 사용할 수 있다.
+3. 실제 기기 캡처 기반 동일 상태 검증은 아직 진행하지 않았다.

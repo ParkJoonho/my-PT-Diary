@@ -1,15 +1,7 @@
-import {
-  ArrowRight,
-  Camera,
-  CheckCheck,
-  FolderOpen,
-  Timer,
-  Utensils,
-  XCircle,
-} from 'lucide-react-native';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
-import { UnimplementedBadge } from 'shared/components/unimplemented-badge';
+import { OriginalAppIcon } from 'shared/components/icons/pt-diary-icons';
 import Colors, { iosShadow } from 'shared/constants/colors';
+import { formatEatingDuration } from '../lib/meal-analysis-format';
 import type { MealPhoto, MealPhotoTarget } from '../types/meal-analysis';
 
 type MealPhotoSectionProps = {
@@ -40,9 +32,9 @@ function PhotoColumn({
     <View style={styles.photoColumn}>
       <View style={styles.photoLabelRow}>
         {required ? (
-          <Utensils color={accent} size={16} strokeWidth={2.1} />
+          <OriginalAppIcon color={accent} name="restaurant" size={16} />
         ) : (
-          <CheckCheck color={accent} size={16} strokeWidth={2.1} />
+          <OriginalAppIcon color={accent} name="checkmark" size={16} />
         )}
         <Text style={styles.photoLabel}>{label}</Text>
         <Text
@@ -65,12 +57,20 @@ function PhotoColumn({
             style={styles.previewImage}
           />
           <Pressable hitSlop={8} onPress={onRemove} style={styles.removeButton}>
-            <XCircle color={Colors.danger} fill={Colors.white} size={23} />
+            <OriginalAppIcon
+              color={Colors.danger}
+              name="closeCircle"
+              size={22}
+            />
           </Pressable>
         </View>
       ) : (
         <Pressable onPress={onPickAlbum} style={styles.emptyPhoto}>
-          <Camera color={Colors.textMuted} size={31} strokeWidth={1.8} />
+          <OriginalAppIcon
+            color={Colors.textMuted}
+            name="cameraOutline"
+            size={32}
+          />
           <Text style={styles.emptyPhotoText}>사진 추가</Text>
         </Pressable>
       )}
@@ -80,7 +80,7 @@ function PhotoColumn({
           onPress={onPickCamera}
           style={[styles.actionButton, { backgroundColor: accent }]}
         >
-          <Camera color={Colors.white} size={16} strokeWidth={2.1} />
+          <OriginalAppIcon color={Colors.white} name="camera" size={16} />
         </Pressable>
         <Pressable
           onPress={onPickAlbum}
@@ -90,7 +90,7 @@ function PhotoColumn({
             { borderColor: accent },
           ]}
         >
-          <FolderOpen color={accent} size={16} strokeWidth={2.1} />
+          <OriginalAppIcon color={accent} name="images" size={16} />
         </Pressable>
       </View>
     </View>
@@ -117,7 +117,11 @@ export function MealPhotoSection({
         />
 
         <View style={styles.arrowColumn}>
-          <ArrowRight color={Colors.textMuted} size={18} strokeWidth={2} />
+          <OriginalAppIcon
+            color={Colors.textMuted}
+            name="arrowForward"
+            size={18}
+          />
         </View>
 
         <PhotoColumn
@@ -137,14 +141,40 @@ export function MealPhotoSection({
           분석합니다
         </Text>
       ) : null}
+    </View>
+  );
+}
 
-      <View style={styles.durationRow}>
-        <Timer color={Colors.textMuted} size={15} strokeWidth={2} />
-        <Text style={styles.durationText}>
-          촬영 시간으로 식사 속도 자동 계산
+export function MealDurationCard({
+  durationMinutes,
+}: {
+  durationMinutes: number;
+}) {
+  const color =
+    durationMinutes < 10
+      ? Colors.danger
+      : durationMinutes < 15
+        ? Colors.warning
+        : Colors.success;
+  const hint =
+    durationMinutes < 10
+      ? '⚠️ 너무 빠름'
+      : durationMinutes < 15
+        ? '조금 빠름'
+        : durationMinutes < 30
+          ? '적정'
+          : '충분';
+
+  return (
+    <View style={[styles.durationCard, iosShadow]}>
+      <OriginalAppIcon color={color} name="timeOutline" size={20} />
+      <View style={styles.durationContent}>
+        <Text style={styles.durationTitle}>식사 소요 시간</Text>
+        <Text style={[styles.durationValue, { color }]}>
+          {formatEatingDuration(durationMinutes)}
         </Text>
-        <UnimplementedBadge compact />
       </View>
+      <Text style={styles.durationHint}>{hint}</Text>
     </View>
   );
 }
@@ -155,7 +185,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     flex: 1,
     justifyContent: 'center',
-    minHeight: 34,
+    paddingVertical: 8,
   },
   actionButtonOutline: {
     backgroundColor: Colors.white,
@@ -168,7 +198,7 @@ const styles = StyleSheet.create({
   arrowColumn: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 55,
+    paddingTop: 60,
     width: 28,
   },
   card: {
@@ -182,20 +212,32 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     flexDirection: 'row',
   },
-  durationRow: {
+  durationCard: {
     alignItems: 'center',
-    borderTopColor: Colors.cardBorder,
-    borderTopWidth: StyleSheet.hairlineWidth,
+    backgroundColor: Colors.card,
+    borderRadius: 12,
     flexDirection: 'row',
-    gap: 6,
-    marginTop: 13,
-    paddingTop: 11,
+    gap: 10,
+    marginBottom: 12,
+    marginHorizontal: 16,
+    padding: 12,
   },
-  durationText: {
-    color: Colors.textMuted,
+  durationContent: {
     flex: 1,
-    fontFamily: 'Pretendard-Regular',
-    fontSize: 11,
+  },
+  durationHint: {
+    color: Colors.textSecondary,
+    fontFamily: 'Pretendard-SemiBold',
+    fontSize: 12,
+  },
+  durationTitle: {
+    color: Colors.textMuted,
+    fontFamily: 'Pretendard-Medium',
+    fontSize: 12,
+  },
+  durationValue: {
+    fontFamily: 'Pretendard-Medium',
+    fontSize: 16,
   },
   emptyPhoto: {
     alignItems: 'center',
@@ -242,7 +284,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     overflow: 'hidden',
     paddingHorizontal: 6,
-    paddingVertical: 2,
+    paddingVertical: 1,
   },
   previewCard: {
     borderRadius: 12,

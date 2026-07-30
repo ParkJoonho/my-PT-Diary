@@ -20,19 +20,20 @@ jest.mock('@granite-js/react-native', () => ({
   }),
 }));
 
-jest.mock('lucide-react-native', () => {
-  const React = require('react');
+jest.mock('@granite-js/native/react-native-safe-area-context', () => ({
+  useSafeAreaInsets: () => ({ bottom: 0, left: 0, right: 0, top: 0 }),
+}));
+
+jest.mock('shared/components/icons/pt-diary-icons', () => {
   const { Text } = require('react-native');
 
-  return new Proxy(
-    {},
-    {
-      get: (_target, property) => {
-        return (props: Record<string, unknown>) =>
-          React.createElement(Text, props, String(property));
-      },
-    },
-  );
+  return {
+    AIInfoIcon: () => <Text>icon:aiInfo</Text>,
+    OriginalAppIcon: ({ name }: { name: string }) => (
+      <Text>{`icon:${name}`}</Text>
+    ),
+    SemanticIcon: ({ name }: { name: string }) => <Text>{`icon:${name}`}</Text>,
+  };
 });
 
 jest.mock('shared/components/tab-page-layout', () => ({
@@ -176,6 +177,10 @@ describe('트레이너 추천 화면', () => {
     expect(screen.getByText('경력 6년')).toBeTruthy();
     expect(screen.getByText('FMS 레벨2')).toBeTruthy();
     expect(screen.getByText('임산부 전문')).toBeTruthy();
+    expect(screen.getAllByText('icon:star')).toHaveLength(3);
+    expect(screen.getAllByText('icon:timeOutline')).toHaveLength(3);
+    expect(screen.getAllByText('icon:heartOutline')).toHaveLength(2);
+    expect(screen.getByText('icon:heart')).toBeTruthy();
   });
 
   it('찜 버튼을 누르면 서버 토글 mutation을 호출한다', async () => {
@@ -189,5 +194,27 @@ describe('트레이너 추천 화면', () => {
         trainerId: 'trainer-1',
       });
     });
+  });
+
+  it('정렬 메뉴와 AI 추천 카드에 원본 icon affordance를 표시한다', () => {
+    render(<TrainerMatchScreen />);
+
+    fireEvent.press(screen.getByText('기본순'));
+    expect(screen.getByText('icon:chevronUp')).toBeTruthy();
+    expect(screen.getByText('icon:checkmark')).toBeTruthy();
+
+    fireEvent.press(screen.getByText('AI 추천순'));
+    expect(screen.getByText('icon:lightningBolt')).toBeTruthy();
+    expect(screen.getByText('91점')).toBeTruthy();
+  });
+
+  it('카드를 누르면 원본 결함을 보완한 상세 bottom sheet를 연다', () => {
+    render(<TrainerMatchScreen />);
+
+    fireEvent.press(screen.getByText('김민준'));
+
+    expect(screen.getByText('PT 비용')).toBeTruthy();
+    expect(screen.getByText('PT 신청하기')).toBeTruthy();
+    expect(screen.getByLabelText('트레이너 상세 닫기')).toBeTruthy();
   });
 });

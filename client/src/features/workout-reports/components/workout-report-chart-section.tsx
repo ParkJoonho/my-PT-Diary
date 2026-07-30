@@ -19,7 +19,7 @@ import Svg, {
 } from 'react-native-svg';
 import type { WorkoutReportSummaryDto } from 'shared/api/generated/models';
 import { OriginalAppIcon } from 'shared/components/icons/pt-diary-icons';
-import Colors, { iosShadow } from 'shared/constants/colors';
+import Colors from 'shared/constants/colors';
 import { useWorkoutReportStore } from '../stores/use-workout-report-store';
 import {
   WORKOUT_REPORT_TABS,
@@ -47,7 +47,7 @@ export function WorkoutReportChartSection({
   const { width: screenWidth } = useWindowDimensions();
   const activeTab = useWorkoutReportStore((state) => state.activeTab);
   const setActiveTab = useWorkoutReportStore((state) => state.setActiveTab);
-  const chartWidth = Math.min(screenWidth - 64, 500);
+  const chartWidth = Math.min(screenWidth - 40, 500);
   const chartHeight = 220;
 
   const bodyCompositionData = useMemo<DualTrendPoint[]>(
@@ -92,7 +92,7 @@ export function WorkoutReportChartSection({
               <OriginalAppIcon
                 color={active ? Colors.white : Colors.textSecondary}
                 name={tab.icon}
-                size={14}
+                size={16}
               />
               <Text
                 style={[
@@ -636,6 +636,11 @@ function BarChart({
 function EmptyChart({ height, width }: { height: number; width: number }) {
   return (
     <View style={[chartStyles.emptyChart, { height, width }]}>
+      <OriginalAppIcon
+        color={Colors.textMuted}
+        name="analyticsOutline"
+        size={28}
+      />
       <Text style={chartStyles.emptyText}>데이터가 없어요</Text>
     </View>
   );
@@ -684,17 +689,17 @@ function formatStatValue(value: number, unit: string) {
 const chartStyles = StyleSheet.create({
   chartLabel: {
     color: Colors.text,
-    fontFamily: 'Pretendard-Medium',
     fontSize: 14,
+    fontWeight: '700',
     marginBottom: 8,
   },
   emptyChart: {
     alignItems: 'center',
+    gap: 8,
     justifyContent: 'center',
   },
   emptyText: {
     color: Colors.textMuted,
-    fontFamily: 'Pretendard-Regular',
     fontSize: 13,
   },
   legendDot: {
@@ -714,7 +719,6 @@ const chartStyles = StyleSheet.create({
   },
   legendText: {
     color: Colors.textSecondary,
-    fontFamily: 'Pretendard-Regular',
     fontSize: 11,
   },
   statItem: {
@@ -723,7 +727,6 @@ const chartStyles = StyleSheet.create({
   },
   statLabel: {
     color: Colors.textMuted,
-    fontFamily: 'Pretendard-Regular',
     fontSize: 10,
   },
   statRow: {
@@ -736,16 +739,19 @@ const chartStyles = StyleSheet.create({
   },
   statValue: {
     color: Colors.text,
-    fontFamily: 'Pretendard-Medium',
     fontSize: 14,
+    fontWeight: '700',
   },
 });
 
 const styles = StyleSheet.create({
   chartCard: {
-    ...iosShadow,
     backgroundColor: Colors.card,
+    borderColor: Colors.cardBorder,
     borderRadius: 16,
+    borderWidth: 1,
+    marginBottom: 16,
+    marginHorizontal: 20,
     padding: 16,
   },
   insightCard: {
@@ -756,12 +762,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     flexDirection: 'row',
     gap: 10,
+    marginBottom: 16,
+    marginHorizontal: 20,
     padding: 14,
   },
   insightText: {
     color: Colors.text,
     flex: 1,
-    fontFamily: 'Pretendard-Regular',
     fontSize: 13,
     lineHeight: 20,
   },
@@ -782,20 +789,18 @@ const styles = StyleSheet.create({
   },
   tabButtonText: {
     color: Colors.textSecondary,
-    fontFamily: 'Pretendard-Medium',
     fontSize: 13,
+    fontWeight: '600',
   },
   tabButtonTextActive: {
     color: Colors.white,
   },
   tabContent: {
     gap: 8,
-    paddingRight: 4,
+    paddingHorizontal: 20,
   },
   tabScroll: {
-    marginBottom: 0,
+    marginBottom: 16,
   },
-  wrap: {
-    gap: 12,
-  },
+  wrap: {},
 });

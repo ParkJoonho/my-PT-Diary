@@ -1,5 +1,6 @@
 import { createRoute } from '@granite-js/react-native';
 import { PtLessonFormScreen } from 'features/pt-logs/components/pt-lesson-form-screen';
+import { TabPageLayout } from 'shared/components/tab-page-layout';
 
 type PtLessonFormRouteParams = {
   lessonId?: string;
@@ -22,5 +23,14 @@ export const Route = createRoute('/pt-lesson-form', {
 function PtLessonFormRoute() {
   const { lessonId } = Route.useParams();
 
-  return <PtLessonFormScreen lessonId={lessonId} />;
+  return (
+    <TabPageLayout activeKey={null} contentBottomSpacing={20}>
+      {({ contentBottomInset }) => (
+        <PtLessonFormScreen
+          contentBottomInset={contentBottomInset}
+          lessonId={lessonId}
+        />
+      )}
+    </TabPageLayout>
+  );
 }

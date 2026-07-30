@@ -1,18 +1,21 @@
-import { Coffee, Moon, Sun, Utensils } from 'lucide-react-native';
 import { StyleSheet, Text, View } from 'react-native';
 import type {
   DailyMealSummaryDto,
   MealRecordDto,
 } from 'shared/api/generated/models';
+import {
+  OriginalAppIcon,
+  type OriginalAppIconName,
+} from 'shared/components/icons/pt-diary-icons';
 import Colors, { iosShadow } from 'shared/constants/colors';
 import { MEAL_LABELS, type MealType } from '../types/meal-analysis';
 
 const MEAL_ICONS = {
-  breakfast: Sun,
-  dinner: Moon,
-  lunch: Utensils,
-  snack: Coffee,
-} as const;
+  breakfast: 'sunnyOutline',
+  dinner: 'moonOutline',
+  lunch: 'restaurantOutline',
+  snack: 'cafeOutline',
+} satisfies Record<MealType, OriginalAppIconName>;
 
 export function DailyMealSummary({
   summary,
@@ -75,22 +78,14 @@ export function TodayMealRecords({ records }: { records: MealRecordDto[] }) {
   return (
     <View style={[styles.historyCard, iosShadow]}>
       <Text style={styles.historyTitle}>오늘의 식단 기록</Text>
-      {records.map((record, index) => {
+      {records.map((record) => {
         const mealType = record.mealType as MealType;
-        const Icon = MEAL_ICONS[mealType] ?? Utensils;
+        const icon = MEAL_ICONS[mealType] ?? 'restaurantOutline';
 
         return (
-          <View
-            key={record.id}
-            style={[
-              styles.historyItem,
-              index === records.length - 1
-                ? styles.lastBorderlessItem
-                : undefined,
-            ]}
-          >
+          <View key={record.id} style={styles.historyItem}>
             <View style={styles.historyHeader}>
-              <Icon color={Colors.accent} size={18} strokeWidth={2.1} />
+              <OriginalAppIcon color={Colors.accent} name={icon} size={18} />
               <Text style={styles.historyMealType}>
                 {MEAL_LABELS[mealType] ?? record.mealType}
               </Text>
@@ -155,9 +150,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Pretendard-Medium',
     fontSize: 15,
     marginBottom: 12,
-  },
-  lastBorderlessItem: {
-    borderBottomWidth: 0,
   },
   summaryCard: {
     backgroundColor: Colors.card,

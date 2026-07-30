@@ -1,6 +1,10 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { ConditionRecordDto } from 'shared/api/generated/models';
-import Colors from 'shared/constants/colors';
+import {
+  OriginalAppIcon,
+  type OriginalAppIconName,
+} from 'shared/components/icons/pt-diary-icons';
+import Colors, { iosShadow } from 'shared/constants/colors';
 import {
   calculateAverageScore,
   getConditionBadge,
@@ -30,7 +34,7 @@ export function ConditionRecordCard({
     >
       <View style={styles.cardRow}>
         <View style={styles.metric}>
-          <Text style={styles.metricLabel}>컨디션</Text>
+          <MetricLabel icon="personOutline" label="컨디션" />
           <View style={styles.metricValueRow}>
             <Text style={styles.metricValue}>
               {averageConditionScore > 0
@@ -57,7 +61,7 @@ export function ConditionRecordCard({
         <View style={styles.divider} />
 
         <View style={styles.metric}>
-          <Text style={styles.metricLabel}>근육통</Text>
+          <MetricLabel icon="walkOutline" label="근육통" />
           <View style={styles.metricValueRow}>
             <Text style={styles.metricValue}>
               {averageSorenessScore > 0 ? averageSorenessScore.toFixed(1) : '-'}
@@ -82,7 +86,7 @@ export function ConditionRecordCard({
         <View style={styles.divider} />
 
         <View style={styles.metric}>
-          <Text style={styles.metricLabel}>근육통 부위</Text>
+          <MetricLabel icon="armFlexOutline" label="근육통 부위" />
           <Text
             numberOfLines={1}
             style={[styles.metricValue, styles.metricValueText]}
@@ -92,6 +96,21 @@ export function ConditionRecordCard({
         </View>
       </View>
     </Pressable>
+  );
+}
+
+function MetricLabel({
+  icon,
+  label,
+}: {
+  icon: OriginalAppIconName;
+  label: string;
+}) {
+  return (
+    <View style={styles.metricLabelRow}>
+      <OriginalAppIcon color={Colors.textMuted} name={icon} size={13} />
+      <Text style={styles.metricLabel}>{label}</Text>
+    </View>
   );
 }
 
@@ -106,10 +125,10 @@ const styles = StyleSheet.create({
     fontSize: 11,
   },
   card: {
+    ...iosShadow,
     backgroundColor: Colors.card,
-    borderColor: Colors.cardBorder,
     borderRadius: 14,
-    borderWidth: StyleSheet.hairlineWidth,
+    marginBottom: 10,
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
@@ -132,6 +151,11 @@ const styles = StyleSheet.create({
     fontFamily: 'Pretendard-Regular',
     fontSize: 11,
   },
+  metricLabelRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 4,
+  },
   metricValue: {
     color: Colors.text,
     fontFamily: 'Pretendard-SemiBold',
@@ -147,6 +171,6 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   pressed: {
-    opacity: 0.78,
+    opacity: 0.85,
   },
 });

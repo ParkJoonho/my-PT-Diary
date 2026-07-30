@@ -1,7 +1,12 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { OriginalAppIcon } from 'shared/components/icons/pt-diary-icons';
 import Colors from 'shared/constants/colors';
 import {
+  asNumber,
+  asRecord,
+  asString,
+  asStringArray,
   toBodyAnalysisResult,
   toBodyComparisonResult,
 } from '../lib/object-access';
@@ -101,6 +106,63 @@ function DetailInfoRow({
       <Text style={styles.infoLabel}>{label}</Text>
       {value ? <Text style={styles.infoValue}>{value}</Text> : null}
       {note ? <Text style={styles.infoNote}>{note}</Text> : null}
+    </View>
+  );
+}
+
+function getGradeColor(grade?: string) {
+  if (grade?.startsWith('A')) {
+    return Colors.success;
+  }
+
+  if (grade?.startsWith('B')) {
+    return Colors.info;
+  }
+
+  return Colors.warning;
+}
+
+function getPercentScoreColor(score: number) {
+  if (score >= 70) {
+    return Colors.success;
+  }
+
+  if (score >= 40) {
+    return Colors.warning;
+  }
+
+  return Colors.danger;
+}
+
+function toDisplayText(value: unknown) {
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+
+  return JSON.stringify(value);
+}
+
+function PercentScoreRow({ label, score }: { label: string; score: number }) {
+  const color = getPercentScoreColor(score);
+
+  return (
+    <View style={styles.scoreRow}>
+      <Text style={styles.scoreLabel}>{label}</Text>
+      <View style={styles.scoreBarWrap}>
+        <View style={styles.scoreBarBackground}>
+          <View
+            style={[
+              styles.scoreBarFill,
+              { backgroundColor: color, width: `${score}%` },
+            ]}
+          />
+        </View>
+        <Text style={[styles.scoreValue, { color }]}>{score}</Text>
+      </View>
     </View>
   );
 }
@@ -258,6 +320,352 @@ function BodyAnalysisDetail({ raw }: { raw: Record<string, unknown> }) {
   );
 }
 
+function PostureAnalysisDetail({ raw }: { raw: Record<string, unknown> }) {
+  const exerciseName = asString(raw.exerciseName);
+  const accuracy = asRecord(raw.accuracy);
+  const accuracyGrade = asString(accuracy.grade);
+  const accuracySummary = asString(accuracy.summary);
+  const formCheck = asRecord(raw.formCheck);
+  const injuryRisk = asRecord(raw.injuryRisk);
+  const injuryRiskScore = asNumber(injuryRisk.score);
+  const corrections = Array.isArray(raw.corrections)
+    ? raw.corrections.map(asRecord)
+    : [];
+  const goodPoints = asStringArray(raw.goodPoints) ?? [];
+  const recommendations = asStringArray(raw.recommendations) ?? [];
+  const summary = asString(raw.summary);
+
+  return (
+    <>
+      {exerciseName ? (
+        <View style={styles.section}>
+          <View style={styles.bodyTypeRow}>
+            {accuracyGrade ? (
+              <View
+                style={[
+                  styles.gradeBadge,
+                  { backgroundColor: getGradeColor(accuracyGrade) },
+                ]}
+              >
+                <Text style={styles.gradeBadgeText}>{accuracyGrade}</Text>
+              </View>
+            ) : null}
+            <View style={styles.flexContent}>
+              <Text style={styles.sectionTitle}>{exerciseName}</Text>
+              {accuracySummary ? (
+                <Text style={styles.bodyText}>{accuracySummary}</Text>
+              ) : null}
+            </View>
+          </View>
+        </View>
+      ) : null}
+
+      {Object.keys(formCheck).length > 0 ? (
+        <DetailSection title="폼 체크">
+          {[
+            { key: 'headPosition', label: '머리/목' },
+            { key: 'spineAlignment', label: '척추 정렬' },
+            { key: 'shoulderPosition', label: '어깨' },
+            { key: 'hipAlignment', label: '골반' },
+            { key: 'kneePosition', label: '무릎' },
+            { key: 'footPlacement', label: '발' },
+          ].map((item) => {
+            const value = asRecord(formCheck[item.key]);
+            const score = asNumber(value.score);
+
+            if (score === undefined) {
+              return null;
+            }
+
+            return (
+              <ScoreRow
+                key={item.key}
+                label={item.label}
+                note={asString(value.note)}
+                score={score}
+              />
+            );
+          })}
+        </DetailSection>
+      ) : null}
+
+      {Object.keys(injuryRisk).length > 0 ? (
+        <DetailSection title="부상 위험도">
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>위험 수준</Text>
+            <Text
+              style={[
+                styles.infoValue,
+                {
+                  color:
+                    injuryRiskScore !== undefined && injuryRiskScore <= 3
+                      ? Colors.success
+                      : injuryRiskScore !== undefined && injuryRiskScore <= 6
+                        ? Colors.warning
+                        : Colors.danger,
+                },
+              ]}
+            >
+              {asString(injuryRisk.level) ?? '-'}
+              {injuryRiskScore !== undefined ? ` (${injuryRiskScore}/10)` : ''}
+            </Text>
+          </View>
+          {(asStringArray(injuryRisk.vulnerableAreas) ?? []).length > 0 ? (
+            <DetailInfoRow
+              label="취약 부위"
+              note={(asStringArray(injuryRisk.vulnerableAreas) ?? []).join(
+                ', ',
+              )}
+            />
+          ) : null}
+          {asString(injuryRisk.details) ? (
+            <Text style={styles.bodyText}>{asString(injuryRisk.details)}</Text>
+          ) : null}
+        </DetailSection>
+      ) : null}
+
+      {corrections.length > 0 ? (
+        <DetailSection title="교정 사항">
+          {corrections.map((correction, index) => {
+            const priority = asString(correction.priority);
+
+            return (
+              <View
+                key={`${asString(correction.area) ?? 'correction'}-${index}`}
+                style={styles.correctionCard}
+              >
+                <View style={styles.correctionHeader}>
+                  <Text style={styles.correctionArea}>
+                    {asString(correction.area) ?? '-'}
+                  </Text>
+                  {priority ? (
+                    <View
+                      style={[
+                        styles.priorityBadge,
+                        {
+                          backgroundColor:
+                            priority === '높음'
+                              ? Colors.danger
+                              : priority === '보통'
+                                ? Colors.warning
+                                : Colors.info,
+                        },
+                      ]}
+                    >
+                      <Text style={styles.priorityText}>{priority}</Text>
+                    </View>
+                  ) : null}
+                </View>
+                <Text style={styles.correctionIssue}>
+                  {asString(correction.issue) ?? '-'}
+                </Text>
+                <Text style={styles.correctionFix}>
+                  {asString(correction.fix) ?? '-'}
+                </Text>
+              </View>
+            );
+          })}
+        </DetailSection>
+      ) : null}
+
+      {goodPoints.length > 0 ? (
+        <DetailSection title="잘하고 있는 점">
+          {goodPoints.map((item) => (
+            <View key={item} style={styles.bulletRow}>
+              <OriginalAppIcon
+                color={Colors.success}
+                name="checkmarkCircle"
+                size={18}
+              />
+              <Text style={styles.bulletText}>{item}</Text>
+            </View>
+          ))}
+        </DetailSection>
+      ) : null}
+
+      {recommendations.length > 0 ? (
+        <DetailSection title="추천사항">
+          {recommendations.map((item, index) => (
+            <View key={item} style={styles.bulletRow}>
+              <View style={styles.numberBadge}>
+                <Text style={styles.numberBadgeText}>{index + 1}</Text>
+              </View>
+              <Text style={styles.bulletText}>{item}</Text>
+            </View>
+          ))}
+        </DetailSection>
+      ) : null}
+
+      {summary ? (
+        <DetailSection title="요약">
+          <Text style={styles.bodyText}>{summary}</Text>
+        </DetailSection>
+      ) : null}
+    </>
+  );
+}
+
+function StateVectorAnalysisDetail({ raw }: { raw: Record<string, unknown> }) {
+  const compositeScore = asNumber(raw.compositeScore);
+  const compositeGrade = asString(raw.compositeGrade);
+  const dimensionScores = asRecord(raw.dimensionScores);
+  const weeklyPlan = Array.isArray(raw.weeklyPlan) ? raw.weeklyPlan : [];
+  const correctionProgram = raw.correctionProgram;
+  const nutritionPlan = raw.nutritionPlan;
+  const predictions = asRecord(raw.predictions);
+  const summary = asString(raw.summary);
+  const dimensionLabels: Record<string, string> = {
+    bodyShape: '체형',
+    condition: '컨디션',
+    gait: '보행',
+    nutrition: '영양',
+    posture: '자세',
+    workout: '운동',
+  };
+
+  return (
+    <>
+      {compositeScore !== undefined ? (
+        <View style={styles.section}>
+          <View style={styles.bodyTypeRow}>
+            <View
+              style={[
+                styles.gradeBadge,
+                { backgroundColor: getPercentScoreColor(compositeScore) },
+              ]}
+            >
+              <Text style={styles.gradeBadgeText}>
+                {compositeGrade ?? compositeScore}
+              </Text>
+            </View>
+            <View style={styles.flexContent}>
+              <Text style={styles.sectionTitle}>종합 피트니스 점수</Text>
+              <Text style={styles.bodyText}>점수: {compositeScore}/100</Text>
+            </View>
+          </View>
+        </View>
+      ) : null}
+
+      {Object.keys(dimensionScores).length > 0 ? (
+        <DetailSection title="항목별 점수">
+          {Object.entries(dimensionScores).map(([key, value]) => {
+            const score = asNumber(value) ?? asNumber(asRecord(value).score);
+
+            return score === undefined ? null : (
+              <PercentScoreRow
+                key={key}
+                label={dimensionLabels[key] ?? key}
+                score={score}
+              />
+            );
+          })}
+        </DetailSection>
+      ) : null}
+
+      {weeklyPlan.length > 0 ? (
+        <DetailSection title="주간 운동 계획">
+          {weeklyPlan.map((item, index) => {
+            const day = asRecord(item);
+            const description =
+              typeof item === 'string'
+                ? item
+                : (asString(day.exercises) ??
+                  asString(day.description) ??
+                  toDisplayText(item));
+
+            return (
+              <DetailInfoRow
+                key={`${asString(day.day) ?? 'day'}-${index}`}
+                label={asString(day.day) ?? `Day ${index + 1}`}
+                note={description}
+              />
+            );
+          })}
+        </DetailSection>
+      ) : null}
+
+      {correctionProgram ? (
+        <DetailSection title="교정 프로그램">
+          {Array.isArray(correctionProgram) ? (
+            correctionProgram.map((item, index) => {
+              const itemRecord = asRecord(item);
+
+              return (
+                <View key={toDisplayText(item)} style={styles.bulletRow}>
+                  <View style={styles.numberBadge}>
+                    <Text style={styles.numberBadgeText}>{index + 1}</Text>
+                  </View>
+                  <Text style={styles.bulletText}>
+                    {typeof item === 'string'
+                      ? item
+                      : (asString(itemRecord.description) ??
+                        asString(itemRecord.exercise) ??
+                        toDisplayText(item))}
+                  </Text>
+                </View>
+              );
+            })
+          ) : (
+            <Text style={styles.bodyText}>
+              {toDisplayText(correctionProgram)}
+            </Text>
+          )}
+        </DetailSection>
+      ) : null}
+
+      {nutritionPlan ? (
+        <DetailSection title="영양 계획">
+          {Array.isArray(nutritionPlan) ? (
+            nutritionPlan.map((item) => {
+              const itemRecord = asRecord(item);
+
+              return (
+                <View key={toDisplayText(item)} style={styles.bulletRow}>
+                  <OriginalAppIcon
+                    color={Colors.success}
+                    name="restaurantOutline"
+                    size={16}
+                  />
+                  <Text style={styles.bulletText}>
+                    {typeof item === 'string'
+                      ? item
+                      : (asString(itemRecord.description) ??
+                        toDisplayText(item))}
+                  </Text>
+                </View>
+              );
+            })
+          ) : (
+            <Text style={styles.bodyText}>{toDisplayText(nutritionPlan)}</Text>
+          )}
+        </DetailSection>
+      ) : null}
+
+      {raw.injuryRiskAssessment ? (
+        <DetailSection title="부상 위험 평가">
+          <Text style={styles.bodyText}>
+            {toDisplayText(raw.injuryRiskAssessment)}
+          </Text>
+        </DetailSection>
+      ) : null}
+
+      {Object.keys(predictions).length > 0 ? (
+        <DetailSection title="체형 변화 예측">
+          {Object.entries(predictions).map(([key, value]) => (
+            <DetailInfoRow key={key} label={key} note={toDisplayText(value)} />
+          ))}
+        </DetailSection>
+      ) : null}
+
+      {summary ? (
+        <DetailSection title="요약">
+          <Text style={styles.bodyText}>{summary}</Text>
+        </DetailSection>
+      ) : null}
+    </>
+  );
+}
+
 export function AnalysisRecordDetailContent({
   record,
 }: {
@@ -275,6 +683,14 @@ export function AnalysisRecordDetailContent({
     return <BodyAnalysisDetail raw={record.rawResult} />;
   }
 
+  if (record.analysisType === 'posture') {
+    return <PostureAnalysisDetail raw={record.rawResult} />;
+  }
+
+  if (record.analysisType === 'state-vector') {
+    return <StateVectorAnalysisDetail raw={record.rawResult} />;
+  }
+
   return (
     <View style={styles.emptyState}>
       <Text style={styles.emptyStateText}>
@@ -289,38 +705,72 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     flex: 1,
     fontFamily: 'Pretendard-Regular',
-    fontSize: 13,
-    lineHeight: 19,
+    fontSize: 14,
+    lineHeight: 22,
   },
   bodyTypeBadge: {
     alignItems: 'center',
-    borderRadius: 999,
-    height: 42,
+    borderRadius: 24,
+    height: 48,
     justifyContent: 'center',
-    width: 42,
+    width: 48,
   },
   bodyTypeRow: {
+    alignItems: 'center',
     flexDirection: 'row',
     gap: 12,
   },
   bodyTypeText: {
     color: Colors.white,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 18,
+    fontFamily: 'Pretendard-Medium',
+    fontSize: 22,
   },
   bulletGroup: {
     gap: 8,
   },
   bulletRow: {
+    alignItems: 'flex-start',
     flexDirection: 'row',
     gap: 8,
+    marginBottom: 8,
   },
   bulletText: {
-    color: Colors.textSecondary,
+    color: Colors.text,
     flex: 1,
     fontFamily: 'Pretendard-Regular',
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  correctionArea: {
+    color: Colors.text,
+    fontFamily: 'Pretendard-Medium',
+    fontSize: 14,
+  },
+  correctionCard: {
+    backgroundColor: Colors.inputBg,
+    borderColor: Colors.inputBorder,
+    borderRadius: 10,
+    borderWidth: 1,
+    marginBottom: 12,
+    padding: 12,
+  },
+  correctionFix: {
+    color: Colors.textSecondary,
+    fontFamily: 'Pretendard-Regular',
     fontSize: 13,
-    lineHeight: 19,
+    lineHeight: 20,
+  },
+  correctionHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
+  correctionIssue: {
+    color: Colors.danger,
+    fontFamily: 'Pretendard-Regular',
+    fontSize: 13,
+    marginBottom: 4,
   },
   emptyState: {
     alignItems: 'center',
@@ -332,27 +782,29 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   infoLabel: {
-    color: Colors.text,
-    fontFamily: 'Pretendard-Medium',
-    fontSize: 13,
+    color: Colors.textMuted,
+    fontFamily: 'Pretendard-SemiBold',
+    fontSize: 12,
+    marginBottom: 2,
   },
   infoNote: {
     color: Colors.textSecondary,
     flex: 1,
     fontFamily: 'Pretendard-Regular',
     fontSize: 13,
-    lineHeight: 19,
+    lineHeight: 20,
+    marginTop: 2,
   },
   infoRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
+    borderBottomColor: Colors.divider,
+    borderBottomWidth: 1,
+    marginBottom: 10,
+    paddingBottom: 10,
   },
   infoValue: {
     color: Colors.text,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 13,
+    fontFamily: 'Pretendard-Medium',
+    fontSize: 15,
   },
   numberBadge: {
     alignItems: 'center',
@@ -367,46 +819,77 @@ const styles = StyleSheet.create({
     fontFamily: 'Pretendard-SemiBold',
     fontSize: 12,
   },
+  flexContent: {
+    flex: 1,
+  },
+  gradeBadge: {
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+  },
+  gradeBadgeText: {
+    color: Colors.white,
+    fontFamily: 'Pretendard-Medium',
+    fontSize: 18,
+  },
+  priorityBadge: {
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  priorityText: {
+    color: Colors.white,
+    fontFamily: 'Pretendard-SemiBold',
+    fontSize: 11,
+  },
   scoreBarBackground: {
-    backgroundColor: Colors.surfaceMuted,
-    borderRadius: 999,
+    backgroundColor: Colors.divider,
+    borderRadius: 4,
+    flex: 1,
     height: 8,
     overflow: 'hidden',
   },
   scoreBarFill: {
-    borderRadius: 999,
-    height: '100%',
+    borderRadius: 4,
+    height: 8,
   },
   scoreBarWrap: {
-    gap: 6,
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
   },
   scoreLabel: {
     color: Colors.text,
-    fontFamily: 'Pretendard-Medium',
+    fontFamily: 'Pretendard-SemiBold',
     fontSize: 13,
+    marginBottom: 4,
   },
   scoreNote: {
     color: Colors.textSecondary,
     fontFamily: 'Pretendard-Regular',
     fontSize: 12,
     lineHeight: 18,
+    marginTop: 2,
   },
   scoreRow: {
-    gap: 8,
+    marginBottom: 12,
   },
   scoreValue: {
     fontFamily: 'Pretendard-SemiBold',
-    fontSize: 12,
+    fontSize: 14,
+    minWidth: 36,
   },
   section: {
     backgroundColor: Colors.card,
-    borderRadius: 16,
-    gap: 10,
+    borderColor: Colors.cardBorder,
+    borderRadius: 14,
+    borderWidth: 1,
     padding: 16,
   },
   sectionTitle: {
     color: Colors.text,
-    fontFamily: 'Pretendard-SemiBold',
+    fontFamily: 'Pretendard-Medium',
     fontSize: 16,
+    marginBottom: 10,
   },
 });

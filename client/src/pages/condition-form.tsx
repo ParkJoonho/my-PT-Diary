@@ -1,5 +1,6 @@
 import { createRoute } from '@granite-js/react-native';
 import { ConditionFormScreen } from 'features/condition-records/components/condition-form-screen';
+import { TabPageLayout } from 'shared/components/tab-page-layout';
 
 type ConditionFormRouteParams = {
   conditionId?: string;
@@ -22,5 +23,14 @@ export const Route = createRoute('/condition-form', {
 function ConditionFormRoute() {
   const { conditionId } = Route.useParams();
 
-  return <ConditionFormScreen conditionId={conditionId} />;
+  return (
+    <TabPageLayout activeKey={null} contentBottomSpacing={20}>
+      {({ contentBottomInset }) => (
+        <ConditionFormScreen
+          conditionId={conditionId}
+          contentBottomInset={contentBottomInset}
+        />
+      )}
+    </TabPageLayout>
+  );
 }

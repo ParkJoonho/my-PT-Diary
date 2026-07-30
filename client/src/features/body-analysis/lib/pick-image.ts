@@ -3,6 +3,7 @@ import { Platform } from 'react-native';
 
 export type PickedImage = {
   base64: string;
+  capturedAt?: string;
   uri: string;
 };
 
@@ -65,6 +66,7 @@ async function pickWebImage({
 
         resolve({
           base64,
+          capturedAt: useCamera ? new Date().toISOString() : undefined,
           uri: result,
         });
       };
@@ -94,6 +96,7 @@ export async function pickSingleImage({
 
     return {
       base64: image.dataUri,
+      capturedAt: new Date().toISOString(),
       uri: toDataUri(image.dataUri),
     };
   }

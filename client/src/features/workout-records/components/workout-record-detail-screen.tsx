@@ -15,15 +15,30 @@ import {
 
 const MEAL_LABELS = ['MEAL 1', 'MEAL 2', 'MEAL 3', 'MEAL 4'] as const;
 
-export function WorkoutRecordDetailScreen({ recordId }: { recordId: string }) {
+export function WorkoutRecordDetailScreen({
+  contentBottomInset,
+  recordId,
+}: {
+  contentBottomInset: number;
+  recordId: string;
+}) {
   return (
     <SuspenseSection errorMessage="운동 기록 상세를 불러오지 못했어요.">
-      <WorkoutRecordDetailContent recordId={recordId} />
+      <WorkoutRecordDetailContent
+        contentBottomInset={contentBottomInset}
+        recordId={recordId}
+      />
     </SuspenseSection>
   );
 }
 
-function WorkoutRecordDetailContent({ recordId }: { recordId: string }) {
+function WorkoutRecordDetailContent({
+  contentBottomInset,
+  recordId,
+}: {
+  contentBottomInset: number;
+  recordId: string;
+}) {
   const navigation = useNavigation();
   const { data: record } = useWorkoutRecord(recordId);
   const deleteMutation = useDeleteWorkoutRecord();
@@ -67,7 +82,10 @@ function WorkoutRecordDetailContent({ recordId }: { recordId: string }) {
       </View>
 
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: contentBottomInset },
+        ]}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.hero}>
@@ -256,7 +274,6 @@ const styles = StyleSheet.create({
   },
   content: {
     gap: 12,
-    paddingBottom: 32,
   },
   date: {
     color: Colors.textMuted,

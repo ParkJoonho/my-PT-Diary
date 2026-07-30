@@ -1,6 +1,7 @@
-import { Check, Clock3, Heart, Star, Zap } from 'lucide-react-native';
-import { useMemo, useState } from 'react';
+import { useSafeAreaInsets } from '@granite-js/native/react-native-safe-area-context';
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   Modal,
   Pressable,
@@ -13,9 +14,13 @@ import type {
   RecommendedTrainerDto,
   TrainerDto,
 } from 'shared/api/generated/models';
-import { SuspenseSection } from 'shared/components/async-state';
+import {
+  AsyncErrorBoundary,
+  SuspenseSection,
+} from 'shared/components/async-state';
 import {
   AIInfoIcon,
+  OriginalAppIcon,
   SemanticIcon,
 } from 'shared/components/icons/pt-diary-icons';
 import { TabPageLayout } from 'shared/components/tab-page-layout';
@@ -41,6 +46,8 @@ export function TrainerMatchScreen() {
   const setTrainerLikeMutation = useSetTrainerLike();
   const [sortMode, setSortMode] = useState<SortMode>('default');
   const [sortMenuOpen, setSortMenuOpen] = useState(false);
+  const [hasLoadedRecommendations, setHasLoadedRecommendations] =
+    useState(false);
   const [selectedTrainer, setSelectedTrainer] =
     useState<TrainerListItem | null>(null);
   const sortLabel =
@@ -56,6 +63,10 @@ export function TrainerMatchScreen() {
       Alert.alert('오류', '트레이너 찜 상태를 저장하지 못했어요.');
     }
   };
+  const handleRecommendationsLoaded = useCallback(() => {
+    setHasLoadedRecommendations(true);
+  }, []);
+  const isAiLoading = sortMode === 'ai' && !hasLoadedRecommendations;
 
   return (
     <TabPageLayout activeKey="pt-log" contentBottomSpacing={24}>
@@ -85,8 +96,8 @@ export function TrainerMatchScreen() {
                   <Text style={styles.sortButtonText}>{sortLabel}</Text>
                   <SemanticIcon
                     color={Colors.textSecondary}
-                    name="chevronDown"
-                    size={14}
+                    name={sortMenuOpen ? 'chevronUp' : 'chevronDown'}
+                    size={13}
                   />
                 </Pressable>
                 {sortMenuOpen ? (
@@ -98,7 +109,10 @@ export function TrainerMatchScreen() {
                           setSortMode(option.mode);
                           setSortMenuOpen(false);
                         }}
-                        style={styles.dropdownOption}
+                        style={({ pressed }) => [
+                          styles.dropdownOption,
+                          pressed && styles.dropdownOptionPressed,
+                        ]}
                       >
                         <Text
                           style={[
@@ -110,7 +124,11 @@ export function TrainerMatchScreen() {
                           {option.label}
                         </Text>
                         {option.mode === sortMode ? (
-                          <Check color={Colors.accent} size={14} />
+                          <OriginalAppIcon
+                            color={Colors.accent}
+                            name="checkmark"
+                            size={14}
+                          />
                         ) : null}
                       </Pressable>
                     ))}
@@ -119,23 +137,28 @@ export function TrainerMatchScreen() {
               </View>
             </View>
 
-            <View style={styles.descriptionRow}>
-              <View style={styles.descriptionIcon}>
-                <AIInfoIcon />
+            {isAiLoading ? null : (
+              <View style={styles.descriptionRow}>
+                <View style={styles.descriptionIcon}>
+                  <AIInfoIcon />
+                </View>
+                <Text style={styles.descriptionText}>
+                  AI 추천순을 선택하면 AI가 내 운동기록을 분석해 최적의
+                  트레이너를 추천해요.
+                </Text>
               </View>
-              <Text style={styles.descriptionText}>
-                AI 추천순을 선택하면 AI가 내 운동기록을 분석해 최적의 트레이너를
-                추천해요.
-              </Text>
-            </View>
+            )}
 
             {sortMode === 'ai' ? (
-              <SuspenseSection errorMessage="추천 트레이너를 불러오지 못했어요.">
-                <RecommendedTrainerList
-                  onSelect={setSelectedTrainer}
-                  onToggleLike={handleToggleLike}
-                />
-              </SuspenseSection>
+              <AsyncErrorBoundary message="추천 트레이너를 불러오지 못했어요.">
+                <Suspense fallback={<TrainerMatchLoadingCard />}>
+                  <RecommendedTrainerList
+                    onLoaded={handleRecommendationsLoaded}
+                    onSelect={setSelectedTrainer}
+                    onToggleLike={handleToggleLike}
+                  />
+                </Suspense>
+              </AsyncErrorBoundary>
             ) : (
               <SuspenseSection errorMessage="트레이너 목록을 불러오지 못했어요.">
                 <TrainerCatalogList
@@ -154,6 +177,18 @@ export function TrainerMatchScreen() {
         </>
       )}
     </TabPageLayout>
+  );
+}
+
+function TrainerMatchLoadingCard() {
+  return (
+    <View style={styles.loadingCard}>
+      <ActivityIndicator color={GOLD} size="large" />
+      <Text style={styles.loadingTitle}>운동 데이터 분석 중...</Text>
+      <Text style={styles.loadingSubtitle}>
+        AI가 최적의 트레이너를 찾고 있어요
+      </Text>
+    </View>
   );
 }
 
@@ -196,13 +231,19 @@ function TrainerCatalogList({
 }
 
 function RecommendedTrainerList({
+  onLoaded,
   onSelect,
   onToggleLike,
 }: {
+  onLoaded: () => void;
   onSelect: (trainer: RecommendedTrainerDto) => void;
   onToggleLike: (trainer: RecommendedTrainerDto) => void;
 }) {
   const { data } = useRecommendedTrainers();
+
+  useEffect(() => {
+    onLoaded();
+  }, [onLoaded]);
 
   return (
     <View style={styles.list}>
@@ -253,7 +294,7 @@ function TrainerCard({
         <View style={styles.cardInfo}>
           <View style={styles.nameRow}>
             <Text style={styles.trainerName}>{trainer.name}</Text>
-            <Star color={GOLD} fill={GOLD} size={12} />
+            <OriginalAppIcon color={GOLD} name="star" size={12} />
             <Text style={styles.ratingText}>
               {Number(trainer.rating).toFixed(1)}
             </Text>
@@ -277,9 +318,9 @@ function TrainerCard({
               onToggleLike();
             }}
           >
-            <Heart
-              color={trainer.liked ? Colors.accent : Colors.textMuted}
-              fill={trainer.liked ? Colors.accent : 'transparent'}
+            <OriginalAppIcon
+              color={trainer.liked ? Colors.danger : Colors.textMuted}
+              name={trainer.liked ? 'heart' : 'heartOutline'}
               size={20}
             />
           </Pressable>
@@ -294,7 +335,7 @@ function TrainerCard({
       {isRecommended ? (
         <View style={styles.matchRow}>
           <View style={styles.highlightTag}>
-            <Zap color={GOLD} fill={GOLD} size={10} />
+            <OriginalAppIcon color={GOLD} name="lightningBolt" size={10} />
             <Text style={styles.highlightTagText}>{trainer.highlightTag}</Text>
           </View>
           <Text numberOfLines={2} style={styles.reasonText}>
@@ -305,7 +346,11 @@ function TrainerCard({
 
       <View style={styles.cardFooter}>
         <View style={styles.metaLeft}>
-          <Clock3 color={Colors.textMuted} size={12} />
+          <OriginalAppIcon
+            color={Colors.textMuted}
+            name="timeOutline"
+            size={12}
+          />
           <Text style={styles.metaText}>경력 {trainer.experienceYears}년</Text>
           {trainer.certifications.map((certification) => (
             <View key={certification} style={styles.certTag}>
@@ -339,6 +384,7 @@ function TrainerDetailModal({
   trainer: TrainerListItem | null;
 }) {
   const connectRequestMutation = useCreateTrainerConnectRequest();
+  const insets = useSafeAreaInsets();
 
   if (!trainer) {
     return null;
@@ -387,7 +433,9 @@ function TrainerDetailModal({
     <Modal animationType="slide" onRequestClose={onClose} transparent visible>
       <View style={styles.modalRoot}>
         <Pressable onPress={onClose} style={styles.modalBackdrop} />
-        <View style={styles.modalSheet}>
+        <View
+          style={[styles.modalSheet, { paddingBottom: insets.bottom + 24 }]}
+        >
           <View style={styles.modalHandle} />
 
           <View style={styles.modalHeader}>
@@ -406,15 +454,23 @@ function TrainerDetailModal({
             <View style={styles.modalNameWrap}>
               <View style={styles.modalNameRow}>
                 <Text style={styles.modalTrainerName}>{trainer.name}</Text>
-                <Star color={GOLD} fill={GOLD} size={13} />
+                <OriginalAppIcon color={GOLD} name="star" size={13} />
                 <Text style={styles.modalRating}>
                   {Number(trainer.rating).toFixed(1)}
                 </Text>
               </View>
               <Text style={styles.modalGym}>{trainer.gymName}</Text>
             </View>
-            <Pressable hitSlop={10} onPress={onClose}>
-              <Text style={styles.modalCloseText}>×</Text>
+            <Pressable
+              accessibilityLabel="트레이너 상세 닫기"
+              hitSlop={10}
+              onPress={onClose}
+            >
+              <OriginalAppIcon
+                color={Colors.textMuted}
+                name="close"
+                size={22}
+              />
             </Pressable>
           </View>
 
@@ -627,6 +683,9 @@ const styles = StyleSheet.create({
     color: Colors.accent,
     fontFamily: 'Pretendard-SemiBold',
   },
+  dropdownOptionPressed: {
+    backgroundColor: Colors.inputBg,
+  },
   dropdownOverlay: {
     bottom: 0,
     left: 0,
@@ -653,6 +712,25 @@ const styles = StyleSheet.create({
   },
   list: {
     gap: 10,
+  },
+  loadingCard: {
+    ...iosShadow,
+    alignItems: 'center',
+    backgroundColor: Colors.card,
+    borderRadius: 14,
+    gap: 10,
+    marginBottom: 20,
+    padding: 32,
+  },
+  loadingSubtitle: {
+    color: Colors.textSecondary,
+    fontFamily: 'Pretendard-Regular',
+    fontSize: 13,
+  },
+  loadingTitle: {
+    color: Colors.text,
+    fontFamily: 'Pretendard-SemiBold',
+    fontSize: 15,
   },
   matchRow: {
     backgroundColor: `${GOLD}0D`,
@@ -695,12 +773,6 @@ const styles = StyleSheet.create({
   },
   modalCertTag: {
     backgroundColor: `${Colors.primary}12`,
-  },
-  modalCloseText: {
-    color: Colors.textMuted,
-    fontFamily: 'Pretendard-Regular',
-    fontSize: 28,
-    lineHeight: 28,
   },
   modalContent: {
     gap: 20,

@@ -5,7 +5,7 @@ export type MealAnalysisTab = 'analysis' | 'guide';
 export type MealPhotoTarget = 'after' | 'before';
 export type MealPhoto = PickedImage;
 
-export const MEAL_TYPES: MealType[] = ['breakfast', 'lunch', 'snack', 'dinner'];
+export const MEAL_TYPES: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack'];
 
 export const MEAL_LABELS: Record<MealType, string> = {
   breakfast: '아침',
