@@ -156,7 +156,8 @@ TabPageLayout
 - 원본 SVG: [`components/TabIcons.tsx`](../../../../2026-07-13/my-PT-Diary/components/TabIcons.tsx)
 - 현재 SVG: [`src/shared/components/icons/pt-diary-icons.tsx`](../../src/shared/components/icons/pt-diary-icons.tsx)
 - 원본 이미지: `assets/images`
-- 현재 이미지: `src/assets/images`
+- 현재 공개 이미지 seed: [`infra/minio/seed/pt-diary-assets/v1`](../../../infra/minio/seed/pt-diary-assets/v1)
+- 현재 URI 생성기: [`src/shared/lib/asset-url.ts`](../../src/shared/lib/asset-url.ts)
 
 ### 확인 결과
 
@@ -173,7 +174,7 @@ TabPageLayout
 - `AITabIcon`
 - `MyTabIcon`
 
-홈에서 사용하는 `shoes.png`, `video.png`도 원본과 현재 SHA-256이 동일하다.
+홈에서 사용하는 `shoes.png`, `video.png`도 원본과 MinIO seed의 SHA-256이 동일하다.
 
 반면 원본이 Ionicons로 그리던 chevron과 play를 현재 일부 컴포넌트에서 `›`, `⌃`,
 `⌄`, `▶` 같은 Text glyph로 대체했다. 이 glyph는 폰트 metric에 종속되므로 원본과
@@ -181,7 +182,8 @@ TabPageLayout
 
 ### 공통화 결정
 
-- 이미 옮긴 SVG path와 이미지 asset은 유지한다.
+- 이미 옮긴 SVG path는 코드 registry에 유지하고 PNG·파일형 SVG 원본은 MinIO seed로
+  관리한다.
 - 아이콘을 화면에서 라이브러리명이나 Text glyph로 직접 선택하지 않도록 semantic
   icon registry를 둔다.
 - 우선 필요한 공통 이름은 `chevronRight`, `chevronUp`, `chevronDown`, `play`다.
@@ -195,8 +197,11 @@ TabPageLayout
   추가했다.
 - 홈 quick action, 루틴 accordion, AI hub, PT, 트레이너 매칭, 체형 분석과 분석 기록의
   대응 chevron을 registry로 교체했다.
-- 운동 진행 timer의 play/pause는 이미 이관되어 있던 원본 PNG가 원본과 hash까지
-  같음을 확인하고 문자 glyph 대신 해당 asset을 사용하도록 복원했다.
+- 운동 진행 timer의 play/pause는 원본과 hash가 같은 PNG를 MinIO 공개 URI로 연결해
+  문자 glyph 대신 해당 asset을 사용하도록 복원했다.
+- Apps in Toss가 로컬 이미지 asset을 지원하지 않으므로 근육 안내, 운동 부위,
+  운동 제어, quick action, PT와 운동 가이드의 PNG source를 `ASSET_BASE_URL` 기반
+  원격 URI로 전환했다.
 - 의미가 다른 flow arrow와 아직 registry가 확정되지 않은 leading icon은 Lucide를
   일괄 치환하지 않았다.
 

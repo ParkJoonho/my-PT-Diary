@@ -1,5 +1,6 @@
 import { RowActionCard } from 'shared/components/row-action-card';
 import { UnimplementedBadge } from 'shared/components/unimplemented-badge';
+import { getAssetSource } from 'shared/lib/asset-url';
 
 type QuickActionCardProps = {
   kind: 'outdoor' | 'guide';
@@ -10,8 +11,8 @@ type QuickActionCardProps = {
 };
 
 const QUICK_IMAGES = {
-  outdoor: require('../../../assets/images/shoes.png'),
-  guide: require('../../../assets/images/video.png'),
+  guide: getAssetSource('images/video.png'),
+  outdoor: getAssetSource('images/shoes.png'),
 };
 
 export function QuickActionCard({

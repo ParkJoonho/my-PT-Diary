@@ -11,7 +11,9 @@ if (result.error) {
   });
 }
 
-function readHttpUrl(name: 'API_BASE_URL' | 'OPENAPI_SCHEMA_URL') {
+function readHttpUrl(
+  name: 'API_BASE_URL' | 'ASSET_BASE_URL' | 'OPENAPI_SCHEMA_URL',
+) {
   const value = process.env[name]?.trim();
 
   if (!value) {
@@ -28,4 +30,5 @@ function readHttpUrl(name: 'API_BASE_URL' | 'OPENAPI_SCHEMA_URL') {
 }
 
 export const API_BASE_URL = readHttpUrl('API_BASE_URL');
+export const ASSET_BASE_URL = readHttpUrl('ASSET_BASE_URL');
 export const OPENAPI_SCHEMA_URL = readHttpUrl('OPENAPI_SCHEMA_URL');

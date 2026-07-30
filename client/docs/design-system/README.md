@@ -85,7 +85,7 @@
 | F-01 | [색상·그림자 foundation](common.md#f-01-색상그림자-foundation) | [`constants/colors.ts`](../../../../2026-07-13/my-PT-Diary/constants/colors.ts) | [`shared/constants/colors.ts`](../../src/shared/constants/colors.ts) | ✅ | ✅ | — | ✅ | ✅ | ✅ | ⬜ |
 | F-02 | [폰트 asset과 본문 typography](common.md#f-02-폰트-asset과-본문-typography) | [`app/_layout.tsx`](../../../../2026-07-13/my-PT-Diary/app/_layout.tsx) 및 실제 화면 StyleSheet | [`shared/constants/typography.ts`](../../src/shared/constants/typography.ts) 및 실제 화면 StyleSheet | ✅ | ✅ | 🟨 | ✅ | ✅ | ✅ | ⬜ |
 | F-03 | [하단 탭 shell](common.md#f-03-하단-탭-shell) | [`components/GlobalTabBar.tsx`](../../../../2026-07-13/my-PT-Diary/components/GlobalTabBar.tsx) | [`shared/components/member-tab-bar.tsx`](../../src/shared/components/member-tab-bar.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | ✅ | ⬜ |
-| F-04 | [공통 SVG·이미지·아이콘 체계](common.md#f-04-공통-svg이미지아이콘-체계) | [`components/TabIcons.tsx`](../../../../2026-07-13/my-PT-Diary/components/TabIcons.tsx) 및 원본 asset import | [`shared/components/icons/pt-diary-icons.tsx`](../../src/shared/components/icons/pt-diary-icons.tsx) 및 현재 asset import | ✅ | ✅ | — | ✅ | ✅ | ✅ | ⬜ |
+| F-04 | [공통 SVG·이미지·아이콘 체계](common.md#f-04-공통-svg이미지아이콘-체계) | [`components/TabIcons.tsx`](../../../../2026-07-13/my-PT-Diary/components/TabIcons.tsx) 및 원본 asset import | [`shared/components/icons/pt-diary-icons.tsx`](../../src/shared/components/icons/pt-diary-icons.tsx), [`shared/lib/asset-url.ts`](../../src/shared/lib/asset-url.ts) 및 MinIO seed | ✅ | ✅ | — | ✅ | ✅ | ✅ | ⬜ |
 | F-05 | [화면 배경·스크롤·안전영역](common.md#f-05-화면-배경스크롤안전영역) | 실제 페이지 루트 View·ScrollView | [`shared/components/tab-page-layout.tsx`](../../src/shared/components/tab-page-layout.tsx) 및 실제 페이지 루트 View·ScrollView | ✅ | ✅ | 🟨 | ✅ | ✅ | ✅ | ⬜ |
 
 ## 현재 구현된 사용자 페이지

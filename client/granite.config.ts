@@ -14,20 +14,24 @@ if (result.error) {
   });
 }
 
-const apiBaseUrl = process.env.API_BASE_URL?.trim();
+function readHttpUrl(name: 'API_BASE_URL' | 'ASSET_BASE_URL') {
+  const value = process.env[name]?.trim();
 
-if (!apiBaseUrl) {
-  throw new Error('client/.env에 API_BASE_URL 값이 필요합니다.');
+  if (!value) {
+    throw new Error(`client/.env에 ${name} 값이 필요합니다.`);
+  }
+
+  const url = new URL(value);
+
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    throw new Error(`${name}은 http 또는 https URL이어야 합니다.`);
+  }
+
+  return value.replace(/\/+$/, '');
 }
 
-const parsedApiBaseUrl = new URL(apiBaseUrl);
-
-if (
-  parsedApiBaseUrl.protocol !== 'http:' &&
-  parsedApiBaseUrl.protocol !== 'https:'
-) {
-  throw new Error('API_BASE_URL은 http 또는 https URL이어야 합니다.');
-}
+const apiBaseUrl = readHttpUrl('API_BASE_URL');
+const assetBaseUrl = readHttpUrl('ASSET_BASE_URL');
 
 export default defineConfig({
   scheme: 'intoss',
@@ -37,10 +41,13 @@ export default defineConfig({
       brand: {
         displayName: 'a2t-ptdiary', // 화면에 노출될 앱의 한글 이름으로 바꿔주세요.
         primaryColor: '#3182F6', // 화면에 노출될 앱의 기본 색상으로 바꿔주세요.
-        icon: '', // 화면에 노출될 앱의 아이콘 이미지 주소로 바꿔주세요.
+        icon: `${assetBaseUrl}/images/icon.png`,
       },
       permissions: [],
     }),
-    env({ API_BASE_URL: apiBaseUrl.replace(/\/+$/, '') }),
+    env({
+      API_BASE_URL: apiBaseUrl,
+      ASSET_BASE_URL: assetBaseUrl,
+    }),
   ],
 });

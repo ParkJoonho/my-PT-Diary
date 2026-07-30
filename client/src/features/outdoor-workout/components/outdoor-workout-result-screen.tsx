@@ -5,6 +5,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  type ImageSourcePropType,
   Platform,
   Pressable,
   ScrollView,
@@ -23,14 +24,15 @@ import {
   SemanticIcon,
 } from 'shared/components/icons/pt-diary-icons';
 import Colors from 'shared/constants/colors';
+import { getAssetSource } from 'shared/lib/asset-url';
 import { buildOutdoorWorkoutRecordPayload } from '../lib/build-outdoor-workout-record-payload';
 import { useOutdoorWorkoutStore } from '../stores/use-outdoor-workout-store';
 
-const SOUND_ON_ICON = require('../../../assets/icons/sound_on.png');
-const SOUND_OFF_ICON = require('../../../assets/icons/sound_off.png');
-const PAUSE_ICON = require('../../../assets/icons/pause.png');
-const STOP_ICON = require('../../../assets/icons/stop.png');
-const PLAY_ICON = require('../../../assets/icons/play.png');
+const SOUND_ON_ICON = getAssetSource('icons/sound_on.png');
+const SOUND_OFF_ICON = getAssetSource('icons/sound_off.png');
+const PAUSE_ICON = getAssetSource('icons/pause.png');
+const STOP_ICON = getAssetSource('icons/stop.png');
+const PLAY_ICON = getAssetSource('icons/play.png');
 const SEGMENT_COLORS = ['#22C55E', '#FFA500', '#3B82F6'];
 const SEGMENT_GRADIENTS = [
   ['#15C47E', '#76E4B8'],
@@ -515,7 +517,7 @@ function WorkoutControl({
   label,
   onPress,
 }: {
-  icon: number;
+  icon: ImageSourcePropType;
   label: string;
   onPress: () => void;
 }) {

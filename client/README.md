@@ -17,7 +17,8 @@ Apps in Toss Granite 기반 PT Diary 마이그레이션 앱이다.
 src/pages                 Granite 라우트 진입점
 src/features/home         홈 화면 컴포넌트, mock 데이터, 타입, 유틸
 src/shared                공용 컴포넌트와 디자인 토큰
-src/assets                마이그레이션한 폰트/이미지/아이콘
+src/assets/fonts          네이티브에 등록하는 Pretendard 폰트
+../infra/minio/seed       MinIO에 업로드하는 공개 이미지·아이콘 원본
 docs                      컨벤션, 작업 내역, 원본 디자인 참고 문서
 ```
 
@@ -40,6 +41,9 @@ npm run api:generate
 
 Orval 설정은 `orval.config.ts`에 있고, 입력 스펙은 로컬 서버의 `http://127.0.0.1:3000/docs-json`를 사용한다.
 생성 결과는 `src/shared/api/generated` 아래로 떨어지며 Git에는 포함하지 않는다.
+
+이미지·아이콘 URL은 `.env`의 `ASSET_BASE_URL`을 기준으로 생성한다. Apps in Toss
+실기기에서는 `127.0.0.1` 대신 개발 PC의 LAN IP를 사용한다.
 
 ## 앱인토스 시뮬레이터 실행
 

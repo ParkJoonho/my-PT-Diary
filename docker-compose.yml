@@ -16,5 +16,40 @@ services:
     volumes:
       - at_pt_postgres_data:/var/lib/postgresql
 
+  minio:
+    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
+    container_name: ai-pt-minio-local
+    command: server /data --console-address ':9001'
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-a2t-minio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-a2t-minio-local-secret}
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - at_pt_minio_data:/data
+
+  minio-init:
+    image: minio/mc:RELEASE.2025-08-13T08-35-41Z
+    container_name: ai-pt-minio-init-local
+    entrypoint: ['/bin/sh', '/scripts/bootstrap.sh']
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-a2t-minio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-a2t-minio-local-secret}
+      MINIO_PUBLIC_BUCKET: ${MINIO_PUBLIC_BUCKET:-pt-diary-assets}
+    volumes:
+      - ./infra/minio/scripts/bootstrap.sh:/scripts/bootstrap.sh:ro
+      - ./infra/minio/seed:/seed:ro
+
 volumes:
   at_pt_postgres_data:
+  at_pt_minio_data:

@@ -28,7 +28,7 @@
 | Orval 재생성 | 서버 Swagger 기준으로 클라이언트 생성 모델을 다시 만들었다. 현재 클라이언트는 `ConditionItemDto[]` 기반 모델을 사용한다. | `client/src/shared/api/generated/models/createConditionRecordDto.ts`, `client/src/shared/api/generated/models/conditionRecordDto.ts`, `client/src/shared/api/generated/models/conditionItemDto.ts` |
 | 입력 화면 상태 구조 | 폼 상태를 원본 도메인 구조에 맞춰 `date`, `weekNumberInput`, `conditions[]`, `muscleSoreness[]`로 재구성했고, zustand 슬라이스로 분리했다. | `client/src/features/condition-records/stores/use-condition-form-store.ts`, `client/src/features/condition-records/lib/condition-form.ts` |
 | 입력 화면 UX | 날짜/주차 입력, 컨디션 15문항 1~5 토글, 근육통 15문항 1~4 토글, 수정 모드 로딩, 저장 후 목록 복귀 흐름을 원본 기준으로 복원했다. | `client/src/features/condition-records/components/condition-form-screen.tsx`, `client/src/features/condition-records/components/condition-score-row.tsx` |
-| 근육 위치 안내 | 원본의 근육 부위 안내 모달을 Granite 쪽 컴포넌트로 옮기고, 원본 PNG 자산도 같이 복사해 연결했다. | `client/src/features/condition-records/lib/condition-muscle-info.ts`, `client/src/features/condition-records/components/condition-muscle-info-modal.tsx`, `client/src/assets/muscles/*` |
+| 근육 위치 안내 | 원본의 근육 부위 안내 모달을 Granite 쪽 컴포넌트로 옮기고, 원본 PNG를 MinIO 공개 URI로 연결했다. | [`condition-muscle-info.ts`](../../src/features/condition-records/lib/condition-muscle-info.ts), [`condition-muscle-info-modal.tsx`](../../src/features/condition-records/components/condition-muscle-info-modal.tsx), [`muscles`](../../../infra/minio/seed/pt-diary-assets/v1/muscles) |
 | 목록/필터 화면 UX | 날짜 헤더 묶기, 오늘 배지, 달력 범위 필터, 기록 존재일 마킹, 10건 단위 점진 로드, 롱프레스 삭제 흐름을 복원했다. 목록 상태도 zustand 슬라이스로 분리했다. | `client/src/features/condition-records/components/condition-record-list-screen.tsx`, `client/src/features/condition-records/components/condition-calendar-modal.tsx`, `client/src/features/condition-records/stores/use-condition-record-list-store.ts` |
 | 목록 카드 요약 | 원본처럼 컨디션 평균, 근육통 평균, 근육통 부위 요약을 카드에 다시 표시한다. | `client/src/features/condition-records/components/condition-record-card.tsx`, `client/src/features/condition-records/lib/condition-record-metadata.ts` |
 | 운동 기록 탭 연동 | 오늘 컨디션 빈 상태의 `컨디션 체크` 버튼, 상단 `전체 기록보기` 링크, 오늘 기록 요약 카드 흐름을 원본 쪽으로 맞췄다. | `client/src/features/exercise-dashboard/components/exercise-screen.tsx` |
@@ -70,4 +70,3 @@
   - 빈 상태: `/exercise` 에서 `컨디션 체크`
   - 기록 있음: 요약 카드 표시, 상단은 `전체 기록보기`
 - 목록에서 날짜 헤더/오늘 배지/기간 필터/롱프레스 삭제가 동작하는지
-

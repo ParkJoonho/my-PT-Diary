@@ -1,8 +1,9 @@
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import Colors from 'shared/constants/colors';
+import { getAssetSource } from 'shared/lib/asset-url';
 import type { ExerciseGuide } from '../types/exercise-guide';
 
-const HEART_ICON = require('../../../assets/icons/heart.png');
+const HEART_ICON = getAssetSource('icons/heart.png');
 
 export function ExerciseGuideCard({
   guide,

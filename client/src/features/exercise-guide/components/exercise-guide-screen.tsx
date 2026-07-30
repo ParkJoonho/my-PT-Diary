@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import {
   Alert,
   Image,
+  type ImageSourcePropType,
   Modal,
   Platform,
   Pressable,
@@ -15,6 +16,7 @@ import {
 import { SuspenseSection } from 'shared/components/async-state';
 import { OriginalAppIcon } from 'shared/components/icons/pt-diary-icons';
 import Colors, { iosShadowLight } from 'shared/constants/colors';
+import { getAssetSource } from 'shared/lib/asset-url';
 import {
   useExerciseGuides,
   useSetExerciseGuideLike,
@@ -26,8 +28,8 @@ import { ExerciseGuideCard } from './exercise-guide-card';
 import { ExerciseGuideFilterRow } from './exercise-guide-filter-row';
 import { ExerciseGuideTabSelector } from './exercise-guide-tab-selector';
 
-const CAMERA_ICON = require('../../../assets/icons/camera.png');
-const GALLERY_ICON = require('../../../assets/icons/gallery.png');
+const CAMERA_ICON = getAssetSource('icons/camera.png');
+const GALLERY_ICON = getAssetSource('icons/gallery.png');
 
 type ExerciseGuideScreenProps = {
   contentBottomInset: number;
@@ -209,7 +211,7 @@ function ModalOption({
   label,
   onPress,
 }: {
-  icon: number;
+  icon: ImageSourcePropType;
   label: string;
   onPress: () => void;
 }) {

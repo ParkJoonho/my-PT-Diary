@@ -1,7 +1,11 @@
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { OriginalAppIcon } from 'shared/components/icons/pt-diary-icons';
 import Colors from 'shared/constants/colors';
+import { getAssetSource } from 'shared/lib/asset-url';
 import { formatTimer } from '../lib/format-duration';
+
+const PAUSE_ICON = getAssetSource('icons/pause.png');
+const PLAY_ICON = getAssetSource('icons/play.png');
 
 type ActiveTimerBarProps = {
   elapsedSeconds: number;
@@ -30,11 +34,7 @@ export function ActiveTimerBar({
         >
           <Image
             resizeMode="contain"
-            source={
-              isPaused
-                ? require('../../../assets/icons/play.png')
-                : require('../../../assets/icons/pause.png')
-            }
+            source={isPaused ? PLAY_ICON : PAUSE_ICON}
             style={styles.workoutIcon}
           />
         </Pressable>

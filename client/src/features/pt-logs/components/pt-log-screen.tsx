@@ -21,6 +21,7 @@ import { RowActionCard } from 'shared/components/row-action-card';
 import { TabPageLayout } from 'shared/components/tab-page-layout';
 import Colors, { iosShadow } from 'shared/constants/colors';
 import { ptTypography } from 'shared/constants/typography';
+import { getAssetSource } from 'shared/lib/asset-url';
 import {
   getPtLessonsQueryKeyPrefix,
   useDeletePtLesson,
@@ -152,7 +153,7 @@ function PtLogContent({
             </Text>
             <View style={styles.trainerCardWrap}>
               <RowActionCard
-                imageSource={require('../../../assets/images/trainer-icon.png')}
+                imageSource={getAssetSource('images/trainer-icon.png')}
                 pressedOpacity={0.85}
                 pressedScale={0.98}
                 subtitle="나에게 딱 맞는 트레이너를 추천해드려요."
