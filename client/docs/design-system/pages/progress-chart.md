@@ -174,8 +174,8 @@ MaterialCommunityIcons의 `weight-lifter` 의미는 공통 SVG registry의 `weig
 
 ### 자동 검증
 
-- 운동 리포트 관련 Jest: `3` suites, `12` tests 통과
-- 전체 client Jest: `57` suites, `159` tests 통과
+- 운동 리포트 관련 Jest: `3` suites, `13` tests 통과
+- 전체 client Jest: `57` suites, `160` tests 통과
 - TypeScript `tsc --noEmit` 통과
 - 변경한 TypeScript/TSX `5`개 파일 Biome check 통과
 - `git diff --check` 통과

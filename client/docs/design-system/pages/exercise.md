@@ -175,11 +175,13 @@ ExerciseScreen
 | metric value | `20`, Medium | 동일 | 일치 |
 | metric label | `11`, Regular | 동일 | 일치 |
 | chart card | 흰색, radius `16`, padding `16`, `iosShadow` | 동일 | 일치 |
+| chart content width | 화면 좌우 `16` + 카드 안쪽 `16`을 뺀 `screenWidth - 64` | embedded variant로 동일 | 일치 |
 | chart tab | icon + text pill | 원본 SVG path의 icon + text pill | 일치 |
 | insight card | `#FFFDF5`, radius `12`, border `#F0E6C8`, padding `14`, lightbulb `18` | 동일 MDI path | 일치 |
 
 차트 그리기 로직은 유지하고, 차트 바깥 summary와 tab/insight icon만 원본 구조로
-복원했다.
+복원했다. P-21 상세 페이지와 같은 차트 컴포넌트를 사용하되 기록 탭에서는
+`embedded` variant로 상세 페이지 전용 좌우 `20` 여백이 중복되지 않게 분리했다.
 
 ## 공통화 판정
 
@@ -238,7 +240,7 @@ ExerciseScreen
 ## 코드 검증
 
 - 대시보드 카드 3종의 운동 요약·컨디션 snapshot·단일 리포트 구조 테스트 추가
-- workout report 기존 API·format 테스트 포함 관련 테스트 12개 통과
+- workout report와 기록 대시보드 관련 `4` suites, `16` tests 통과
 - TypeScript `tsc --noEmit` 통과
 - 변경 파일 Biome 검사 통과
 

@@ -227,7 +227,7 @@ function InlineReportSection() {
         workoutCount={formatReportNumber(data.totals.workoutRecordCount)}
       />
 
-      <WorkoutReportChartSection summary={data} />
+      <WorkoutReportChartSection summary={data} variant="embedded" />
     </View>
   );
 }

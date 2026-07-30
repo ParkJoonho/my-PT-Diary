@@ -3,6 +3,7 @@ import type { WorkoutReportSummaryDto } from 'shared/api/generated/models';
 import {
   formatReportCompactNumber,
   formatShortDate,
+  getWorkoutReportChartWidth,
   getWorkoutReportInsight,
 } from '../report-format';
 
@@ -50,6 +51,11 @@ describe('운동 리포트 포맷 유틸', () => {
   it('큰 수는 k 단위로 축약한다', () => {
     expect(formatReportCompactNumber(1160)).toBe('1.2k');
     expect(formatReportCompactNumber(840)).toBe('840');
+  });
+
+  it('기록 탭 내장 차트는 바깥 16과 카드 안쪽 16만 폭에서 차감한다', () => {
+    expect(getWorkoutReportChartWidth(390, 'embedded')).toBe(326);
+    expect(getWorkoutReportChartWidth(390, 'detail')).toBe(350);
   });
 
   it('볼륨 탭 인사이트를 이전 기록 대비로 만든다', () => {

@@ -19,11 +19,12 @@ import Svg, {
 } from 'react-native-svg';
 import type { WorkoutReportSummaryDto } from 'shared/api/generated/models';
 import { OriginalAppIcon } from 'shared/components/icons/pt-diary-icons';
-import Colors from 'shared/constants/colors';
+import Colors, { iosShadow } from 'shared/constants/colors';
 import { useWorkoutReportStore } from '../stores/use-workout-report-store';
 import {
   WORKOUT_REPORT_TABS,
   formatShortDate,
+  getWorkoutReportChartWidth,
   getWorkoutReportInsight,
 } from './report-format';
 
@@ -41,13 +42,16 @@ type DualTrendPoint = {
 
 export function WorkoutReportChartSection({
   summary,
+  variant = 'detail',
 }: {
   summary: WorkoutReportSummaryDto;
+  variant?: 'detail' | 'embedded';
 }) {
   const { width: screenWidth } = useWindowDimensions();
   const activeTab = useWorkoutReportStore((state) => state.activeTab);
   const setActiveTab = useWorkoutReportStore((state) => state.setActiveTab);
-  const chartWidth = Math.min(screenWidth - 40, 500);
+  const embedded = variant === 'embedded';
+  const chartWidth = getWorkoutReportChartWidth(screenWidth, variant);
   const chartHeight = 220;
 
   const bodyCompositionData = useMemo<DualTrendPoint[]>(
@@ -73,12 +77,15 @@ export function WorkoutReportChartSection({
   const insightText = getWorkoutReportInsight(summary, activeTab);
 
   return (
-    <View style={styles.wrap}>
+    <View style={[styles.wrap, embedded && styles.wrapEmbedded]}>
       <ScrollView
         horizontal
-        contentContainerStyle={styles.tabContent}
+        contentContainerStyle={[
+          styles.tabContent,
+          embedded && styles.tabContentEmbedded,
+        ]}
         showsHorizontalScrollIndicator={false}
-        style={styles.tabScroll}
+        style={[styles.tabScroll, embedded && styles.tabScrollEmbedded]}
       >
         {WORKOUT_REPORT_TABS.map((tab) => {
           const active = activeTab === tab.key;
@@ -92,7 +99,7 @@ export function WorkoutReportChartSection({
               <OriginalAppIcon
                 color={active ? Colors.white : Colors.textSecondary}
                 name={tab.icon}
-                size={16}
+                size={embedded ? 14 : 16}
               />
               <Text
                 style={[
@@ -107,7 +114,7 @@ export function WorkoutReportChartSection({
         })}
       </ScrollView>
 
-      <View style={styles.chartCard}>
+      <View style={[styles.chartCard, embedded && styles.chartCardEmbedded]}>
         {activeTab === 'volume' ? (
           <LineChart
             color={Colors.accent}
@@ -167,7 +174,9 @@ export function WorkoutReportChartSection({
       </View>
 
       {insightText ? (
-        <View style={styles.insightCard}>
+        <View
+          style={[styles.insightCard, embedded && styles.insightCardEmbedded]}
+        >
           <OriginalAppIcon color="#D4AF37" name="lightbulbOutline" size={18} />
           <Text style={styles.insightText}>{insightText}</Text>
         </View>
@@ -754,6 +763,12 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     padding: 16,
   },
+  chartCardEmbedded: {
+    ...iosShadow,
+    borderWidth: 0,
+    marginBottom: 0,
+    marginHorizontal: 0,
+  },
   insightCard: {
     alignItems: 'flex-start',
     backgroundColor: '#FFFDF5',
@@ -771,6 +786,10 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     lineHeight: 20,
+  },
+  insightCardEmbedded: {
+    marginBottom: 0,
+    marginHorizontal: 0,
   },
   tabButton: {
     alignItems: 'center',
@@ -799,8 +818,18 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 20,
   },
+  tabContentEmbedded: {
+    paddingHorizontal: 0,
+    paddingRight: 4,
+  },
   tabScroll: {
     marginBottom: 16,
   },
+  tabScrollEmbedded: {
+    marginBottom: 0,
+  },
   wrap: {},
+  wrapEmbedded: {
+    gap: 12,
+  },
 });

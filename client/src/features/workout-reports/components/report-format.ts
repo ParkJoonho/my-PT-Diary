@@ -20,6 +20,15 @@ export const WORKOUT_REPORT_TABS: Array<{
   { icon: 'calendar', key: 'frequency', label: '빈도' },
 ];
 
+export function getWorkoutReportChartWidth(
+  screenWidth: number,
+  variant: 'detail' | 'embedded',
+) {
+  return variant === 'embedded'
+    ? screenWidth - 64
+    : Math.min(screenWidth - 40, 500);
+}
+
 export function formatShortDate(date: string) {
   const [, month, day] = date.split('-').map(Number);
   const safeMonth = month || 1;
