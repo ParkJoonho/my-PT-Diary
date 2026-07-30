@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import Colors from 'shared/constants/colors';
 import { formatTimer } from '../lib/format-duration';
 
@@ -27,7 +27,15 @@ export function ActiveTimerBar({
             pressed && styles.pressed,
           ]}
         >
-          <Text style={styles.iconText}>{isPaused ? '▶' : 'Ⅱ'}</Text>
+          <Image
+            resizeMode="contain"
+            source={
+              isPaused
+                ? require('../../../assets/icons/play.png')
+                : require('../../../assets/icons/pause.png')
+            }
+            style={styles.workoutIcon}
+          />
         </Pressable>
         <Pressable
           accessibilityRole="button"
@@ -82,11 +90,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 32,
   },
-  iconText: {
-    color: Colors.white,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 20,
-  },
   pressed: {
     opacity: 0.78,
   },
@@ -95,5 +98,10 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: 'Pretendard-Medium',
     fontSize: 28,
+    letterSpacing: 2,
+  },
+  workoutIcon: {
+    height: 32,
+    width: 32,
   },
 });

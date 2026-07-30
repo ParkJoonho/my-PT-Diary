@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { ChevronLeft } from 'lucide-react-native';
 import { useEffect, useMemo, useState } from 'react';
 import {
   Modal,
@@ -9,6 +9,7 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
+import { SemanticIcon } from 'shared/components/icons/pt-diary-icons';
 import Colors, { iosShadow } from 'shared/constants/colors';
 import { KOREAN_DAYS } from '../data/pt-log-options';
 import { formatShortPtDate } from '../lib/pt-log-format';
@@ -160,7 +161,11 @@ export function PtLogCalendarModal({
                 onPress={() => changeMonth('next')}
                 style={styles.navButton}
               >
-                <ChevronRight color={Colors.text} size={20} />
+                <SemanticIcon
+                  color={Colors.text}
+                  name="chevronRight"
+                  size={20}
+                />
               </Pressable>
             </View>
 

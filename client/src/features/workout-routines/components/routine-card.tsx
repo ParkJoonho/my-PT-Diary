@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { AIInfoIcon } from 'shared/components/icons/pt-diary-icons';
 import Colors, { iosShadow } from 'shared/constants/colors';
+import { ptTypography } from 'shared/constants/typography';
 import {
   MOCK_AI_GYM_ROUTINES,
   MOCK_AI_HOME_ROUTINES,
@@ -255,8 +256,7 @@ const styles = StyleSheet.create({
   },
   title: {
     color: Colors.text,
-    fontFamily: 'Pretendard-Medium',
-    fontSize: 17,
+    ...ptTypography.sectionTitle,
   },
   titleRow: {
     alignItems: 'center',

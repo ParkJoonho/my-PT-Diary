@@ -4,8 +4,6 @@ import {
   ArrowLeft,
   Camera,
   CheckCircle2,
-  ChevronDown,
-  ChevronUp,
   FolderOpen,
   Footprints,
   History,
@@ -25,6 +23,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { SemanticIcon } from 'shared/components/icons/pt-diary-icons';
 import Colors, { iosShadow } from 'shared/constants/colors';
 import { useCreateAnalysisRecord } from '../api/analysis-records';
 import { useAnalyzeBody } from '../api/body-analysis';
@@ -451,16 +450,16 @@ export function BodyAnalysisScreen() {
                   ) : null}
                 </View>
                 {multiViewOpen ? (
-                  <ChevronUp
+                  <SemanticIcon
                     color={Colors.textMuted}
+                    name="chevronUp"
                     size={20}
-                    strokeWidth={2.1}
                   />
                 ) : (
-                  <ChevronDown
+                  <SemanticIcon
                     color={Colors.textMuted}
+                    name="chevronDown"
                     size={20}
-                    strokeWidth={2.1}
                   />
                 )}
               </Pressable>

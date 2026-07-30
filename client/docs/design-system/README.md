@@ -82,11 +82,11 @@
 
 | ID | 점검 단위 | 원본 실제 코드 | `ai-pt` 실제 코드 | 원본 코드 | 현재 코드 | 상태 정렬 | 규칙 추출 | 공통화 | 반영 | 실기 검증 |
 |---|---|---|---|---|---|---|---|---|---|---|
-| F-01 | [색상·그림자 foundation](common.md#f-01-색상그림자-foundation) | [`constants/colors.ts`](../../../../2026-07-13/my-PT-Diary/constants/colors.ts) | [`shared/constants/colors.ts`](../../src/shared/constants/colors.ts) | ✅ | ✅ | — | ✅ | ✅ | ⬜ | ⬜ |
-| F-02 | [폰트 asset과 본문 typography](common.md#f-02-폰트-asset과-본문-typography) | [`app/_layout.tsx`](../../../../2026-07-13/my-PT-Diary/app/_layout.tsx) 및 실제 화면 StyleSheet | [`react-native.config.js`](../../react-native.config.js) 및 실제 화면 StyleSheet | ✅ | ✅ | 🟨 | ✅ | 🟨 | ⬜ | ⬜ |
-| F-03 | [하단 탭 shell](common.md#f-03-하단-탭-shell) | [`components/GlobalTabBar.tsx`](../../../../2026-07-13/my-PT-Diary/components/GlobalTabBar.tsx) | [`features/home/components/home-tab-bar.tsx`](../../src/features/home/components/home-tab-bar.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | ⬜ | ⬜ |
-| F-04 | [공통 SVG·이미지·아이콘 체계](common.md#f-04-공통-svg이미지아이콘-체계) | [`components/TabIcons.tsx`](../../../../2026-07-13/my-PT-Diary/components/TabIcons.tsx) 및 원본 asset import | [`shared/components/icons/pt-diary-icons.tsx`](../../src/shared/components/icons/pt-diary-icons.tsx) 및 현재 asset import | ✅ | ✅ | — | ✅ | ✅ | ⬜ | ⬜ |
-| F-05 | [화면 배경·스크롤·안전영역](common.md#f-05-화면-배경스크롤안전영역) | 실제 페이지 루트 View·ScrollView | 실제 페이지 루트 View·ScrollView | ✅ | ✅ | 🟨 | ✅ | ✅ | ⬜ | ⬜ |
+| F-01 | [색상·그림자 foundation](common.md#f-01-색상그림자-foundation) | [`constants/colors.ts`](../../../../2026-07-13/my-PT-Diary/constants/colors.ts) | [`shared/constants/colors.ts`](../../src/shared/constants/colors.ts) | ✅ | ✅ | — | ✅ | ✅ | ✅ | ⬜ |
+| F-02 | [폰트 asset과 본문 typography](common.md#f-02-폰트-asset과-본문-typography) | [`app/_layout.tsx`](../../../../2026-07-13/my-PT-Diary/app/_layout.tsx) 및 실제 화면 StyleSheet | [`shared/constants/typography.ts`](../../src/shared/constants/typography.ts) 및 실제 화면 StyleSheet | ✅ | ✅ | 🟨 | ✅ | ✅ | ✅ | ⬜ |
+| F-03 | [하단 탭 shell](common.md#f-03-하단-탭-shell) | [`components/GlobalTabBar.tsx`](../../../../2026-07-13/my-PT-Diary/components/GlobalTabBar.tsx) | [`shared/components/member-tab-bar.tsx`](../../src/shared/components/member-tab-bar.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | ✅ | ⬜ |
+| F-04 | [공통 SVG·이미지·아이콘 체계](common.md#f-04-공통-svg이미지아이콘-체계) | [`components/TabIcons.tsx`](../../../../2026-07-13/my-PT-Diary/components/TabIcons.tsx) 및 원본 asset import | [`shared/components/icons/pt-diary-icons.tsx`](../../src/shared/components/icons/pt-diary-icons.tsx) 및 현재 asset import | ✅ | ✅ | — | ✅ | ✅ | ✅ | ⬜ |
+| F-05 | [화면 배경·스크롤·안전영역](common.md#f-05-화면-배경스크롤안전영역) | 실제 페이지 루트 View·ScrollView | [`shared/components/tab-page-layout.tsx`](../../src/shared/components/tab-page-layout.tsx) 및 실제 페이지 루트 View·ScrollView | ✅ | ✅ | 🟨 | ✅ | ✅ | ✅ | ⬜ |
 
 ## 현재 구현된 사용자 페이지
 
@@ -95,12 +95,12 @@
 
 | ID | 페이지 | 원본 실제 코드 | `ai-pt` 실제 코드 | 원본 코드 | 현재 코드 | 상태 정렬 | 규칙 추출 | 공통화 | 반영 | 실기 검증 |
 |---|---|---|---|---|---|---|---|---|---|---|
-| P-01 | [홈 `/`](pages/home.md) | [`app/(tabs)/index.tsx`](<../../../../2026-07-13/my-PT-Diary/app/(tabs)/index.tsx>) | [`src/pages/index.tsx`](../../src/pages/index.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | ⬜ | ⬜ |
-| P-02 | [기록 `/exercise`](pages/exercise.md) | [`app/(tabs)/exercise.tsx`](<../../../../2026-07-13/my-PT-Diary/app/(tabs)/exercise.tsx>) | [`src/pages/exercise.tsx`](../../src/pages/exercise.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | ⬜ | ⬜ |
-| P-03 | [PT `/pt-log`](pages/pt-log.md) | [`app/(tabs)/pt-log.tsx`](<../../../../2026-07-13/my-PT-Diary/app/(tabs)/pt-log.tsx>) | [`src/pages/pt-log.tsx`](../../src/pages/pt-log.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | ⬜ | ⬜ |
-| P-04 | [AI `/ai-hub`](pages/ai-hub.md) | [`app/(tabs)/ai-hub.tsx`](<../../../../2026-07-13/my-PT-Diary/app/(tabs)/ai-hub.tsx>) | [`src/pages/ai-hub.tsx`](../../src/pages/ai-hub.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | ⬜ | ⬜ |
-| P-05 | [내 정보 `/condition`](pages/condition.md) | [`app/(tabs)/condition.tsx`](<../../../../2026-07-13/my-PT-Diary/app/(tabs)/condition.tsx>) | [`src/pages/condition.tsx`](../../src/pages/condition.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | ⬜ | ⬜ |
-| P-06 | [운동 진행 `/active-workout`](pages/active-workout.md) | [`app/active-workout.tsx`](../../../../2026-07-13/my-PT-Diary/app/active-workout.tsx) | [`src/pages/active-workout.tsx`](../../src/pages/active-workout.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | ⬜ | ⬜ |
+| P-01 | [홈 `/`](pages/home.md) | [`app/(tabs)/index.tsx`](<../../../../2026-07-13/my-PT-Diary/app/(tabs)/index.tsx>) | [`src/pages/index.tsx`](../../src/pages/index.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | 🟨 | ⬜ |
+| P-02 | [기록 `/exercise`](pages/exercise.md) | [`app/(tabs)/exercise.tsx`](<../../../../2026-07-13/my-PT-Diary/app/(tabs)/exercise.tsx>) | [`src/pages/exercise.tsx`](../../src/pages/exercise.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | 🟨 | ⬜ |
+| P-03 | [PT `/pt-log`](pages/pt-log.md) | [`app/(tabs)/pt-log.tsx`](<../../../../2026-07-13/my-PT-Diary/app/(tabs)/pt-log.tsx>) | [`src/pages/pt-log.tsx`](../../src/pages/pt-log.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | 🟨 | ⬜ |
+| P-04 | [AI `/ai-hub`](pages/ai-hub.md) | [`app/(tabs)/ai-hub.tsx`](<../../../../2026-07-13/my-PT-Diary/app/(tabs)/ai-hub.tsx>) | [`src/pages/ai-hub.tsx`](../../src/pages/ai-hub.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | 🟨 | ⬜ |
+| P-05 | [내 정보 `/condition`](pages/condition.md) | [`app/(tabs)/condition.tsx`](<../../../../2026-07-13/my-PT-Diary/app/(tabs)/condition.tsx>) | [`src/pages/condition.tsx`](../../src/pages/condition.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | 🟨 | ⬜ |
+| P-06 | [운동 진행 `/active-workout`](pages/active-workout.md) | [`app/active-workout.tsx`](../../../../2026-07-13/my-PT-Diary/app/active-workout.tsx) | [`src/pages/active-workout.tsx`](../../src/pages/active-workout.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | 🟨 | ⬜ |
 | P-07 | [야외운동 `/outdoor-workout`](pages/outdoor-workout.md) | [`app/(tabs)/outdoor-workout.tsx`](<../../../../2026-07-13/my-PT-Diary/app/(tabs)/outdoor-workout.tsx>) | [`src/pages/outdoor-workout.tsx`](../../src/pages/outdoor-workout.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | ⬜ | ⬜ |
 | P-08 | [야외운동 결과 `/outdoor-workout-result`](pages/outdoor-workout-result.md) | [`app/(tabs)/outdoor-workout-result.tsx`](<../../../../2026-07-13/my-PT-Diary/app/(tabs)/outdoor-workout-result.tsx>) | [`src/pages/outdoor-workout-result.tsx`](../../src/pages/outdoor-workout-result.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | ⬜ | ⬜ |
 | P-09 | [운동배우기 `/exercise-guide`](pages/exercise-guide.md) | [`app/exercise-guide.tsx`](../../../../2026-07-13/my-PT-Diary/app/exercise-guide.tsx) | [`src/pages/exercise-guide.tsx`](../../src/pages/exercise-guide.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | ⬜ | ⬜ |
@@ -111,9 +111,9 @@
 | P-14 | [컨디션 기록 목록 `/condition-list`](pages/condition-list.md) | [`app/condition-list.tsx`](../../../../2026-07-13/my-PT-Diary/app/condition-list.tsx) | [`src/pages/condition-list.tsx`](../../src/pages/condition-list.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | ⬜ | ⬜ |
 | P-15 | [컨디션 기록 작성·수정 `/condition-form`](pages/condition-form.md) | [`app/condition-form.tsx`](../../../../2026-07-13/my-PT-Diary/app/condition-form.tsx) | [`src/pages/condition-form.tsx`](../../src/pages/condition-form.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | ⬜ | ⬜ |
 | P-16 | [PT 수업일지 작성·수정 `/pt-lesson-form`](pages/pt-lesson-form.md) | [`app/pt-lesson-form.tsx`](../../../../2026-07-13/my-PT-Diary/app/pt-lesson-form.tsx) | [`src/pages/pt-lesson-form.tsx`](../../src/pages/pt-lesson-form.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | ⬜ | ⬜ |
-| P-17 | [트레이너 매칭 `/ai-trainer-match`](pages/ai-trainer-match.md) | [`app/ai-trainer-match.tsx`](../../../../2026-07-13/my-PT-Diary/app/ai-trainer-match.tsx) | [`src/pages/ai-trainer-match.tsx`](../../src/pages/ai-trainer-match.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | ⬜ | ⬜ |
-| P-18 | [AI 체형 분석 `/ai-analysis`](pages/ai-analysis.md) | [`app/ai-analysis.tsx`](../../../../2026-07-13/my-PT-Diary/app/ai-analysis.tsx) | [`src/pages/ai-analysis.tsx`](../../src/pages/ai-analysis.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | ⬜ | ⬜ |
-| P-19 | [체형 분석 기록 `/analysis-history`](pages/analysis-history.md) | [`app/analysis-history.tsx`](../../../../2026-07-13/my-PT-Diary/app/analysis-history.tsx) | [`src/pages/analysis-history.tsx`](../../src/pages/analysis-history.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | ⬜ | ⬜ |
+| P-17 | [트레이너 매칭 `/ai-trainer-match`](pages/ai-trainer-match.md) | [`app/ai-trainer-match.tsx`](../../../../2026-07-13/my-PT-Diary/app/ai-trainer-match.tsx) | [`src/pages/ai-trainer-match.tsx`](../../src/pages/ai-trainer-match.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | 🟨 | ⬜ |
+| P-18 | [AI 체형 분석 `/ai-analysis`](pages/ai-analysis.md) | [`app/ai-analysis.tsx`](../../../../2026-07-13/my-PT-Diary/app/ai-analysis.tsx) | [`src/pages/ai-analysis.tsx`](../../src/pages/ai-analysis.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | 🟨 | ⬜ |
+| P-19 | [체형 분석 기록 `/analysis-history`](pages/analysis-history.md) | [`app/analysis-history.tsx`](../../../../2026-07-13/my-PT-Diary/app/analysis-history.tsx) | [`src/pages/analysis-history.tsx`](../../src/pages/analysis-history.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | 🟨 | ⬜ |
 | P-20 | [식단 분석 `/meal-analysis`](pages/meal-analysis.md) | [`app/meal-analysis.tsx`](../../../../2026-07-13/my-PT-Diary/app/meal-analysis.tsx) | [`src/pages/meal-analysis.tsx`](../../src/pages/meal-analysis.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | ⬜ | ⬜ |
 | P-21 | [운동 리포트 `/progress-chart`](pages/progress-chart.md) | [`app/progress-chart.tsx`](../../../../2026-07-13/my-PT-Diary/app/progress-chart.tsx) | [`src/pages/progress-chart.tsx`](../../src/pages/progress-chart.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | ⬜ | ⬜ |
 

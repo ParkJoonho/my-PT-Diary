@@ -7,8 +7,12 @@
 - 상태 정렬: 부분 완료
 - 시각 규칙 추출: 완료
 - 공통화 판정: 완료
-- 코드 반영: 미진행
+- 코드 반영: 일부 완료
 - 동일 상태 실기 검증: 미진행
+
+공통 반영으로 `TabPageLayout`의 탭·safe-area·본문/FAB 하단 계산, section/row
+typography, trainer row와 filter의 semantic chevron을 적용했다. 카드 radius·tag와
+calendar sheet 위치 같은 PT 전용 차이는 아직 남아 있다.
 
 제공된 PT 캡처는 원본과 `ai-pt` 모두 수업일지가 없는 기본 상태를 보여주지만, calendar
 modal과 데이터가 있는 카드 상태는 확인되지 않았다. empty state와 trainer 진입 card는
@@ -33,7 +37,8 @@ calendar modal을 [`pt-log.tsx`](<../../../../../2026-07-13/my-PT-Diary/app/(tab
 - 수업일지 카드: [`features/pt-logs/components/pt-lesson-card.tsx`](../../../src/features/pt-logs/components/pt-lesson-card.tsx)
 - 날짜 필터 modal: [`features/pt-logs/components/pt-log-calendar-modal.tsx`](../../../src/features/pt-logs/components/pt-log-calendar-modal.tsx)
 - 포맷 함수: [`features/pt-logs/lib/pt-log-format.ts`](../../../src/features/pt-logs/lib/pt-log-format.ts)
-- 하단 탭: [`features/home/components/home-tab-bar.tsx`](../../../src/features/home/components/home-tab-bar.tsx)
+- 탭 shell: [`shared/components/tab-page-layout.tsx`](../../../src/shared/components/tab-page-layout.tsx)
+- 하단 탭: [`shared/components/member-tab-bar.tsx`](../../../src/shared/components/member-tab-bar.tsx)
 
 현재는 원본의 시각 구조를 비교적 충실하게 옮겼지만, chevron/icon 체계와 card radius,
 calendar modal 배치처럼 전체 인상에 누적되는 작은 차이가 남아 있다.
@@ -70,7 +75,7 @@ PtLogScreen
 │       │   └── 또는 empty card
 │       ├── FAB
 │       └── PtLogCalendarModal
-└── HomeTabBar                              화면 내부에서 렌더링
+└── MemberTabBar                            TabPageLayout에서 렌더링
 ```
 
 이 화면은 구조 자체는 거의 유지됐다. 차이는 대부분 shell 책임 위치, icon primitive,
@@ -99,8 +104,8 @@ modal 위치는 동일 fixture로 다시 찍어야 한다.
 | 배경 | `#F4F5F7` | 동일 | 일치 |
 | 좌우 padding | `16` | `16` | 일치 |
 | 상단 padding | `20` | `20` | 일치 |
-| 하단 padding | `GLOBAL_TAB_BAR_CONTENT_H + inset + 80` | `120` 고정 | 공통 shell 차이 |
-| FAB | `52 × 52`, radius `26`, accent, shadow, bottom `tab + inset + 16` | 크기 동일, bottom `104` 고정, shadow 단순화 | 공통 shell 차이 |
+| 하단 padding | `GLOBAL_TAB_BAR_CONTENT_H + inset + 80` | 동일 계산 | 공통 반영 완료 |
+| FAB | `52 × 52`, radius `26`, accent, shadow, bottom `tab + inset + 16` | bottom 계산 동일, shadow 단순화 | shell 계산 반영 완료 |
 
 이 페이지의 큰 화면 인상은 root shell보다 내부 card 규칙이 더 중요하다. bottom inset은
 [`공통 영역 F-03·F-05`](../common.md)를 따른다.

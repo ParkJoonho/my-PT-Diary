@@ -3,6 +3,52 @@ import Svg, { Path, Circle } from 'react-native-svg';
 
 type IconProps = { color?: string; size?: number };
 
+export type SemanticIconName =
+  | 'chevronRight'
+  | 'chevronUp'
+  | 'chevronDown'
+  | 'play';
+
+type SemanticIconProps = IconProps & {
+  name: SemanticIconName;
+};
+
+export function SemanticIcon({
+  color = '#B8C1CC',
+  name,
+  size = 20,
+}: SemanticIconProps) {
+  if (name === 'play') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 512 512">
+        <Path
+          d="M133 440a35.37 35.37 0 0 1-17.5-4.67C103.5 428.53 96.04 415.37 96.04 401V111c0-14.37 7.46-27.53 19.46-34.33a35.13 35.13 0 0 1 35.77.45l247.85 148.36a36 36 0 0 1 0 61l-247.89 148.4A35.5 35.5 0 0 1 133 440Z"
+          fill={color}
+        />
+      </Svg>
+    );
+  }
+
+  const path =
+    name === 'chevronRight'
+      ? 'M184 112l144 144-144 144'
+      : name === 'chevronUp'
+        ? 'M112 328l144-144 144 144'
+        : 'M112 184l144 144 144-144';
+
+  return (
+    <Svg width={size} height={size} viewBox="0 0 512 512" fill="none">
+      <Path
+        d={path}
+        stroke={color}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={48}
+      />
+    </Svg>
+  );
+}
+
 export function TimeIcon({
   size = 21,
   active = false,

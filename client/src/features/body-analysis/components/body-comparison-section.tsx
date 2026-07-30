@@ -1,14 +1,13 @@
 import {
   ArrowRight,
   Camera,
-  ChevronDown,
-  ChevronUp,
   FolderOpen,
   GitCompareArrows,
   X,
 } from 'lucide-react-native';
 import { useState } from 'react';
 import { Alert, Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { SemanticIcon } from 'shared/components/icons/pt-diary-icons';
 import Colors, { iosShadow } from 'shared/constants/colors';
 import { useCreateAnalysisRecord } from '../api/analysis-records';
 import { useAnalyzeBodyComparison } from '../api/body-comparison';
@@ -209,9 +208,9 @@ export function BodyComparisonSection({
           ) : null}
         </View>
         {open ? (
-          <ChevronUp color={Colors.textMuted} size={18} strokeWidth={2.1} />
+          <SemanticIcon color={Colors.textMuted} name="chevronUp" size={18} />
         ) : (
-          <ChevronDown color={Colors.textMuted} size={18} strokeWidth={2.1} />
+          <SemanticIcon color={Colors.textMuted} name="chevronDown" size={18} />
         )}
       </Pressable>
 

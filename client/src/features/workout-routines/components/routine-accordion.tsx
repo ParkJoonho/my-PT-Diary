@@ -2,6 +2,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import {
   ChatIcon,
   FireIcon,
+  SemanticIcon,
   TimeIcon,
 } from 'shared/components/icons/pt-diary-icons';
 import Colors from 'shared/constants/colors';
@@ -36,7 +37,11 @@ export function RoutineAccordion({
           <TimeIcon active={expanded} />
           <Text style={styles.label}>{routine.label}</Text>
         </View>
-        <Text style={styles.chevron}>{expanded ? '⌃' : '⌄'}</Text>
+        <SemanticIcon
+          color={Colors.iconMuted}
+          name={expanded ? 'chevronUp' : 'chevronDown'}
+          size={20}
+        />
       </Pressable>
 
       {expanded ? (
@@ -93,7 +98,7 @@ export function RoutineAccordion({
               pressed && styles.startButtonPressed,
             ]}
           >
-            <Text style={styles.startIcon}>▶</Text>
+            <SemanticIcon color={Colors.white} name="play" size={16} />
             <Text style={styles.startButtonText}>운동 시작</Text>
           </Pressable>
         </View>
@@ -108,12 +113,6 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     paddingHorizontal: 16,
     paddingTop: 16,
-  },
-  chevron: {
-    color: Colors.iconMuted,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 20,
-    lineHeight: 20,
   },
   header: {
     alignItems: 'center',
@@ -173,10 +172,6 @@ const styles = StyleSheet.create({
     color: Colors.white,
     fontFamily: 'Pretendard-SemiBold',
     fontSize: 14,
-  },
-  startIcon: {
-    color: Colors.white,
-    fontSize: 13,
   },
   stepContent: {
     flex: 1,

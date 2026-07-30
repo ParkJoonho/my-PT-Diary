@@ -1,44 +1,41 @@
-import { useSafeAreaInsets } from '@granite-js/native/react-native-safe-area-context';
-import { HomeTabBar } from 'features/home/components/home-tab-bar';
 import { ShieldCheck, UserRound } from 'lucide-react-native';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTrackerUserKey } from 'shared/api/user-key';
 import { SuspenseSection } from 'shared/components/async-state';
+import { TabPageLayout } from 'shared/components/tab-page-layout';
 import Colors, { iosShadow } from 'shared/constants/colors';
 import { buildAccountProfile } from '../lib/account-profile';
 import { AccountBackground } from './account-background';
 
 export function AccountScreen() {
-  const insets = useSafeAreaInsets();
-
   return (
-    <View style={styles.container}>
-      <AccountBackground />
+    <TabPageLayout activeKey="condition" contentBottomSpacing={20}>
+      {({ contentBottomInset }) => (
+        <>
+          <AccountBackground />
 
-      <ScrollView
-        contentContainerStyle={[
-          styles.content,
-          {
-            paddingBottom: 110 + insets.bottom,
-          },
-        ]}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.titleBlock}>
-          <Text style={styles.eyebrow}>내 정보</Text>
-          <Text style={styles.title}>개인 페이지</Text>
-          <Text style={styles.subtitle}>
-            현재 앱에서 사용하는 사용자 식별 정보를 확인할 수 있어요.
-          </Text>
-        </View>
+          <ScrollView
+            contentContainerStyle={[
+              styles.content,
+              { paddingBottom: contentBottomInset },
+            ]}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.titleBlock}>
+              <Text style={styles.eyebrow}>내 정보</Text>
+              <Text style={styles.title}>개인 페이지</Text>
+              <Text style={styles.subtitle}>
+                현재 앱에서 사용하는 사용자 식별 정보를 확인할 수 있어요.
+              </Text>
+            </View>
 
-        <SuspenseSection errorMessage="사용자 정보를 불러오지 못했어요.">
-          <AccountProfileCard />
-        </SuspenseSection>
-      </ScrollView>
-
-      <HomeTabBar activeKey="condition" />
-    </View>
+            <SuspenseSection errorMessage="사용자 정보를 불러오지 못했어요.">
+              <AccountProfileCard />
+            </SuspenseSection>
+          </ScrollView>
+        </>
+      )}
+    </TabPageLayout>
   );
 }
 
@@ -86,10 +83,6 @@ const styles = StyleSheet.create({
     height: 64,
     justifyContent: 'center',
     width: 64,
-  },
-  container: {
-    backgroundColor: Colors.background,
-    flex: 1,
   },
   content: {
     gap: 16,

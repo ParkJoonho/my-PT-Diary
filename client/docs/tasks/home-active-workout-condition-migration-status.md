@@ -71,7 +71,7 @@
 | active-workout 중량 입력 UX | 미구현 | routine record 저장은 정상화했지만, 루틴 수행 중 실중량을 입력하는 단계는 아직 없다. | `client/src/features/active-workout/**`, `server/src/modules/workout-records/**` |
 | routine record 전용 수정 UX | 미구현 | routine record는 현재 상세 조회와 삭제는 가능하지만, manual form처럼 수정하지는 않는다. | `client/src/features/workout-records/components/workout-record-detail-screen.tsx`, 후속 routine edit screen 필요 |
 | trainer condition view | 미구현 | 일반 사용자 컨디션 입력/목록/홈 연동은 옮겼지만, 원본 `trainer-condition-view`는 아직 대응 화면이 없다. | `2026-07-13/my-PT-Diary/app/trainer-condition-view.tsx`에 대응하는 `client/src/features/condition-records/**` 또는 trainer feature 필요 |
-| 홈 하단 탭의 나머지 도메인 | 미구현 | `기록` 탭은 연결돼 있지만 `PT`, `AI`, `내 정보` 탭은 아직 원본처럼 완성되지 않았다. 현재는 `미구현` 배지만 유지한다. | `client/src/features/home/components/home-tab-bar.tsx`, `client/src/features/home/data/tabs.ts` |
+| 홈 하단 탭의 나머지 도메인 | 공통 shell 반영 | `PT`, `AI`, `내 정보` 라우트까지 연결됐고 공통 탭·safe-area 계산을 사용한다. 각 페이지의 원본 충실도 보정은 별도 진행 중이다. | `client/src/shared/components/member-tab-bar.tsx`, `client/src/shared/components/tab-page-layout.tsx` |
 | screen-level 상호작용 테스트 | 미구현 | helper/API/store 테스트는 보강했지만, active-workout 종료 얼럿, condition form 입력, today card route 분기 같은 실제 화면 상호작용 테스트는 충분히 없다. | `client/src/features/active-workout/components/**/__tests__`, `client/src/features/condition-records/components/**/__tests__`, `client/src/features/exercise-dashboard/components/**/__tests__` |
 | 과거 routine/condition 데이터 백필 | 미구현 | 새 계약은 들어갔지만, 과거 축소 레코드를 새 구조로 일괄 변환하는 데이터 이관은 이번 범위 밖이었다. | `server/src/modules/workout-records/**`, `server/src/modules/condition-records/**`, `server/src/database/database.service.ts` |
 

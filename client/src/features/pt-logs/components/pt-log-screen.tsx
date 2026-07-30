@@ -1,13 +1,6 @@
 import { useNavigation } from '@granite-js/react-native';
 import { useQueryClient } from '@tanstack/react-query';
-import { HomeTabBar } from 'features/home/components/home-tab-bar';
-import {
-  ArrowRight,
-  Calendar,
-  ChevronDown,
-  ClipboardList,
-  Plus,
-} from 'lucide-react-native';
+import { Calendar, ClipboardList, Plus } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import {
   Alert,
@@ -22,7 +15,10 @@ import {
 import { useTrackerUserKey } from 'shared/api/user-key';
 import { getWeeklyTrackerSummaryQueryKeyPrefix } from 'shared/api/weekly-tracker';
 import { SuspenseSection } from 'shared/components/async-state';
+import { SemanticIcon } from 'shared/components/icons/pt-diary-icons';
+import { TabPageLayout } from 'shared/components/tab-page-layout';
 import Colors, { iosShadow } from 'shared/constants/colors';
+import { ptTypography } from 'shared/constants/typography';
 import {
   getPtLessonsQueryKeyPrefix,
   useDeletePtLesson,
@@ -38,16 +34,24 @@ import { PtLogCalendarModal } from './pt-log-calendar-modal';
 
 export function PtLogScreen() {
   return (
-    <View style={styles.container}>
-      <SuspenseSection errorMessage="PT 수업일지를 불러오지 못했어요.">
-        <PtLogContent />
-      </SuspenseSection>
-      <HomeTabBar activeKey="pt-log" />
-    </View>
+    <TabPageLayout activeKey="pt-log" contentBottomSpacing={80}>
+      {(metrics) => (
+        <SuspenseSection errorMessage="PT 수업일지를 불러오지 못했어요.">
+          <PtLogContent metrics={metrics} />
+        </SuspenseSection>
+      )}
+    </TabPageLayout>
   );
 }
 
-function PtLogContent() {
+function PtLogContent({
+  metrics,
+}: {
+  metrics: {
+    contentBottomInset: number;
+    floatingActionBottomInset: number;
+  };
+}) {
   const navigation = useNavigation();
   const queryClient = useQueryClient();
   const userKey = useTrackerUserKey();
@@ -110,7 +114,10 @@ function PtLogContent() {
   return (
     <>
       <FlatList
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: metrics.contentBottomInset },
+        ]}
         data={filteredLessons}
         keyExtractor={(item) => item.id}
         ListEmptyComponent={
@@ -157,7 +164,11 @@ function PtLogContent() {
                   나에게 딱 맞는 트레이너를 추천해드려요.
                 </Text>
               </View>
-              <ArrowRight color={Colors.iconMuted} size={18} />
+              <SemanticIcon
+                color={Colors.iconMuted}
+                name="chevronRight"
+                size={20}
+              />
             </Pressable>
 
             <View style={styles.sectionHeader}>
@@ -181,8 +192,9 @@ function PtLogContent() {
                 >
                   {formatPtDateRangeLabel(dateRange)}
                 </Text>
-                <ChevronDown
+                <SemanticIcon
                   color={isFiltered ? Colors.accent : Colors.textSecondary}
+                  name="chevronDown"
                   size={14}
                 />
               </Pressable>
@@ -211,7 +223,7 @@ function PtLogContent() {
         onPress={() =>
           navigation.navigate({ name: '/pt-lesson-form', params: {} })
         }
-        style={styles.fab}
+        style={[styles.fab, { bottom: metrics.floatingActionBottomInset }]}
       >
         <Plus color={Colors.white} size={28} />
       </Pressable>
@@ -229,12 +241,7 @@ function PtLogContent() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: Colors.background,
-    flex: 1,
-  },
   content: {
-    paddingBottom: 120,
     paddingHorizontal: 16,
     paddingTop: 20,
   },
@@ -263,7 +270,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: Colors.accent,
     borderRadius: 26,
-    bottom: 104,
     height: 52,
     justifyContent: 'center',
     position: 'absolute',
@@ -301,8 +307,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     color: Colors.text,
-    fontFamily: 'Pretendard-Medium',
-    fontSize: 17,
+    ...ptTypography.sectionTitle,
   },
   trainerSectionTitle: {
     marginBottom: 10,
@@ -330,8 +335,7 @@ const styles = StyleSheet.create({
   },
   trainerSubtitle: {
     color: '#8E8E8E',
-    fontFamily: 'Pretendard-Regular',
-    fontSize: 13,
+    ...ptTypography.rowActionSubtitle,
   },
   trainerTextWrap: {
     flex: 1,
@@ -339,7 +343,6 @@ const styles = StyleSheet.create({
   },
   trainerTitle: {
     color: '#00192B',
-    fontFamily: 'Pretendard-Medium',
-    fontSize: 16,
+    ...ptTypography.rowActionTitle,
   },
 });

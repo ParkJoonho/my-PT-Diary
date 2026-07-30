@@ -5,6 +5,7 @@ import {
   screen,
   waitFor,
 } from '@testing-library/react-native';
+import type { ReactNode } from 'react';
 import { ScrollView } from 'react-native';
 
 const mockNavigate = jest.fn();
@@ -33,6 +34,23 @@ jest.mock('lucide-react-native', () => {
     },
   );
 });
+
+jest.mock('shared/components/tab-page-layout', () => ({
+  TabPageLayout: ({
+    children,
+  }: {
+    children: (metrics: {
+      contentBottomInset: number;
+      floatingActionBottomInset: number;
+      tabBarHeight: number;
+    }) => ReactNode;
+  }) =>
+    children({
+      contentBottomInset: 84,
+      floatingActionBottomInset: 76,
+      tabBarHeight: 60,
+    }),
+}));
 
 jest.mock('../../api/trainers', () => ({
   useCreateTrainerConnectRequest: () => ({

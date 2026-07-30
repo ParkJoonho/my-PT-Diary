@@ -7,8 +7,12 @@
 - 상태 정렬: 부분 완료
 - 시각 규칙 추출: 완료
 - 공통화 판정: 완료
-- 코드 반영: 미진행
+- 코드 반영: 일부 완료
 - 동일 상태 실기 검증: 미진행
+
+공통 반영으로 `TabPageLayout`의 탭·safe-area·본문/FAB 하단 계산과 공통 section title
+typography를 적용했다. 오늘 운동·컨디션·리포트의 페이지 전용 구조 차이는 아직
+남아 있다.
 
 현재 `ai-pt` 기록 화면 상단의 `기록 / 운동 기록` 블록은 원본에 없는 앱 내부 중복
 header다. 사용자 지시상 이번 수정 범위에서는 제거하지 않으므로, 이 문서에는 구조
@@ -39,7 +43,8 @@ header다. 사용자 지시상 이번 수정 범위에서는 제거하지 않으
 - 리포트 차트: [`features/workout-reports/components/workout-report-chart-section.tsx`](../../../src/features/workout-reports/components/workout-report-chart-section.tsx)
 - 리포트 포맷: [`features/workout-reports/components/report-format.ts`](../../../src/features/workout-reports/components/report-format.ts)
 - 컨디션 배지 계산: [`features/condition-records/lib/condition-record-metadata.ts`](../../../src/features/condition-records/lib/condition-record-metadata.ts)
-- 하단 탭: [`features/home/components/home-tab-bar.tsx`](../../../src/features/home/components/home-tab-bar.tsx)
+- 탭 shell: [`shared/components/tab-page-layout.tsx`](../../../src/shared/components/tab-page-layout.tsx)
+- 하단 탭: [`shared/components/member-tab-bar.tsx`](../../../src/shared/components/member-tab-bar.tsx)
 
 현재는 원본 대시보드 전용 카드 대신 기록 상세/목록용 컴포넌트를 재사용한 부분이 많다.
 이 재사용이 화면의 전체 인상 차이를 크게 만든다.
@@ -83,7 +88,7 @@ ExerciseScreen
 │       ├── 3개의 SummaryMetricCard
 │       └── WorkoutReportChartSection
 ├── FAB
-└── HomeTabBar                              화면 내부에서 렌더링
+└── MemberTabBar                            TabPageLayout에서 렌더링
 ```
 
 원본은 하나의 대시보드 안에서 세 section을 직접 설계했고, 현재는 목록 카드와
@@ -115,7 +120,7 @@ ExerciseScreen
 | 좌우 padding | `16` | `16` | 일치 |
 | 상단 padding | `20` | `20` | 일치 |
 | 섹션 간 세로 리듬 | `section marginBottom: 20` | `content gap: 18` | 다름 |
-| 하단 padding | `GLOBAL_TAB_BAR_CONTENT_H + inset + 16` | `120` 고정 | 공통 shell 차이 |
+| 하단 padding | `GLOBAL_TAB_BAR_CONTENT_H + inset + 16` | 동일 계산 | 공통 반영 완료 |
 | section title | `17`, Medium | 동일 | 코드 일치 |
 | seeAll link | `13` Regular + chevron `13` | `13` Regular만 존재 | 다름 |
 | 페이지 intro header | 없음 | eyebrow `12` SemiBold, title `28` Bold, lineHeight `34` | 원본에 없는 구조 |

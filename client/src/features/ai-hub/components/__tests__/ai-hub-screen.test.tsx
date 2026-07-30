@@ -1,6 +1,6 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
-import React from 'react';
+import type React from 'react';
 import { AiHubScreen } from '../ai-hub-screen';
 
 const mockNavigate = jest.fn();
@@ -11,15 +11,21 @@ jest.mock('@granite-js/react-native', () => ({
   }),
 }));
 
-jest.mock('@granite-js/native/react-native-safe-area-context', () => ({
-  useSafeAreaInsets: () => ({
-    bottom: 0,
-    top: 0,
-  }),
-}));
-
-jest.mock('features/home/components/home-tab-bar', () => ({
-  HomeTabBar: () => null,
+jest.mock('shared/components/tab-page-layout', () => ({
+  TabPageLayout: ({
+    children,
+  }: {
+    children: (metrics: {
+      contentBottomInset: number;
+      floatingActionBottomInset: number;
+      tabBarHeight: number;
+    }) => React.ReactNode;
+  }) =>
+    children({
+      contentBottomInset: 76,
+      floatingActionBottomInset: 76,
+      tabBarHeight: 60,
+    }),
 }));
 
 jest.mock('lucide-react-native', () => {

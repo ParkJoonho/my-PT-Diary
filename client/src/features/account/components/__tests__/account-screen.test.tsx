@@ -3,21 +3,25 @@ import { render, screen } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
 import { AccountScreen } from '../account-screen';
 
-jest.mock('@granite-js/native/react-native-safe-area-context', () => ({
-  useSafeAreaInsets: () => ({ bottom: 0, left: 0, right: 0, top: 0 }),
-}));
-
 jest.mock('shared/api/user-key', () => ({
   useTrackerUserKey: jest.fn(),
 }));
 
-jest.mock('features/home/components/home-tab-bar', () => ({
-  HomeTabBar: () => {
-    const React = require('react');
-    const { Text } = require('react-native');
-
-    return React.createElement(Text, null, '하단 탭바');
-  },
+jest.mock('shared/components/tab-page-layout', () => ({
+  TabPageLayout: ({
+    children,
+  }: {
+    children: (metrics: {
+      contentBottomInset: number;
+      floatingActionBottomInset: number;
+      tabBarHeight: number;
+    }) => ReactNode;
+  }) =>
+    children({
+      contentBottomInset: 80,
+      floatingActionBottomInset: 76,
+      tabBarHeight: 60,
+    }),
 }));
 
 jest.mock('shared/components/async-state', () => ({

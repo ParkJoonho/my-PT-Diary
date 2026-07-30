@@ -10,7 +10,6 @@ import {
   getSorePartsText,
   getSorenessBadge,
 } from 'features/condition-records/lib/condition-record-metadata';
-import { HomeTabBar } from 'features/home/components/home-tab-bar';
 import {
   getWorkoutRecordsQueryKeyPrefix,
   useWorkoutRecords,
@@ -35,7 +34,9 @@ import {
 import type { ConditionRecordDto } from 'shared/api/generated/models';
 import { useTrackerUserKey } from 'shared/api/user-key';
 import { SuspenseSection } from 'shared/components/async-state';
+import { TabPageLayout } from 'shared/components/tab-page-layout';
 import Colors, { iosShadow } from 'shared/constants/colors';
+import { ptTypography } from 'shared/constants/typography';
 import { getClientTodayDate } from 'shared/lib/date';
 
 export function ExerciseScreen() {
@@ -65,64 +66,73 @@ export function ExerciseScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <ScrollView
-        contentContainerStyle={styles.content}
-        refreshControl={
-          <RefreshControl onRefresh={handleRefresh} refreshing={refreshing} />
-        }
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.eyebrow}>기록</Text>
-            <Text style={styles.title}>운동 기록</Text>
-          </View>
-        </View>
+    <TabPageLayout activeKey="exercise">
+      {({ contentBottomInset, floatingActionBottomInset }) => (
+        <>
+          <ScrollView
+            contentContainerStyle={[
+              styles.content,
+              { paddingBottom: contentBottomInset },
+            ]}
+            refreshControl={
+              <RefreshControl
+                onRefresh={handleRefresh}
+                refreshing={refreshing}
+              />
+            }
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.header}>
+              <View>
+                <Text style={styles.eyebrow}>기록</Text>
+                <Text style={styles.title}>운동 기록</Text>
+              </View>
+            </View>
 
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>오늘의 운동</Text>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>오늘의 운동</Text>
+              <Pressable
+                onPress={() =>
+                  navigation.navigate({ name: '/exercise-list', params: {} })
+                }
+              >
+                <Text style={styles.linkText}>전체 기록보기</Text>
+              </Pressable>
+            </View>
+            <SuspenseSection errorMessage="오늘 운동을 불러오지 못했어요.">
+              <TodayWorkoutSection />
+            </SuspenseSection>
+
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>오늘의 컨디션</Text>
+              <Pressable
+                onPress={() =>
+                  navigation.navigate({ name: '/condition-list', params: {} })
+                }
+              >
+                <Text style={styles.linkText}>전체 기록보기</Text>
+              </Pressable>
+            </View>
+            <SuspenseSection errorMessage="오늘 컨디션을 불러오지 못했어요.">
+              <TodayConditionSection />
+            </SuspenseSection>
+
+            <SuspenseSection errorMessage="리포트를 불러오지 못했어요.">
+              <InlineReportSection />
+            </SuspenseSection>
+          </ScrollView>
+
           <Pressable
             onPress={() =>
-              navigation.navigate({ name: '/exercise-list', params: {} })
+              navigation.navigate({ name: '/exercise-form', params: {} })
             }
+            style={[styles.fab, { bottom: floatingActionBottomInset }]}
           >
-            <Text style={styles.linkText}>전체 기록보기</Text>
+            <Text style={styles.fabText}>+</Text>
           </Pressable>
-        </View>
-        <SuspenseSection errorMessage="오늘 운동을 불러오지 못했어요.">
-          <TodayWorkoutSection />
-        </SuspenseSection>
-
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>오늘의 컨디션</Text>
-          <Pressable
-            onPress={() =>
-              navigation.navigate({ name: '/condition-list', params: {} })
-            }
-          >
-            <Text style={styles.linkText}>전체 기록보기</Text>
-          </Pressable>
-        </View>
-        <SuspenseSection errorMessage="오늘 컨디션을 불러오지 못했어요.">
-          <TodayConditionSection />
-        </SuspenseSection>
-
-        <SuspenseSection errorMessage="리포트를 불러오지 못했어요.">
-          <InlineReportSection />
-        </SuspenseSection>
-      </ScrollView>
-
-      <Pressable
-        onPress={() =>
-          navigation.navigate({ name: '/exercise-form', params: {} })
-        }
-        style={styles.fab}
-      >
-        <Text style={styles.fabText}>+</Text>
-      </Pressable>
-      <HomeTabBar activeKey="exercise" />
-    </View>
+        </>
+      )}
+    </TabPageLayout>
   );
 }
 
@@ -316,13 +326,8 @@ function Badge({ color, label }: { color: string; label: string }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: Colors.background,
-    flex: 1,
-  },
   content: {
     gap: 18,
-    paddingBottom: 120,
     paddingHorizontal: 16,
     paddingTop: 20,
   },
@@ -349,7 +354,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: Colors.accent,
     borderRadius: 26,
-    bottom: 96,
     height: 52,
     justifyContent: 'center',
     position: 'absolute',
@@ -438,8 +442,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     color: Colors.text,
-    fontFamily: 'Pretendard-Medium',
-    fontSize: 17,
+    ...ptTypography.sectionTitle,
   },
   stack: {
     gap: 0,

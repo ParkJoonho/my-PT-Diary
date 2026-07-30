@@ -6,7 +6,6 @@ import {
   ChartColumnBig,
   Check,
   ChevronLeft,
-  ChevronRight,
   GitCompareArrows,
   ScanFace,
   X,
@@ -25,6 +24,7 @@ import {
 } from 'react-native';
 import type { CompareAnalysisRecordsDto } from 'shared/api/generated/models';
 import { EmptyState, SuspenseSection } from 'shared/components/async-state';
+import { SemanticIcon } from 'shared/components/icons/pt-diary-icons';
 import Colors, { iosShadow } from 'shared/constants/colors';
 import {
   useAnalysisRecord,
@@ -214,7 +214,11 @@ function RecordCard({
         </View>
         <View style={styles.recordHeaderRight}>
           <Text style={styles.recordDate}>{formatDate(record.analyzedAt)}</Text>
-          <ChevronRight color={Colors.textMuted} size={16} strokeWidth={2.1} />
+          <SemanticIcon
+            color={Colors.textMuted}
+            name="chevronRight"
+            size={16}
+          />
         </View>
       </View>
 

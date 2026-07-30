@@ -1,19 +1,20 @@
-import { useNavigation } from "@granite-js/react-native";
-import { useActiveWorkoutStore } from "features/active-workout/stores/use-active-workout-store";
-import { RoutineCard } from "features/workout-routines/components/routine-card";
-import { Component, type PropsWithChildren, Suspense } from "react";
+import { useNavigation } from '@granite-js/react-native';
+import { useActiveWorkoutStore } from 'features/active-workout/stores/use-active-workout-store';
+import { RoutineCard } from 'features/workout-routines/components/routine-card';
+import { Component, type PropsWithChildren, Suspense } from 'react';
 import {
   ActivityIndicator,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
   View,
-} from "react-native";
-import { useWeeklyTrackerSummary } from "shared/api/weekly-tracker";
-import Colors from "shared/constants/colors";
-import { HomeTabBar } from "./home-tab-bar";
-import { QuickActionCard } from "./quick-action-card";
-import { WeeklyTrackerCard } from "./weekly-tracker-card";
+} from 'react-native';
+import { useWeeklyTrackerSummary } from 'shared/api/weekly-tracker';
+import { TabPageLayout } from 'shared/components/tab-page-layout';
+import Colors from 'shared/constants/colors';
+import { QuickActionCard } from './quick-action-card';
+import { WeeklyTrackerCard } from './weekly-tracker-card';
 
 function WeeklyTrackerLoading() {
   return (
@@ -59,67 +60,72 @@ export function HomeScreen() {
   );
 
   return (
-    <View style={styles.container}>
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        style={styles.scrollView}
-      >
-        <WeeklyTrackerErrorBoundary>
-          <Suspense fallback={<WeeklyTrackerLoading />}>
-            <WeeklyTrackerSection />
-          </Suspense>
-        </WeeklyTrackerErrorBoundary>
-        <RoutineCard
-          onStartRoutine={(routine) => {
-            setSelectedRoutine(routine);
-            navigation.navigate("/active-workout", { routineId: routine.id });
-          }}
-        />
-        <QuickActionCard
-          kind="outdoor"
-          onPress={() =>
-            navigation.navigate({ name: '/outdoor-workout', params: {} })
-          }
-          showUnimplementedBadge={false}
-          subtitle="러닝·등산 코스 추천"
-          title="야외운동"
-        />
-        <QuickActionCard
-          kind="guide"
-          onPress={() =>
-            navigation.navigate({ name: "/exercise-guide", params: {} })
-          }
-          showUnimplementedBadge={false}
-          subtitle="부위별·기구별 운동 학습"
-          title="운동배우기"
-        />
-      </ScrollView>
-      <HomeTabBar />
-    </View>
+    <TabPageLayout
+      activeKey="home"
+      contentBottomSpacing={16}
+      minimumContentBottomInset={Platform.OS === 'web' ? 100 : 120}
+    >
+      {({ contentBottomInset }) => (
+        <ScrollView
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: contentBottomInset },
+          ]}
+          showsVerticalScrollIndicator={false}
+          style={styles.scrollView}
+        >
+          <WeeklyTrackerErrorBoundary>
+            <Suspense fallback={<WeeklyTrackerLoading />}>
+              <WeeklyTrackerSection />
+            </Suspense>
+          </WeeklyTrackerErrorBoundary>
+          <RoutineCard
+            onStartRoutine={(routine) => {
+              setSelectedRoutine(routine);
+              navigation.navigate('/active-workout', {
+                routineId: routine.id,
+              });
+            }}
+          />
+          <QuickActionCard
+            kind="outdoor"
+            onPress={() =>
+              navigation.navigate({ name: '/outdoor-workout', params: {} })
+            }
+            showUnimplementedBadge={false}
+            subtitle="러닝·등산 코스 추천"
+            title="야외운동"
+          />
+          <QuickActionCard
+            kind="guide"
+            onPress={() =>
+              navigation.navigate({ name: '/exercise-guide', params: {} })
+            }
+            showUnimplementedBadge={false}
+            subtitle="부위별·기구별 운동 학습"
+            title="운동배우기"
+          />
+        </ScrollView>
+      )}
+    </TabPageLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: Colors.background,
-    flex: 1,
-  },
   errorText: {
     color: Colors.textMuted,
-    fontFamily: "Pretendard-Regular",
+    fontFamily: 'Pretendard-Regular',
     fontSize: 14,
   },
   loadingCard: {
-    alignItems: "center",
+    alignItems: 'center',
     backgroundColor: Colors.card,
     borderRadius: 16,
-    justifyContent: "center",
+    justifyContent: 'center',
     minHeight: 144,
   },
   scrollContent: {
     gap: 10,
-    paddingBottom: 104,
     paddingHorizontal: 16,
     paddingTop: 16,
   },

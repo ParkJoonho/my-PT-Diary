@@ -1,17 +1,16 @@
-import { useSafeAreaInsets } from '@granite-js/native/react-native-safe-area-context';
 import { useNavigation } from '@granite-js/react-native';
 import { useBodyAnalysisEntryStore } from 'features/body-analysis/stores/use-body-analysis-entry-store';
-import { HomeTabBar } from 'features/home/components/home-tab-bar';
 import {
   Accessibility,
   ChartColumnBig,
-  ChevronRight,
   Footprints,
   MessageCircleMore,
   ScanFace,
   Utensils,
 } from 'lucide-react-native';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SemanticIcon } from 'shared/components/icons/pt-diary-icons';
+import { TabPageLayout } from 'shared/components/tab-page-layout';
 import { UnimplementedBadge } from 'shared/components/unimplemented-badge';
 import Colors, { iosShadow } from 'shared/constants/colors';
 
@@ -74,80 +73,73 @@ const AI_FEATURES = [
 
 export function AiHubScreen() {
   const navigation = useNavigation();
-  const insets = useSafeAreaInsets();
   const setEntryPoint = useBodyAnalysisEntryStore(
     (state) => state.setEntryPoint,
   );
 
   return (
-    <View style={styles.container}>
-      <ScrollView
-        contentContainerStyle={{
-          gap: 10,
-          paddingBottom: 110 + insets.bottom,
-          paddingHorizontal: 16,
-          paddingTop: 16,
-        }}
-        showsVerticalScrollIndicator={false}
-        style={styles.scrollView}
-      >
-        {AI_FEATURES.map((feature) => (
-          <Pressable
-            key={feature.title}
-            onPress={() => {
-              if (!feature.route) {
-                return;
-              }
+    <TabPageLayout activeKey="ai-hub">
+      {({ contentBottomInset }) => (
+        <ScrollView
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: contentBottomInset },
+          ]}
+          showsVerticalScrollIndicator={false}
+          style={styles.scrollView}
+        >
+          {AI_FEATURES.map((feature) => (
+            <Pressable
+              key={feature.title}
+              onPress={() => {
+                if (!feature.route) {
+                  return;
+                }
 
-              setEntryPoint(
-                feature.title === 'AI 신발 추천' ? 'shoe' : 'default',
-              );
-              navigation.navigate({ name: feature.route, params: {} });
-            }}
-            style={({ pressed }) => [
-              styles.featureCard,
-              iosShadow,
-              pressed && styles.featureCardPressed,
-            ]}
-          >
-            <View
-              style={[
-                styles.featureCircle,
-                { backgroundColor: feature.iconBackground },
+                setEntryPoint(
+                  feature.title === 'AI 신발 추천' ? 'shoe' : 'default',
+                );
+                navigation.navigate({ name: feature.route, params: {} });
+              }}
+              style={({ pressed }) => [
+                styles.featureCard,
+                iosShadow,
+                pressed && styles.featureCardPressed,
               ]}
             >
-              <feature.icon
-                color={feature.accent}
-                size={20}
-                strokeWidth={2.1}
-              />
-            </View>
-            <View style={styles.featureTextWrap}>
-              <View style={styles.featureTitleRow}>
-                <Text style={styles.featureTitle}>{feature.title}</Text>
-                {!feature.implemented ? <UnimplementedBadge compact /> : null}
+              <View
+                style={[
+                  styles.featureCircle,
+                  { backgroundColor: feature.iconBackground },
+                ]}
+              >
+                <feature.icon
+                  color={feature.accent}
+                  size={20}
+                  strokeWidth={2.1}
+                />
               </View>
-              <Text style={styles.featureSubtitle}>{feature.subtitle}</Text>
-            </View>
-            <ChevronRight
-              color={Colors.iconMuted}
-              size={18}
-              strokeWidth={2.1}
-            />
-          </Pressable>
-        ))}
-      </ScrollView>
-
-      <HomeTabBar activeKey="ai-hub" />
-    </View>
+              <View style={styles.featureTextWrap}>
+                <View style={styles.featureTitleRow}>
+                  <Text style={styles.featureTitle}>{feature.title}</Text>
+                  {!feature.implemented ? <UnimplementedBadge compact /> : null}
+                </View>
+                <Text style={styles.featureSubtitle}>{feature.subtitle}</Text>
+              </View>
+              <SemanticIcon
+                color={Colors.iconMuted}
+                name="chevronRight"
+                size={18}
+              />
+            </Pressable>
+          ))}
+        </ScrollView>
+      )}
+    </TabPageLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: Colors.background,
-    flex: 1,
-  },
   featureCard: {
     alignItems: 'center',
     backgroundColor: Colors.card,
@@ -188,6 +180,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     gap: 8,
+  },
+  scrollContent: {
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingTop: 16,
   },
   scrollView: {
     flex: 1,

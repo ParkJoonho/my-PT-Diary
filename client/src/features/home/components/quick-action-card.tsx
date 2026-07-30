@@ -1,9 +1,11 @@
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
-import { UnimplementedBadge } from "shared/components/unimplemented-badge";
-import Colors, { iosShadow } from "shared/constants/colors";
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { SemanticIcon } from 'shared/components/icons/pt-diary-icons';
+import { UnimplementedBadge } from 'shared/components/unimplemented-badge';
+import Colors, { iosShadow } from 'shared/constants/colors';
+import { ptTypography } from 'shared/constants/typography';
 
 type QuickActionCardProps = {
-  kind: "outdoor" | "guide";
+  kind: 'outdoor' | 'guide';
   onPress?: () => void;
   showUnimplementedBadge?: boolean;
   subtitle: string;
@@ -11,8 +13,8 @@ type QuickActionCardProps = {
 };
 
 const QUICK_IMAGES = {
-  outdoor: require("../../../assets/images/shoes.png"),
-  guide: require("../../../assets/images/video.png"),
+  outdoor: require('../../../assets/images/shoes.png'),
+  guide: require('../../../assets/images/video.png'),
 };
 
 export function QuickActionCard({
@@ -40,7 +42,7 @@ export function QuickActionCard({
         </View>
         <Text style={styles.subtitle}>{subtitle}</Text>
       </View>
-      <Text style={styles.chevron}>›</Text>
+      <SemanticIcon color={Colors.iconMuted} name="chevronRight" size={20} />
     </Pressable>
   );
 }
@@ -48,20 +50,14 @@ export function QuickActionCard({
 const styles = StyleSheet.create({
   card: {
     ...iosShadow,
-    alignItems: "center",
+    alignItems: 'center',
     backgroundColor: Colors.card,
     borderRadius: 16,
-    flexDirection: "row",
+    flexDirection: 'row',
     gap: 14,
     minHeight: 72,
     paddingHorizontal: 16,
     paddingVertical: 19,
-  },
-  chevron: {
-    color: Colors.iconMuted,
-    fontFamily: "Pretendard-SemiBold",
-    fontSize: 24,
-    lineHeight: 24,
   },
   icon: {
     borderRadius: 17,
@@ -77,17 +73,15 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     color: Colors.textMuted,
-    fontFamily: "Pretendard-Regular",
-    fontSize: 13,
+    ...ptTypography.rowActionSubtitle,
   },
   title: {
     color: Colors.text,
-    fontFamily: "Pretendard-Medium",
-    fontSize: 16,
+    ...ptTypography.rowActionTitle,
   },
   titleRow: {
-    alignItems: "center",
-    flexDirection: "row",
+    alignItems: 'center',
+    flexDirection: 'row',
     gap: 8,
   },
 });

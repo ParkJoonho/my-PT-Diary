@@ -7,8 +7,11 @@
 - 상태 정렬: 부분 완료
 - 시각 규칙 추출: 완료
 - 공통화 판정: 완료
-- 코드 반영: 미진행
+- 코드 반영: 일부 완료
 - 동일 상태 실기 검증: 미진행
+
+공통 반영으로 `TabPageLayout`의 탭·safe-area·본문 하단 계산과 trailing semantic
+chevron을 적용했다. leading icon과 미구현 badge·route 상태 차이는 아직 남아 있다.
 
 제공된 AI 허브 캡처는 원본과 `ai-pt` 모두 6개 기능 card가 세로로 나열된 기본 상태를
 보여준다. 이 화면은 data loading 분기가 거의 없어 기본 상태 코드와 캡처를 함께 보는
@@ -35,7 +38,8 @@
 - 라우트: [`src/pages/ai-hub.tsx`](../../../src/pages/ai-hub.tsx)
 - 화면 조립: [`features/ai-hub/components/ai-hub-screen.tsx`](../../../src/features/ai-hub/components/ai-hub-screen.tsx)
 - 미구현 badge: [`shared/components/unimplemented-badge.tsx`](../../../src/shared/components/unimplemented-badge.tsx)
-- 하단 탭: [`features/home/components/home-tab-bar.tsx`](../../../src/features/home/components/home-tab-bar.tsx)
+- 탭 shell: [`shared/components/tab-page-layout.tsx`](../../../src/shared/components/tab-page-layout.tsx)
+- 하단 탭: [`shared/components/member-tab-bar.tsx`](../../../src/shared/components/member-tab-bar.tsx)
 
 현재 구현도 card list를 한 컴포넌트 안에 직접 가지고 있지만, icon 체계와 feature 상태
 표시가 원본과 달라졌다.
@@ -56,7 +60,7 @@ ai-pt
 AiHubScreen
 ├── ScrollView
 │   └── AI feature card × 6
-└── HomeTabBar                              화면 내부에서 렌더링
+└── MemberTabBar                            TabPageLayout에서 렌더링
 ```
 
 레이아웃 뼈대는 거의 같다. 차이는 각 card 안의 title weight, icon primitive, badge, 탭
@@ -88,7 +92,7 @@ shell 책임 위치에서 발생한다.
 | 상단 padding | `16` | `16` | 일치 |
 | 좌우 padding | `16` | `16` | 일치 |
 | 카드 gap | `10` | `10` | 일치 |
-| 하단 padding | `GLOBAL_TAB_BAR_CONTENT_H + inset + 16` | `110 + inset` | 공통 shell 차이 |
+| 하단 padding | `GLOBAL_TAB_BAR_CONTENT_H + inset + 16` | 동일 계산 | 공통 반영 완료 |
 
 이 화면은 탭 shell을 제외하면 리스트 여백 규칙이 원본과 사실상 같다.
 

@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { CheckIcon } from 'shared/components/icons/pt-diary-icons';
 import Colors, { iosShadow } from 'shared/constants/colors';
+import { ptTypography } from 'shared/constants/typography';
 import type { WeeklyDay } from '../types/home';
 
 type WeeklyTrackerCardProps = {
@@ -84,7 +85,6 @@ const styles = StyleSheet.create({
   },
   title: {
     color: Colors.text,
-    fontFamily: 'Pretendard-Medium',
-    fontSize: 17,
+    ...ptTypography.sectionTitle,
   },
 });

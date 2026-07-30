@@ -1,13 +1,4 @@
-import { HomeTabBar } from 'features/home/components/home-tab-bar';
-import {
-  Check,
-  ChevronDown,
-  ChevronRight,
-  Clock3,
-  Heart,
-  Star,
-  Zap,
-} from 'lucide-react-native';
+import { Check, Clock3, Heart, Star, Zap } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import {
   Alert,
@@ -23,7 +14,11 @@ import type {
   TrainerDto,
 } from 'shared/api/generated/models';
 import { SuspenseSection } from 'shared/components/async-state';
-import { AIInfoIcon } from 'shared/components/icons/pt-diary-icons';
+import {
+  AIInfoIcon,
+  SemanticIcon,
+} from 'shared/components/icons/pt-diary-icons';
+import { TabPageLayout } from 'shared/components/tab-page-layout';
 import Colors, { iosShadow } from 'shared/constants/colors';
 import {
   useCreateTrainerConnectRequest,
@@ -63,92 +58,102 @@ export function TrainerMatchScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      {sortMenuOpen ? (
-        <Pressable
-          onPress={() => setSortMenuOpen(false)}
-          style={styles.dropdownOverlay}
-        />
-      ) : null}
-
-      <ScrollView
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.titleRow}>
-          <Text style={styles.pageTitle}>AI 트레이너 추천</Text>
-          <View style={styles.sortWrap}>
+    <TabPageLayout activeKey="pt-log" contentBottomSpacing={24}>
+      {({ contentBottomInset }) => (
+        <>
+          {sortMenuOpen ? (
             <Pressable
-              onPress={() => setSortMenuOpen((current) => !current)}
-              style={styles.sortButton}
-            >
-              <Text style={styles.sortButtonText}>{sortLabel}</Text>
-              <ChevronDown color={Colors.textSecondary} size={14} />
-            </Pressable>
-            {sortMenuOpen ? (
-              <View style={styles.dropdown}>
-                {SORT_OPTIONS.map((option) => (
-                  <Pressable
-                    key={option.mode}
-                    onPress={() => {
-                      setSortMode(option.mode);
-                      setSortMenuOpen(false);
-                    }}
-                    style={styles.dropdownOption}
-                  >
-                    <Text
-                      style={[
-                        styles.dropdownOptionText,
-                        option.mode === sortMode &&
-                          styles.dropdownOptionTextActive,
-                      ]}
-                    >
-                      {option.label}
-                    </Text>
-                    {option.mode === sortMode ? (
-                      <Check color={Colors.accent} size={14} />
-                    ) : null}
-                  </Pressable>
-                ))}
+              onPress={() => setSortMenuOpen(false)}
+              style={styles.dropdownOverlay}
+            />
+          ) : null}
+
+          <ScrollView
+            contentContainerStyle={[
+              styles.content,
+              { paddingBottom: contentBottomInset },
+            ]}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.titleRow}>
+              <Text style={styles.pageTitle}>AI 트레이너 추천</Text>
+              <View style={styles.sortWrap}>
+                <Pressable
+                  onPress={() => setSortMenuOpen((current) => !current)}
+                  style={styles.sortButton}
+                >
+                  <Text style={styles.sortButtonText}>{sortLabel}</Text>
+                  <SemanticIcon
+                    color={Colors.textSecondary}
+                    name="chevronDown"
+                    size={14}
+                  />
+                </Pressable>
+                {sortMenuOpen ? (
+                  <View style={styles.dropdown}>
+                    {SORT_OPTIONS.map((option) => (
+                      <Pressable
+                        key={option.mode}
+                        onPress={() => {
+                          setSortMode(option.mode);
+                          setSortMenuOpen(false);
+                        }}
+                        style={styles.dropdownOption}
+                      >
+                        <Text
+                          style={[
+                            styles.dropdownOptionText,
+                            option.mode === sortMode &&
+                              styles.dropdownOptionTextActive,
+                          ]}
+                        >
+                          {option.label}
+                        </Text>
+                        {option.mode === sortMode ? (
+                          <Check color={Colors.accent} size={14} />
+                        ) : null}
+                      </Pressable>
+                    ))}
+                  </View>
+                ) : null}
               </View>
-            ) : null}
-          </View>
-        </View>
+            </View>
 
-        <View style={styles.descriptionRow}>
-          <View style={styles.descriptionIcon}>
-            <AIInfoIcon />
-          </View>
-          <Text style={styles.descriptionText}>
-            AI 추천순을 선택하면 AI가 내 운동기록을 분석해 최적의 트레이너를
-            추천해요.
-          </Text>
-        </View>
+            <View style={styles.descriptionRow}>
+              <View style={styles.descriptionIcon}>
+                <AIInfoIcon />
+              </View>
+              <Text style={styles.descriptionText}>
+                AI 추천순을 선택하면 AI가 내 운동기록을 분석해 최적의 트레이너를
+                추천해요.
+              </Text>
+            </View>
 
-        {sortMode === 'ai' ? (
-          <SuspenseSection errorMessage="추천 트레이너를 불러오지 못했어요.">
-            <RecommendedTrainerList
-              onSelect={setSelectedTrainer}
-              onToggleLike={handleToggleLike}
-            />
-          </SuspenseSection>
-        ) : (
-          <SuspenseSection errorMessage="트레이너 목록을 불러오지 못했어요.">
-            <TrainerCatalogList
-              onSelect={setSelectedTrainer}
-              onToggleLike={handleToggleLike}
-              sortMode={sortMode}
-            />
-          </SuspenseSection>
-        )}
-      </ScrollView>
+            {sortMode === 'ai' ? (
+              <SuspenseSection errorMessage="추천 트레이너를 불러오지 못했어요.">
+                <RecommendedTrainerList
+                  onSelect={setSelectedTrainer}
+                  onToggleLike={handleToggleLike}
+                />
+              </SuspenseSection>
+            ) : (
+              <SuspenseSection errorMessage="트레이너 목록을 불러오지 못했어요.">
+                <TrainerCatalogList
+                  onSelect={setSelectedTrainer}
+                  onToggleLike={handleToggleLike}
+                  sortMode={sortMode}
+                />
+              </SuspenseSection>
+            )}
+          </ScrollView>
 
-      <TrainerDetailModal
-        onClose={() => setSelectedTrainer(null)}
-        trainer={selectedTrainer}
-      />
-      <HomeTabBar activeKey="pt-log" />
-    </View>
+          <TrainerDetailModal
+            onClose={() => setSelectedTrainer(null)}
+            trainer={selectedTrainer}
+          />
+        </>
+      )}
+    </TabPageLayout>
   );
 }
 
@@ -278,7 +283,11 @@ function TrainerCard({
               size={20}
             />
           </Pressable>
-          <ChevronRight color={Colors.textMuted} size={18} />
+          <SemanticIcon
+            color={Colors.textMuted}
+            name="chevronRight"
+            size={18}
+          />
         </View>
       </View>
 
@@ -569,12 +578,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Pretendard-Medium',
     fontSize: 10,
   },
-  container: {
-    backgroundColor: Colors.background,
-    flex: 1,
-  },
   content: {
-    paddingBottom: 104,
     paddingHorizontal: 16,
     paddingTop: 20,
   },

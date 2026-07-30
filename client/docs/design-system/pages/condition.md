@@ -7,8 +7,11 @@
 - 상태 정렬: 부분 완료
 - 시각 규칙 추출: 완료
 - 공통화 판정: 완료
-- 코드 반영: 미진행
+- 코드 반영: 일부 완료
 - 동일 상태 실기 검증: 미진행
+
+공통 반영으로 `TabPageLayout`의 탭·safe-area·본문 하단 계산만 적용했다. 원본과 다른
+계정 정보 구조, glow, title block과 로그아웃 미이식은 그대로 남아 있다.
 
 이 화면은 다른 루트 탭과 달리 “원본을 스타일만 바꿔 옮긴 상태”가 아니다. 현재
 `ai-pt`의 `/condition`은 원본의 프로필/로그아웃 페이지 대신, 사용자 키와 로컬
@@ -36,7 +39,8 @@
 - 화면 조립: [`features/account/components/account-screen.tsx`](../../../src/features/account/components/account-screen.tsx)
 - 배경 데코: [`features/account/components/account-background.tsx`](../../../src/features/account/components/account-background.tsx)
 - 프로필 변환: [`features/account/lib/account-profile.ts`](../../../src/features/account/lib/account-profile.ts)
-- 하단 탭: [`features/home/components/home-tab-bar.tsx`](../../../src/features/home/components/home-tab-bar.tsx)
+- 탭 shell: [`shared/components/tab-page-layout.tsx`](../../../src/shared/components/tab-page-layout.tsx)
+- 하단 탭: [`shared/components/member-tab-bar.tsx`](../../../src/shared/components/member-tab-bar.tsx)
 
 현재는 Apps in Toss 사용자 계정 화면이 아니라, tracker user key와 로컬 미리보기 여부를
 설명하는 진단성 페이지다.
@@ -71,7 +75,7 @@ AccountScreen
 │       ├── detailText
 │       ├── helperText
 │       └── userKeyPanel
-└── HomeTabBar                                화면 내부에서 렌더링
+└── MemberTabBar                              TabPageLayout에서 렌더링
 ```
 
 원본의 핵심은 “짧은 프로필 + 로그아웃 액션”이고, 현재의 핵심은 “기술적 사용자 식별자
@@ -101,7 +105,7 @@ AccountScreen
 | 상단 padding | `20` | `18` | 다름 |
 | 좌우 padding | `16` | `16` | 일치 |
 | 카드 간 gap | `12` | `16` | 다름 |
-| 하단 padding | `GLOBAL_TAB_BAR_CONTENT_H + inset + 20` | `110 + inset` | 공통 shell 차이 |
+| 하단 padding | `GLOBAL_TAB_BAR_CONTENT_H + inset + 20` | 동일 계산 | 공통 반영 완료 |
 
 배경 tone조차 현재는 원본보다 더 “연출된 페이지” 쪽으로 바뀌어 있다.
 

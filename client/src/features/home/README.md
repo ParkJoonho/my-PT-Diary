@@ -10,7 +10,10 @@ Suggested component split:
 - `routine-card.tsx`
 - `routine-accordion.tsx`
 - `quick-action-card.tsx`
-- `home-tab-bar.tsx`
+
+공통 탭 shell은 [`../../shared/components/tab-page-layout.tsx`](../../shared/components/tab-page-layout.tsx)와
+[`../../shared/components/member-tab-bar.tsx`](../../shared/components/member-tab-bar.tsx)에서
+관리한다.
 
 Suggested supporting files:
 

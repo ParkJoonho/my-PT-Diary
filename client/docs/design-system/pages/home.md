@@ -7,8 +7,12 @@
 - 상태 정렬: 부분 완료
 - 시각 규칙 추출: 완료
 - 공통화 판정: 완료
-- 코드 반영: 미진행
+- 코드 반영: 일부 완료
 - 동일 상태 실기 검증: 미진행
+
+공통 반영으로 `TabPageLayout`의 탭·safe-area·본문 하단 계산을 적용하고, section/row
+typography와 quick action·routine의 chevron/play를 semantic icon으로 교체했다.
+아래 수정 후보 중 홈 전용 카드·상태 차이는 아직 남아 있다.
 
 제공된 원본·현재 홈 캡처는 선택 탭, 루틴 확장 상태, 주간 데이터가 서로 달라 전체
 화면 pixel 비교에는 사용할 수 없다. 코드와 캡처에서 동일 상태로 확인할 수 있는
@@ -34,7 +38,8 @@
 - 루틴 선택: [`features/workout-routines/components/routine-card.tsx`](../../../src/features/workout-routines/components/routine-card.tsx)
 - 루틴 아코디언: [`features/workout-routines/components/routine-accordion.tsx`](../../../src/features/workout-routines/components/routine-accordion.tsx)
 - 빠른 진입 카드: [`features/home/components/quick-action-card.tsx`](../../../src/features/home/components/quick-action-card.tsx)
-- 하단 탭: [`features/home/components/home-tab-bar.tsx`](../../../src/features/home/components/home-tab-bar.tsx)
+- 탭 shell: [`shared/components/tab-page-layout.tsx`](../../../src/shared/components/tab-page-layout.tsx)
+- 하단 탭: [`shared/components/member-tab-bar.tsx`](../../../src/shared/components/member-tab-bar.tsx)
 
 현재는 원본의 한 파일을 기능별 컴포넌트로 분리했지만, 각 컴포넌트의 StyleSheet가
 원본 실효값을 모두 그대로 유지한 것은 아니다.
@@ -61,7 +66,7 @@ HomeScreen
 │   ├── RoutineCard
 │   ├── QuickActionCard(outdoor)
 │   └── QuickActionCard(guide)
-└── HomeTabBar                    화면 내부에서 렌더링
+└── MemberTabBar                  TabPageLayout에서 렌더링
 ```
 
 본문의 큰 구성 순서는 유지됐다. 구조적인 공통 차이는 하단 탭의 소유 위치다. 자세한
@@ -96,7 +101,7 @@ HomeScreen
 | 좌우 padding | `16` | `16` | 일치 |
 | 상단 padding | `16` | `16` | 일치 |
 | 카드 사이 gap | `10` | `10` | 일치 |
-| 하단 padding | native `120`, web `100` | `104` | 다름 |
+| 하단 padding | native `120`, web `100` | 같은 최소값 + safe-area 보호 | 공통 반영 완료 |
 
 하단 padding은 홈 전용 값으로 고치지 않고 공통 `TabPageLayout`에서 해결해야 한다.
 

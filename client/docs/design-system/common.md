@@ -4,7 +4,7 @@
 
 - 실제 코드 대조: 완료
 - 공통화 판정: 완료
-- `ai-pt` 코드 반영: 미진행
+- `ai-pt` 코드 반영: 완료
 - 동일 상태 실기 캡처 검증: 미진행
 
 이 문서는 원본과 `ai-pt`에서 실제로 import·렌더링되는 코드만 비교한다. 기존 디자인
@@ -69,9 +69,18 @@ Regular, Medium, SemiBold, Bold 네 파일의 SHA-256은 원본과 `ai-pt`가 �
 
 - 폰트 asset은 현재 foundation으로 그대로 사용할 수 있다.
 - 지금 단계에서 TDS Text나 다른 글꼴로 교체할 근거는 없다.
-- typography token은 홈 한 페이지만 보고 확정하지 않는다.
-- 루트 탭 페이지들을 순차 점검하면서 같은 역할과 실효값이 반복되는 경우에만
-  `PTText` variant 후보로 올린다.
+- 전체 페이지 문서를 대조한 결과, 같은 의미와 값이 반복된 `tabLabel`,
+  `sectionTitle`, `rowActionTitle`, `rowActionSubtitle`만 공통 typography로 확정했다.
+- line height가 페이지마다 다른 본문과 원본에 없는 현재 전용 hero title은 전역
+  typography로 올리지 않는다.
+
+### 반영
+
+- [`src/shared/constants/typography.ts`](../../src/shared/constants/typography.ts)에
+  Pretendard family 이름과 확정된 네 역할을 정의했다.
+- 탭 label, 홈·기록·PT section title, 홈·PT row action에 적용했다.
+- AI feature title처럼 원본에서 weight가 다른 variant와 페이지 전용 본문은 직접 값을
+  유지했다.
 
 ## F-03 하단 탭 shell
 
@@ -79,36 +88,37 @@ Regular, Medium, SemiBold, Bold 네 파일의 SHA-256은 원본과 `ai-pt`가 �
 
 - 원본: [`components/GlobalTabBar.tsx`](../../../../2026-07-13/my-PT-Diary/components/GlobalTabBar.tsx)
 - 원본 장착 위치: [`app/_layout.tsx`](../../../../2026-07-13/my-PT-Diary/app/_layout.tsx)
-- 현재: [`src/features/home/components/home-tab-bar.tsx`](../../src/features/home/components/home-tab-bar.tsx)
+- 현재 탭: [`src/shared/components/member-tab-bar.tsx`](../../src/shared/components/member-tab-bar.tsx)
+- 현재 shell: [`src/shared/components/tab-page-layout.tsx`](../../src/shared/components/tab-page-layout.tsx)
 
-현재 `HomeTabBar`는 홈, 기록, PT, AI, 내 정보와 트레이너 매칭 화면이 각각 직접
-렌더링한다. 원본 `GlobalMemberTabBar`는 인증된 사용자 영역의 app root에서
-렌더링되므로 그 밖의 상세 라우트에서도 유지된다. 현재는 상세 라우트별로 탭 존재
-여부도 달라졌다.
+반영 전 `HomeTabBar`는 홈, 기록, PT, AI, 내 정보와 트레이너 매칭 화면이 각각 직접
+렌더링했다. 현재는 해당 소비 화면을 공통 `TabPageLayout`으로 감싸고
+`MemberTabBar`의 높이와 위치 계산을 한 곳으로 옮겼다. 앱 전체 인증 shell에서 모든
+상세 라우트에 탭을 장착하는 작업은 인증·라우팅 범위가 확정될 때까지 남아 있다.
 
 ### 구조 대조
 
 | 항목 | 원본 실제 코드 | `ai-pt` 실제 코드 | 판정 |
 |---|---|---|---|
-| 장착 위치 | 앱 root에서 `GlobalMemberTabBar`를 한 번 렌더링 | 각 루트 화면이 `HomeTabBar`를 렌더링 | 구조 변경 |
-| 표시 범위 | 인증된 사용자 상세 라우트까지 root에서 유지 | 일부 화면에서만 직접 렌더링 | 구조 변경 |
-| native 콘텐츠 높이 | `60` | 고정 전체 높이 `84` | 다름 |
-| native 전체 높이 | `60 + insets.bottom` | `84` | 안전영역에 따라 다름 |
-| native 하단 padding | `insets.bottom` | `10` | 다름 |
-| web 전체 높이 | `50 + 34 = 84` | `84` | 숫자만 동일 |
-| 가로 보정 | `(520 - screenWidth) / 8` | 없음 | 다름 |
+| 장착 위치 | 앱 root에서 `GlobalMemberTabBar`를 한 번 렌더링 | 기존 소비 화면별 `TabPageLayout` | 인증 root 통합은 남음 |
+| 표시 범위 | 인증된 사용자 상세 라우트까지 root에서 유지 | 루트 탭 5개와 트레이너 매칭 | 상세 라우트 통합은 남음 |
+| native 콘텐츠 높이 | `60` | `60` | 동일 |
+| native 전체 높이 | `60 + insets.bottom` | `60 + insets.bottom` | 동일 |
+| native 하단 padding | `insets.bottom` | `insets.bottom` | 동일 |
+| web 전체 높이 | `50 + 34 = 84` | `50 + 34 = 84` | 동일 |
+| 가로 보정 | `(520 - screenWidth) / 8` | 동일, 음수는 `0` | 동일 |
 | 탭 아이콘 | 원본 custom SVG, `24` | 같은 SVG, `24` | 동일 |
 | 탭 내부 | `gap: 3`, `paddingTop: 8` | 동일 | 동일 |
-| 라벨 | `10`, `letterSpacing: -0.1` | `10`, letter spacing 미지정 | 일부 다름 |
+| 라벨 | `10`, `letterSpacing: -0.1` | 동일 | 동일 |
 | 활성·비활성 색상 | `#00192B`, `#B8C1CC` | 동일 | 동일 |
 
 ### 판정
 
-현재 탭의 가장 큰 공통 문제는 시각 asset이 아니라 shell 책임의 이동이다.
+반영 전 탭의 가장 큰 공통 문제는 시각 asset이 아니라 shell 책임의 이동이었다.
 
-원본은 root가 탭 높이와 safe area를 한 번 계산한다. 현재는 각 화면이 탭을 직접
-렌더링하고, 각 ScrollView가 `104`, `110 + inset`, `120`처럼 서로 다른 하단 여백을
-수동으로 예약한다. 따라서 기기 safe area와 페이지에 따라 콘텐츠 끝 위치가 달라진다.
+현재는 `TabPageLayout`이 탭 높이와 safe area를 한 번 계산하지만 인증 app root에
+장착한 것은 아니다. 따라서 기존 탭 소비 화면의 계산 중복은 해결됐고, 상세 라우트
+전체의 표시 범위 통합은 인증·라우팅 범위 확정 뒤 처리해야 한다.
 
 ### 공통화 결정
 
@@ -126,6 +136,16 @@ TabPageLayout
 - 각 페이지 StyleSheet의 임의 `paddingBottom`은 제거 대상이다.
 - 실제 구현 시 Apps in Toss 런타임의 하단 safe area 값을 확인한 뒤 원본 계산식을
   그대로 쓸지 플랫폼용 계산으로 치환할지 결정한다.
+
+### 반영
+
+- [`src/shared/components/member-tab-bar.tsx`](../../src/shared/components/member-tab-bar.tsx)에
+  탭 렌더링과 navigation 책임을 이동했다.
+- [`src/shared/components/tab-page-layout.tsx`](../../src/shared/components/tab-page-layout.tsx)가
+  native `60 + insets.bottom`, web `50 + 34`, 원본 가로 보정
+  `(520 - width) / 8`을 계산한다.
+- 탭 label의 `letterSpacing: -0.1`을 복원했다.
+- 홈·기록·PT·AI·내 정보와 현재 탭을 표시하는 트레이너 매칭에 적용했다.
 
 ## F-04 공통 SVG·이미지·아이콘 체계
 
@@ -166,12 +186,25 @@ TabPageLayout
 - 원본의 실제 vector와 대조가 끝나기 전까지 임의의 Lucide 대체 아이콘을 공통
   기준으로 승격하지 않는다.
 
+### 반영
+
+- Ionicons 7.4 원본 SVG path로 `chevronRight`, `chevronUp`, `chevronDown`, `play`
+  semantic registry를 [`pt-diary-icons.tsx`](../../src/shared/components/icons/pt-diary-icons.tsx)에
+  추가했다.
+- 홈 quick action, 루틴 accordion, AI hub, PT, 트레이너 매칭, 체형 분석과 분석 기록의
+  대응 chevron을 registry로 교체했다.
+- 운동 진행 timer의 play/pause는 이미 이관되어 있던 원본 PNG가 원본과 hash까지
+  같음을 확인하고 문자 glyph 대신 해당 asset을 사용하도록 복원했다.
+- 의미가 다른 flow arrow와 아직 registry가 확정되지 않은 leading icon은 Lucide를
+  일괄 치환하지 않았다.
+
 ## F-05 화면 배경·스크롤·안전영역
 
 ### 실제 구조
 
 원본 루트 탭 화면은 각 페이지 콘텐츠와 root `GlobalMemberTabBar`가 분리되어 있다.
-현재는 각 페이지 컨테이너 안에 ScrollView와 `HomeTabBar`가 같이 들어간다.
+반영 전에는 각 페이지 컨테이너 안에 ScrollView와 `HomeTabBar`가 같이 들어갔다.
+현재는 `TabPageLayout`이 ScrollView 소비자와 `MemberTabBar`를 조립한다.
 
 홈 기준 실제 값은 다음과 같다.
 
@@ -182,11 +215,10 @@ TabPageLayout
 | 본문 좌우 padding | `16` | `16` |
 | 본문 상단 padding | `16` | `16` |
 | 카드 사이 gap | `10` | `10` |
-| native 본문 하단 padding | `120` | `104` |
-| 탭 safe area | root에서 `insets.bottom` 반영 | 홈에서는 미반영 |
+| native 본문 하단 padding | `120` | 최소 `120`, 큰 safe area에서는 자동 증가 |
+| 탭 safe area | root에서 `insets.bottom` 반영 | `TabPageLayout`에서 반영 |
 
-다른 현재 루트 화면은 하단 padding으로 `120`, `110 + insets.bottom` 등을 각각
-사용하고 있어 공통 계산이 없다.
+다른 루트 화면도 현재는 `TabPageLayout`이 tab height와 페이지별 마지막 여백을 합산한다.
 
 ### 공통화 결정
 
@@ -195,6 +227,16 @@ TabPageLayout
 - 화면 좌우 padding `16`과 카드 사이 gap `10`은 홈에서 확인됐지만, 다른 페이지
   점검 전에는 제품 전체 token으로 확정하지 않는다.
 - Apps in Toss 네이티브 상단 헤더는 이 layout의 소유 범위에 포함하지 않는다.
+
+### 반영
+
+- `TabPageLayout`이 `contentBottomInset`과 `floatingActionBottomInset`을 소비 화면에
+  제공하도록 구현했다.
+- 루트 탭 5개와 트레이너 매칭에서 `104`, `110 + inset`, `120` 등으로 흩어져 있던
+  하단 값을 제거했다.
+- 홈은 원본의 web `100`, native `120` 최소 여백을 보존하면서 더 큰 safe area에서는
+  콘텐츠가 탭에 가려지지 않도록 계산한다.
+- 기록·PT FAB는 원본처럼 web `24`, native `tabBarHeight + 16`을 사용한다.
 
 ## 공통 후보 요약
 
@@ -206,12 +248,22 @@ TabPageLayout
 | `MemberTabBar` | pattern | 신규 정리 필요 | 5개 루트 탭 공통 |
 | `TabPageLayout` | pattern | 신규 필요 | 탭·safe area·content inset 책임 통합 |
 | semantic icon registry | primitive/adapter | 신규 필요 | vector 대신 Text glyph 사용 방지 |
-| 전역 typography scale | token/primitive | 보류 | 나머지 루트 페이지 실제 코드 확인 필요 |
-| 전역 card·spacing scale | token/pattern | 보류 | 홈 외 페이지 실제 코드 확인 필요 |
+| `tabLabel`, `sectionTitle`, row action typography | token/primitive | 확정·반영 | 전체 페이지 대조에서 같은 역할과 값 반복 |
+| 전역 card·spacing scale | token/pattern | 보류 | 전체 페이지에서 역할별 값이 안정적으로 반복되지 않음 |
 
-## 반영 전 확인 사항
+## 반영 검증
 
-1. Apps in Toss 실행 환경에서 `insets.bottom` 실측
-2. 동일 기기 폭에서 원본의 `MEMBER_TAB_H_PAD` 계산 결과 확인
-3. 원본 chevron·play에 대응할 vector asset 확정
-4. 기록·PT·AI·내 정보 페이지의 실제 typography와 surface 반복 여부 확인
+- `npm run typecheck`: 통과
+- `npm test -- --runInBand`: 36 suites, 99 tests 통과
+- `npm run build`: iOS·Android Apps in Toss artifact 생성 통과
+- 공통 layout 계산 test: native safe area, web 84px tab, 홈 최소 하단 여백 검증
+- 변경 파일 Biome 검사: 통과
+- 전체 `src`, `pages` Biome 검사: 이번 변경과 무관한 기존 운동배우기 계열 format과
+  lint 불일치 27건으로 실패
+
+## 실기 검증 전 확인 사항
+
+1. Apps in Toss 실기기에서 `insets.bottom` 값과 콘텐츠 끝 위치 캡처
+2. 같은 viewport에서 원본과 `MEMBER_TAB_H_PAD` 정렬 비교
+3. 원본·현재의 동일 상태 fixture와 스크롤 위치 확보
+4. 페이지별로 남은 card·surface·상태 차이 반영 후 최종 캡처
