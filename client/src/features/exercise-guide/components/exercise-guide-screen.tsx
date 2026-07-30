@@ -5,7 +5,6 @@ import {
   Alert,
   Image,
   type ImageSourcePropType,
-  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -14,6 +13,7 @@ import {
   View,
 } from 'react-native';
 import { SuspenseSection } from 'shared/components/async-state';
+import { BottomSheetModal } from 'shared/components/bottom-sheet-modal';
 import { OriginalAppIcon } from 'shared/components/icons/pt-diary-icons';
 import Colors, { iosShadowLight } from 'shared/constants/colors';
 import { getAssetSource } from 'shared/lib/asset-url';
@@ -158,50 +158,42 @@ function ExerciseGuideScreenContent({
         </View>
       </ScrollView>
 
-      <Modal
-        animationType="slide"
+      <BottomSheetModal
+        backdropAccessibilityLabel="사진 선택 액션시트 닫기"
         onRequestClose={() => setShowActionSheet(false)}
-        transparent
+        sheetStyle={[
+          styles.modalSheet,
+          { paddingBottom: Platform.OS === 'web' ? 34 : insets.bottom + 8 },
+        ]}
         visible={showActionSheet}
       >
+        <View style={styles.modalHandle} />
+        <View style={styles.modalCard}>
+          <ModalOption
+            icon={CAMERA_ICON}
+            label="카메라로 촬영"
+            onPress={() => {
+              setShowActionSheet(false);
+              Alert.alert('카메라로 촬영', '준비 중입니다.');
+            }}
+          />
+          <View style={styles.modalDivider} />
+          <ModalOption
+            icon={GALLERY_ICON}
+            label="갤러리에서 선택"
+            onPress={() => {
+              setShowActionSheet(false);
+              Alert.alert('갤러리에서 선택', '준비 중입니다.');
+            }}
+          />
+        </View>
         <Pressable
           onPress={() => setShowActionSheet(false)}
-          style={styles.modalOverlay}
-        />
-        <View
-          style={[
-            styles.modalSheet,
-            { paddingBottom: Platform.OS === 'web' ? 34 : insets.bottom + 8 },
-          ]}
+          style={styles.modalCancel}
         >
-          <View style={styles.modalHandle} />
-          <View style={styles.modalCard}>
-            <ModalOption
-              icon={CAMERA_ICON}
-              label="카메라로 촬영"
-              onPress={() => {
-                setShowActionSheet(false);
-                Alert.alert('카메라로 촬영', '준비 중입니다.');
-              }}
-            />
-            <View style={styles.modalDivider} />
-            <ModalOption
-              icon={GALLERY_ICON}
-              label="갤러리에서 선택"
-              onPress={() => {
-                setShowActionSheet(false);
-                Alert.alert('갤러리에서 선택', '준비 중입니다.');
-              }}
-            />
-          </View>
-          <Pressable
-            onPress={() => setShowActionSheet(false)}
-            style={styles.modalCancel}
-          >
-            <Text style={styles.modalCancelText}>취소</Text>
-          </Pressable>
-        </View>
-      </Modal>
+          <Text style={styles.modalCancelText}>취소</Text>
+        </Pressable>
+      </BottomSheetModal>
     </View>
   );
 }
@@ -314,10 +306,6 @@ const styles = StyleSheet.create({
     color: Colors.text,
     fontFamily: 'Pretendard-Medium',
     fontSize: 16,
-  },
-  modalOverlay: {
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    flex: 1,
   },
   modalSheet: {
     backgroundColor: Colors.white,

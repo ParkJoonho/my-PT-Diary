@@ -3,7 +3,6 @@ import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -18,6 +17,7 @@ import {
   AsyncErrorBoundary,
   SuspenseSection,
 } from 'shared/components/async-state';
+import { BottomSheetModal } from 'shared/components/bottom-sheet-modal';
 import {
   AIInfoIcon,
   OriginalAppIcon,
@@ -383,12 +383,31 @@ function TrainerDetailModal({
   onClose: () => void;
   trainer: TrainerListItem | null;
 }) {
-  const connectRequestMutation = useCreateTrainerConnectRequest();
   const insets = useSafeAreaInsets();
 
-  if (!trainer) {
-    return null;
-  }
+  return (
+    <BottomSheetModal
+      backdropAccessibilityLabel="트레이너 상세 배경 닫기"
+      backdropColor="#00000055"
+      onRequestClose={onClose}
+      sheetStyle={[styles.modalSheet, { paddingBottom: insets.bottom + 24 }]}
+      visible={trainer !== null}
+    >
+      {trainer ? (
+        <TrainerDetailContent onClose={onClose} trainer={trainer} />
+      ) : null}
+    </BottomSheetModal>
+  );
+}
+
+function TrainerDetailContent({
+  onClose,
+  trainer,
+}: {
+  onClose: () => void;
+  trainer: TrainerListItem;
+}) {
+  const connectRequestMutation = useCreateTrainerConnectRequest();
 
   const isLocked =
     trainer.connectRequestStatus === 'pending' ||
@@ -430,115 +449,100 @@ function TrainerDetailModal({
   };
 
   return (
-    <Modal animationType="slide" onRequestClose={onClose} transparent visible>
-      <View style={styles.modalRoot}>
-        <Pressable onPress={onClose} style={styles.modalBackdrop} />
+    <>
+      <View style={styles.modalHandle} />
+
+      <View style={styles.modalHeader}>
         <View
-          style={[styles.modalSheet, { paddingBottom: insets.bottom + 24 }]}
+          style={[
+            styles.modalAvatar,
+            {
+              backgroundColor: trainer.avatarColor,
+            },
+          ]}
         >
-          <View style={styles.modalHandle} />
-
-          <View style={styles.modalHeader}>
-            <View
-              style={[
-                styles.modalAvatar,
-                {
-                  backgroundColor: trainer.avatarColor,
-                },
-              ]}
-            >
-              <Text style={styles.modalAvatarText}>
-                {trainer.name.slice(0, 1)}
-              </Text>
-            </View>
-            <View style={styles.modalNameWrap}>
-              <View style={styles.modalNameRow}>
-                <Text style={styles.modalTrainerName}>{trainer.name}</Text>
-                <OriginalAppIcon color={GOLD} name="star" size={13} />
-                <Text style={styles.modalRating}>
-                  {Number(trainer.rating).toFixed(1)}
-                </Text>
-              </View>
-              <Text style={styles.modalGym}>{trainer.gymName}</Text>
-            </View>
-            <Pressable
-              accessibilityLabel="트레이너 상세 닫기"
-              hitSlop={10}
-              onPress={onClose}
-            >
-              <OriginalAppIcon
-                color={Colors.textMuted}
-                name="close"
-                size={22}
-              />
-            </Pressable>
-          </View>
-
-          <ScrollView
-            contentContainerStyle={styles.modalContent}
-            showsVerticalScrollIndicator={false}
-          >
-            <View style={styles.modalSection}>
-              <Text style={styles.modalSectionTitle}>전문 분야</Text>
-              <View style={styles.modalTagRow}>
-                {trainer.specialties.map((specialty) => (
-                  <View key={specialty} style={styles.modalTag}>
-                    <Text style={styles.modalTagText}>{specialty}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-
-            <View style={styles.modalSection}>
-              <Text style={styles.modalSectionTitle}>경력 및 자격증</Text>
-              <Text style={styles.modalMetaText}>
-                경력 {trainer.experienceYears}년
-              </Text>
-              <View style={styles.modalTagRow}>
-                {trainer.certifications.map((certification) => (
-                  <View
-                    key={certification}
-                    style={[styles.modalTag, styles.modalCertTag]}
-                  >
-                    <Text style={styles.modalTagText}>{certification}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-
-            {'matchReason' in trainer ? (
-              <View style={styles.modalSection}>
-                <Text style={styles.modalSectionTitle}>AI 추천 이유</Text>
-                <Text style={styles.modalDescription}>
-                  {trainer.highlightTag} · {trainer.matchReason}
-                </Text>
-              </View>
-            ) : null}
-
-            <View style={styles.modalPriceSection}>
-              <Text style={styles.modalSectionTitle}>PT 비용</Text>
-              <Text style={styles.modalPrice}>
-                {trainer.pricePerSession}/회
-              </Text>
-            </View>
-          </ScrollView>
-
-          <Pressable
-            disabled={isLocked || connectRequestMutation.isPending}
-            onPress={handleConnectRequest}
-            style={[
-              styles.connectButton,
-              (isLocked || connectRequestMutation.isPending) &&
-                styles.connectButtonDisabled,
-            ]}
-          >
-            <Text style={styles.connectButtonText}>
-              {connectRequestMutation.isPending ? '전송 중...' : ctaLabel}
-            </Text>
-          </Pressable>
+          <Text style={styles.modalAvatarText}>{trainer.name.slice(0, 1)}</Text>
         </View>
+        <View style={styles.modalNameWrap}>
+          <View style={styles.modalNameRow}>
+            <Text style={styles.modalTrainerName}>{trainer.name}</Text>
+            <OriginalAppIcon color={GOLD} name="star" size={13} />
+            <Text style={styles.modalRating}>
+              {Number(trainer.rating).toFixed(1)}
+            </Text>
+          </View>
+          <Text style={styles.modalGym}>{trainer.gymName}</Text>
+        </View>
+        <Pressable
+          accessibilityLabel="트레이너 상세 닫기"
+          hitSlop={10}
+          onPress={onClose}
+        >
+          <OriginalAppIcon color={Colors.textMuted} name="close" size={22} />
+        </Pressable>
       </View>
-    </Modal>
+
+      <ScrollView
+        contentContainerStyle={styles.modalContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.modalSection}>
+          <Text style={styles.modalSectionTitle}>전문 분야</Text>
+          <View style={styles.modalTagRow}>
+            {trainer.specialties.map((specialty) => (
+              <View key={specialty} style={styles.modalTag}>
+                <Text style={styles.modalTagText}>{specialty}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.modalSection}>
+          <Text style={styles.modalSectionTitle}>경력 및 자격증</Text>
+          <Text style={styles.modalMetaText}>
+            경력 {trainer.experienceYears}년
+          </Text>
+          <View style={styles.modalTagRow}>
+            {trainer.certifications.map((certification) => (
+              <View
+                key={certification}
+                style={[styles.modalTag, styles.modalCertTag]}
+              >
+                <Text style={styles.modalTagText}>{certification}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {'matchReason' in trainer ? (
+          <View style={styles.modalSection}>
+            <Text style={styles.modalSectionTitle}>AI 추천 이유</Text>
+            <Text style={styles.modalDescription}>
+              {trainer.highlightTag} · {trainer.matchReason}
+            </Text>
+          </View>
+        ) : null}
+
+        <View style={styles.modalPriceSection}>
+          <Text style={styles.modalSectionTitle}>PT 비용</Text>
+          <Text style={styles.modalPrice}>{trainer.pricePerSession}/회</Text>
+        </View>
+      </ScrollView>
+
+      <Pressable
+        disabled={isLocked || connectRequestMutation.isPending}
+        onPress={handleConnectRequest}
+        style={[
+          styles.connectButton,
+          (isLocked || connectRequestMutation.isPending) &&
+            styles.connectButtonDisabled,
+        ]}
+      >
+        <Text style={styles.connectButtonText}>
+          {connectRequestMutation.isPending ? '전송 중...' : ctaLabel}
+        </Text>
+      </Pressable>
+    </>
   );
 }
 
@@ -763,14 +767,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Pretendard-SemiBold',
     fontSize: 22,
   },
-  modalBackdrop: {
-    backgroundColor: '#00000055',
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-    right: 0,
-    top: 0,
-  },
   modalCertTag: {
     backgroundColor: `${Colors.primary}12`,
   },
@@ -829,10 +825,6 @@ const styles = StyleSheet.create({
     color: Colors.text,
     fontFamily: 'Pretendard-SemiBold',
     fontSize: 13,
-  },
-  modalRoot: {
-    flex: 1,
-    justifyContent: 'flex-end',
   },
   modalSection: {
     gap: 10,
