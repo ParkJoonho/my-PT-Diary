@@ -1,8 +1,5 @@
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
-import { SemanticIcon } from 'shared/components/icons/pt-diary-icons';
+import { RowActionCard } from 'shared/components/row-action-card';
 import { UnimplementedBadge } from 'shared/components/unimplemented-badge';
-import Colors, { iosShadow } from 'shared/constants/colors';
-import { ptTypography } from 'shared/constants/typography';
 
 type QuickActionCardProps = {
   kind: 'outdoor' | 'guide';
@@ -25,63 +22,14 @@ export function QuickActionCard({
   title,
 }: QuickActionCardProps) {
   return (
-    <Pressable
-      accessibilityRole="button"
+    <RowActionCard
+      imageSource={QUICK_IMAGES[kind]}
       onPress={onPress ?? (() => undefined)}
-      style={({ pressed }) => [styles.card, pressed && styles.pressed]}
-    >
-      <Image
-        resizeMode="contain"
-        source={QUICK_IMAGES[kind]}
-        style={styles.icon}
-      />
-      <View style={styles.info}>
-        <View style={styles.titleRow}>
-          <Text style={styles.title}>{title}</Text>
-          {showUnimplementedBadge ? <UnimplementedBadge compact /> : null}
-        </View>
-        <Text style={styles.subtitle}>{subtitle}</Text>
-      </View>
-      <SemanticIcon color={Colors.iconMuted} name="chevronRight" size={20} />
-    </Pressable>
+      subtitle={subtitle}
+      title={title}
+      titleAccessory={
+        showUnimplementedBadge ? <UnimplementedBadge compact /> : undefined
+      }
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    ...iosShadow,
-    alignItems: 'center',
-    backgroundColor: Colors.card,
-    borderRadius: 16,
-    flexDirection: 'row',
-    gap: 14,
-    minHeight: 72,
-    paddingHorizontal: 16,
-    paddingVertical: 19,
-  },
-  icon: {
-    borderRadius: 17,
-    height: 34,
-    width: 34,
-  },
-  info: {
-    flex: 1,
-    gap: 5,
-  },
-  pressed: {
-    opacity: 0.78,
-  },
-  subtitle: {
-    color: Colors.textMuted,
-    ...ptTypography.rowActionSubtitle,
-  },
-  title: {
-    color: Colors.text,
-    ...ptTypography.rowActionTitle,
-  },
-  titleRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 8,
-  },
-});

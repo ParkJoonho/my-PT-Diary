@@ -7,18 +7,16 @@
 - 상태 정렬: 부분 완료
 - 시각 규칙 추출: 완료
 - 공통화 판정: 완료
-- 코드 반영: 일부 완료
+- 코드 반영: 완료
 - 동일 상태 실기 검증: 미진행
 
-공통 반영으로 `TabPageLayout`의 탭·safe-area·본문 하단 계산만 적용했다. 원본과 다른
-계정 정보 구조, glow, title block과 로그아웃 미이식은 그대로 남아 있다.
+공통 `TabPageLayout`의 탭·safe-area·본문 하단 계산을 유지하면서 원본의 profile
+card + logout card 구조를 복원했다. 진단용 glow·title block·preview badge·user key
+panel은 제거하고 원본 icon path와 모든 실효값을 적용했다.
 
-이 화면은 다른 루트 탭과 달리 “원본을 스타일만 바꿔 옮긴 상태”가 아니다. 현재
-`ai-pt`의 `/condition`은 원본의 프로필/로그아웃 페이지 대신, 사용자 키와 로컬
-미리보기 상태를 보여주는 별도 페이지로 바뀌어 있다.
-
-따라서 이 문서의 핵심 판정은 “어떤 카드 radius가 다른가”보다, 현재 페이지를 디자인
-시스템의 근거로 쓰면 안 된다는 점을 명확히 남기는 데 있다.
+Apps in Toss는 원본 앱의 자체 name/email 세션과 logout API를 제공하지 않는다.
+따라서 이름은 익명/미리보기 사용자, 보조 한 줄은 익명 사용자 키로 매핑하고,
+로그아웃 확인 후에는 플랫폼의 `closeView`로 미니앱을 닫는다.
 
 ## 실제 코드 경로
 
@@ -37,13 +35,12 @@
 
 - 라우트: [`src/pages/condition.tsx`](../../../src/pages/condition.tsx)
 - 화면 조립: [`features/account/components/account-screen.tsx`](../../../src/features/account/components/account-screen.tsx)
-- 배경 데코: [`features/account/components/account-background.tsx`](../../../src/features/account/components/account-background.tsx)
 - 프로필 변환: [`features/account/lib/account-profile.ts`](../../../src/features/account/lib/account-profile.ts)
 - 탭 shell: [`shared/components/tab-page-layout.tsx`](../../../src/shared/components/tab-page-layout.tsx)
 - 하단 탭: [`shared/components/member-tab-bar.tsx`](../../../src/shared/components/member-tab-bar.tsx)
 
-현재는 Apps in Toss 사용자 계정 화면이 아니라, tracker user key와 로컬 미리보기 여부를
-설명하는 진단성 페이지다.
+현재는 원본의 정보 밀도와 카드 구조를 유지하고 Apps in Toss 익명 사용자 정보를
+같은 두 줄 profile slot에 표시한다.
 
 ## 렌더 트리 대조
 
@@ -63,37 +60,29 @@ ProfileScreen
 ```text
 ai-pt
 AccountScreen
-├── AccountBackground                         항상 decorative glow 렌더링
-├── ScrollView
-│   ├── titleBlock
-│   │   ├── eyebrow
-│   │   ├── title
-│   │   └── subtitle
-│   └── AccountProfileCard
-│       ├── avatar
-│       ├── displayName + previewBadge
-│       ├── detailText
-│       ├── helperText
-│       └── userKeyPanel
+├── AccountContent
+│   ├── profileCard
+│   │   ├── avatar
+│   │   └── displayName + anonymous user key
+│   └── logoutButton
 └── MemberTabBar                              TabPageLayout에서 렌더링
 ```
 
-원본의 핵심은 “짧은 프로필 + 로그아웃 액션”이고, 현재의 핵심은 “기술적 사용자 식별자
-설명”이다. 두 페이지는 같은 정보 설계가 아니다.
+원본과 현재 모두 “짧은 프로필 + 로그아웃/종료 액션”의 같은 정보 구조를 사용한다.
 
 ## 상태 매트릭스
 
 | 상태 | 원본 실제 코드 | `ai-pt` 실제 코드 | 비교 가능 | 판정 |
 |---|---|---|---|---|
-| 기본 표시 | 사용자 이름 + 이메일 | 익명/미리보기 사용자 + 설명 + 사용자 키 | 아니오 | 정보 구조가 다름 |
-| 개발 미리보기 상태 | 별도 없음 | `미리보기` badge 가능 | 아니오 | 현재 전용 상태 |
-| 로그아웃 idle | logout button 표시 | 없음 | 아니오 | 기능 자체가 없음 |
-| 로그아웃 진행 중 | 버튼 텍스트 `로그아웃 중…` | 없음 | 아니오 | 상태 자체가 없음 |
-| 배경 데코 | body image 있을 때만 parallax | glow circle 3개 항상 표시 | 부분 가능 | 시각 구조가 다름 |
+| 기본 표시 | 사용자 이름 + 이메일 | 익명 사용자 + 익명 키 | 부분 가능 | 플랫폼 데이터 예외, 구조 일치 |
+| 개발 미리보기 상태 | 별도 없음 | 이름/보조 한 줄에만 매핑 | 부분 가능 | 별도 badge 제거 |
+| 로그아웃 idle | logout button 표시 | 동일 | 코드·테스트 비교 가능 | 반영 완료 |
+| 로그아웃 진행 중 | 버튼 텍스트 `로그아웃 중…` | 동일 | 코드·테스트 비교 가능 | 반영 완료 |
+| 배경 데코 | body image 있을 때만 parallax | 별도 glow 없음 | 부분 가능 | 일반 상태 일치 |
 | 오류 상태 | 별도 없음 | Suspense error 추가 | 아니오 | 현재 전용 상태 |
 
-제공된 캡처도 원본은 프로필 카드 + 로그아웃 버튼, 현재는 title block + user key panel을
-보여주므로 같은 fixture로는 볼 수 없다.
+실기 캡처에서는 원본 name/email과 Apps in Toss 익명 사용자 표시의 데이터 차이를
+제외하고 카드 배치와 크기를 비교해야 한다.
 
 ## 실제 시각 규칙 대조
 
@@ -101,52 +90,52 @@ AccountScreen
 
 | 영역 | 원본 실제 값 | `ai-pt` 실제 값 | 판정 |
 |---|---|---|---|
-| 배경 | `Colors.background` | 동일 foundation + glow background | 부분 일치 |
-| 상단 padding | `20` | `18` | 다름 |
+| 배경 | `Colors.background` | 동일, 별도 glow 없음 | 일치 |
+| 상단 padding | `20` | 동일 | 일치 |
 | 좌우 padding | `16` | `16` | 일치 |
-| 카드 간 gap | `12` | `16` | 다름 |
+| 카드 간 gap | `12` | 동일 | 일치 |
 | 하단 padding | `GLOBAL_TAB_BAR_CONTENT_H + inset + 20` | 동일 계산 | 공통 반영 완료 |
 
-배경 tone조차 현재는 원본보다 더 “연출된 페이지” 쪽으로 바뀌어 있다.
+일반 프로필 상태의 배경과 본문 여백을 원본 값으로 복원했다.
 
 ### 배경과 page title block
 
 | 영역 | 원본 실제 값 | `ai-pt` 실제 값 | 판정 |
 |---|---|---|---|
-| decorative background | `ParallaxBackground`, 사용자 body image 없으면 null | glow 3개를 항상 렌더링 | 다름 |
-| page eyebrow | 없음 | `13` Medium muted | 원본에 없음 |
-| page title | 없음 | `26` SemiBold | 원본에 없음 |
-| page subtitle | 없음 | `14` Regular, lineHeight `21` | 원본에 없음 |
+| decorative background | `ParallaxBackground`, 사용자 body image 없으면 null | 별도 decorative background 없음 | 일반 상태 일치 |
+| page eyebrow | 없음 | 없음 | 일치 |
+| page title | 없음 | 없음 | 일치 |
+| page subtitle | 없음 | 없음 | 일치 |
 
-현재 title block은 “헤더 중복 제거” 이슈를 떠나, 원본에 존재하지 않는 본문 hero 영역이다.
-디자인 시스템의 typography 기준으로 올리면 오히려 마이그레이션을 방해한다.
+원본에 없는 본문 hero와 glow 컴포넌트를 제거했다.
 
 ### 프로필 카드
 
 | 영역 | 원본 실제 값 | `ai-pt` 실제 값 | 판정 |
 |---|---|---|---|
-| surface | 흰색, radius `16`, `iosShadow` | radius `18`, `iosShadow` | 다름 |
-| padding | `20` | 가로 `18`, 세로 `20` | 다름 |
-| avatar | `64 × 64`, inputBg, person icon `36` | `64 × 64`, inputBg, user icon `34` | 거의 동일 |
+| surface | 흰색, radius `16`, `iosShadow` | 동일 | 일치 |
+| padding | `20` | 동일 | 일치 |
+| avatar | `64 × 64`, inputBg, person icon `36` | 원본 SVG path `36` | 일치 |
 | 이름 | `18`, SemiBold | `18`, SemiBold | 일치 |
-| 보조 텍스트 | email `13` Regular muted | detail `13` lineHeight `20`, helper `12` lineHeight `18` | 다름 |
-| 레이아웃 | avatar + info 1행 | avatar 아래 설명 + panel까지 포함한 세로 card | 다름 |
-| preview badge | 없음 | accentLight pill `11` | 현재 전용 상태 |
-| userKey panel | 없음 | muted surface, radius `14`, padding `14` | 원본에 없음 |
+| 보조 텍스트 | email `13` Regular muted | 익명 user key `13` Regular muted | 플랫폼 데이터 예외, 시각 일치 |
+| 레이아웃 | avatar + info 1행 | 동일 | 일치 |
+| preview badge | 없음 | 없음 | 일치 |
+| userKey panel | 없음 | 없음 | 일치 |
 
-avatar 원형과 이름 typography만 일부 닮아 있고, card의 책임 자체는 달라졌다.
+Apps in Toss에서 제공 가능한 익명 식별자를 원본 email slot에 표시하는 플랫폼 예외만
+남는다.
 
 ### 로그아웃 영역
 
 | 영역 | 원본 실제 값 | `ai-pt` 실제 값 | 판정 |
 |---|---|---|---|
-| logout surface | 흰색, radius `14`, `iosShadow` | 없음 | 미이식 |
-| logout icon | `log-out-outline 20`, red | 없음 | 미이식 |
-| logout text | `16`, Medium, `#FF3B30` | 없음 | 미이식 |
-| pressed state | `opacity: 0.75` | 없음 | 미이식 |
+| logout surface | 흰색, radius `14`, `iosShadow` | 동일 | 일치 |
+| logout icon | `log-out-outline 20`, red | 원본 SVG path `20` | 일치 |
+| logout text | `16`, Medium, `#FF3B30` | 동일 | 일치 |
+| pressed state | `opacity: 0.75` | 동일 | 일치 |
+| 진행 text | `로그아웃 중…` | 동일 | 일치 |
 
-원본의 두 번째 핵심 요소인 logout button이 현재는 아예 없다. 이건 디자인 drift가
-아니라 기능/정보 구조 미이식이다.
+원본의 확인 alert와 진행 상태를 유지하되 최종 동작은 Apps in Toss의 `closeView`다.
 
 ## 공통화 판정
 
@@ -154,10 +143,10 @@ avatar 원형과 이름 typography만 일부 닮아 있고, card의 책임 자�
 
 | 후보 | 분류 | 판정 | 이유 |
 |---|---|---|---|
-| 현재 title block | reject | 전역 typography 기준 금지 | 원본 route에 없는 구조 |
-| `AccountBackground` glow | reject | 배경 primitive 금지 | 현재 전용 연출 요소 |
-| `userKeyPanel` | reject | account primitive 금지 | 원본 계정 화면과 무관한 진단 패널 |
-| `previewBadge` | reject | 상태 badge 금지 | 로컬 미리보기 전용 상태 |
+| 현재 title block | reject | 제거 완료 | 원본 route에 없는 구조 |
+| `AccountBackground` glow | reject | 컴포넌트 제거 완료 | 현재 전용 연출 요소 |
+| `userKeyPanel` | reject | 제거 완료 | 원본 계정 화면과 무관한 진단 패널 |
+| `previewBadge` | reject | 제거 완료 | 로컬 미리보기 전용 상태 |
 
 ### 제한적으로 참고 가능한 항목
 
@@ -166,18 +155,29 @@ avatar 원형과 이름 typography만 일부 닮아 있고, card의 책임 자�
 | avatar circle `64 × 64` + inputBg | primitive 후보 | 보류 | 원본과 현재가 닮았지만 한 페이지만으로 전역화할 근거는 약함 |
 | profile name `18 SemiBold` | typography 후보 | 보류 | 다른 계정/프로필 계열 페이지 확인 필요 |
 
-현재 `/condition`은 공통화 후보를 발견하는 페이지가 아니라, “이 페이지를 기반으로
-디자인 시스템을 만들면 안 된다”는 경고를 남기는 페이지에 가깝다.
+profile과 logout은 이 페이지 전용 pattern으로 유지하며 다른 계정 화면을 확인하기
+전까지 전역 primitive로 승격하지 않는다.
 
-## 수정 후보
+## 반영 결과와 플랫폼 예외
 
-이 문서는 코드 수정 범위를 확정하기 위한 점검 결과이며 아직 구현하지 않았다.
+### 반영 완료
 
-1. `/condition`을 원본의 프로필/로그아웃 페이지 책임으로 되돌리기
-2. title block과 glow background를 제거하고 원본의 단순 stacked card 구조 복원
-3. Apps in Toss 사용자 정보 기반 `name`, `email` 표시 복원
-4. logout button과 진행 중 상태 복원
-5. tracker user key 안내가 꼭 필요하면 이 route가 아닌 별도 진단/설정 페이지로 분리
+1. 원본의 profile + logout stacked card 구조
+2. title block·glow·진단 panel·preview badge 제거
+3. profile shell, avatar, typography와 원본 person SVG path
+4. logout shell, 원본 log-out SVG path, pressed·진행 상태
+
+### 플랫폼 예외
+
+- Apps in Toss 익명 키 API는 원본 자체 계정의 name/email을 제공하지 않는다. 이름은
+  `익명 사용자` 또는 `미리보기 사용자`, 보조 한 줄은 익명 키로 표시한다.
+- 앱 소유 인증 세션이 없으므로 로그아웃 확인 후 `closeView`로 미니앱을 닫는다.
+
+## 코드 검증
+
+- profile/logout 전용 구조와 진단 UI 비노출 테스트
+- 확인 후 `closeView` 호출과 `로그아웃 중…` 상태 테스트
+- 관련 테스트 2개, TypeScript `tsc --noEmit`, 변경 파일 Biome 검사 통과
 
 ## 실기 검증에 필요한 fixture
 
@@ -186,5 +186,5 @@ avatar 원형과 이름 typography만 일부 닮아 있고, card의 책임 자�
 1. 이름과 이메일이 채워진 기본 프로필 상태
 2. 로그아웃 버튼을 누른 진행 중 상태
 
-현재 `ai-pt`는 두 상태 모두 같은 route에서 재현되지 않으므로, 실기 검증 전에 기능
-책임부터 원본 쪽으로 다시 맞춰야 한다.
+두 상태를 같은 viewport에서 촬영하고 원본 name/email과 현재 익명 정보의 데이터
+차이는 플랫폼 예외로 분리한다.

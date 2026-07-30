@@ -1,25 +1,38 @@
 import type { HomeRoutine } from 'features/workout-routines/types/routine';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { UnimplementedBadge } from 'shared/components/unimplemented-badge';
+import {
+  OriginalAppIcon,
+  type OriginalAppIconName,
+} from 'shared/components/icons/pt-diary-icons';
 import Colors, { iosShadow } from 'shared/constants/colors';
+import { hasOriginalVoiceGuide } from '../lib/voice-guide-availability';
 import type { CompletedStepMap } from '../types/active-workout';
 
 type WorkoutStepListProps = {
+  contentBottomInset: number;
   completedSteps: CompletedStepMap;
   errorMessage: string | null;
+  onRecordVideo: (stepIndex: number) => void;
   onToggleStep: (stepIndex: number) => void;
+  onVoiceGuide: (stepIndex: number) => void;
   routine: HomeRoutine;
 };
 
 export function WorkoutStepList({
+  contentBottomInset,
   completedSteps,
   errorMessage,
+  onRecordVideo,
   onToggleStep,
+  onVoiceGuide,
   routine,
 }: WorkoutStepListProps) {
   return (
     <ScrollView
-      contentContainerStyle={styles.scrollContent}
+      contentContainerStyle={[
+        styles.scrollContent,
+        { paddingBottom: contentBottomInset },
+      ]}
       showsVerticalScrollIndicator={false}
       style={styles.scrollView}
     >
@@ -27,9 +40,6 @@ export function WorkoutStepList({
         <Text style={styles.title}>
           {routine.source === 'mock-ai' ? 'AI 추천: ' : ''}
           {routine.label}
-        </Text>
-        <Text style={styles.meta}>
-          {routine.duration} · {routine.location === 'home' ? '홈트' : '헬스장'}
         </Text>
 
         {errorMessage ? (
@@ -51,6 +61,15 @@ export function WorkoutStepList({
               : step.type === 'stretch'
                 ? Colors.success
                 : Colors.accent;
+          const typeIcon: OriginalAppIconName =
+            step.type === 'cardio'
+              ? 'walk'
+              : step.type === 'stretch'
+                ? 'body'
+                : 'barbell';
+          const hasVoiceGuide =
+            step.type !== 'cardio' && hasOriginalVoiceGuide(step.name);
+          const hasActions = hasVoiceGuide || step.type === 'strength';
 
           return (
             <View key={`${routine.id}-${step.name}-${index}`}>
@@ -102,6 +121,11 @@ export function WorkoutStepList({
                       { backgroundColor: `${typeColor}18` },
                     ]}
                   >
+                    <OriginalAppIcon
+                      color={typeColor}
+                      name={typeIcon}
+                      size={11}
+                    />
                     <Text
                       style={[styles.stepTypeTagText, { color: typeColor }]}
                     >
@@ -109,11 +133,23 @@ export function WorkoutStepList({
                     </Text>
                   </View>
 
-                  {step.type !== 'cardio' ? (
+                  {hasActions ? (
                     <View style={styles.stepActionRow}>
-                      <ActionChip label="음성가이드" />
+                      {hasVoiceGuide ? (
+                        <ActionButton
+                          icon="mic"
+                          label="음성가이드"
+                          onPress={() => onVoiceGuide(index)}
+                          tone="voice"
+                        />
+                      ) : null}
                       {step.type === 'strength' ? (
-                        <ActionChip label="영상촬영" />
+                        <ActionButton
+                          icon="videocam"
+                          label="영상촬영"
+                          onPress={() => onRecordVideo(index)}
+                          tone="video"
+                        />
                       ) : null}
                     </View>
                   ) : null}
@@ -122,6 +158,11 @@ export function WorkoutStepList({
 
               {step.restAfter ? (
                 <View style={styles.restRow}>
+                  <OriginalAppIcon
+                    color="#F59E0B"
+                    name="cafeOutline"
+                    size={12}
+                  />
                   <Text style={styles.restText}>
                     {step.sets
                       ? `세트 간 휴식 ${step.restAfter} × ${step.sets}회`
@@ -137,31 +178,47 @@ export function WorkoutStepList({
   );
 }
 
-function ActionChip({ label }: { label: string }) {
+function ActionButton({
+  icon,
+  label,
+  onPress,
+  tone,
+}: {
+  icon: OriginalAppIconName;
+  label: string;
+  onPress: () => void;
+  tone: 'video' | 'voice';
+}) {
+  const color = tone === 'voice' ? '#D4AF37' : Colors.info;
+
   return (
-    <Pressable accessibilityRole="button" style={styles.actionChip}>
-      <Text style={styles.actionChipText}>{label}</Text>
-      <UnimplementedBadge compact />
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.actionButton,
+        tone === 'voice' ? styles.voiceButton : styles.videoButton,
+        pressed && styles.pressed,
+      ]}
+    >
+      <OriginalAppIcon color={color} name={icon} size={14} />
+      <Text style={[styles.actionButtonText, { color }]}>{label}</Text>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  actionChip: {
+  actionButton: {
     alignItems: 'center',
-    backgroundColor: Colors.surfaceMuted,
-    borderColor: Colors.cardBorder,
-    borderRadius: 999,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 8,
     flexDirection: 'row',
-    gap: 6,
+    gap: 4,
     paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingVertical: 5,
   },
-  actionChipText: {
-    color: Colors.textSecondary,
+  actionButtonText: {
     fontFamily: 'Pretendard-Medium',
-    fontSize: 12,
+    fontSize: 11,
   },
   card: {
     ...iosShadow,
@@ -198,19 +255,15 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 19,
   },
-  meta: {
-    color: Colors.textMuted,
-    fontFamily: 'Pretendard-Regular',
-    fontSize: 12,
-    marginTop: -8,
-  },
   pressed: {
     opacity: 0.78,
   },
   restRow: {
-    paddingBottom: 8,
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 6,
     paddingLeft: 36,
-    paddingTop: 2,
+    paddingVertical: 4,
   },
   restText: {
     color: Colors.warning,
@@ -218,7 +271,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
   },
   scrollContent: {
-    paddingBottom: 40,
     paddingHorizontal: 16,
   },
   scrollView: {
@@ -232,8 +284,8 @@ const styles = StyleSheet.create({
     paddingBottom: 0,
   },
   stepActionRow: {
+    alignItems: 'center',
     flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: 8,
     marginTop: 10,
   },
@@ -280,8 +332,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   stepTypeTag: {
+    alignItems: 'center',
     alignSelf: 'flex-start',
     borderRadius: 999,
+    flexDirection: 'row',
+    gap: 4,
     marginTop: 8,
     paddingHorizontal: 8,
     paddingVertical: 3,
@@ -294,5 +349,11 @@ const styles = StyleSheet.create({
     color: Colors.text,
     fontFamily: 'Pretendard-Regular',
     fontSize: 17,
+  },
+  videoButton: {
+    backgroundColor: `${Colors.info}14`,
+  },
+  voiceButton: {
+    backgroundColor: '#D4AF3718',
   },
 });

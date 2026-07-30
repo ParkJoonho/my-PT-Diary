@@ -28,7 +28,7 @@
 ## 이번 점검에서 제외하는 항목
 
 - Apps in Toss가 제공하는 네이티브 상단 헤더
-- 원본 헤더를 중복 렌더링하는 코드의 제거 작업
+- Apps in Toss 상단 헤더와 중복되는 원본 `AppHeader` 제거 작업
 - 이미 확인된 원본 Pretendard Medium 등록 충돌의 재조사
 - 로그인·회원가입 화면의 Apps in Toss 인증 전환
 
@@ -91,20 +91,22 @@
 ## 현재 구현된 사용자 페이지
 
 점검은 루트 탭 5개를 먼저 처리하고, 해당 화면에서 진입하는 상세 페이지를 다음
-순서로 처리한다.
+순서로 처리한다. 각 단위는 `pages/` 문서 확인 → 실제 코드 확인 → 원본 디자인 대조
+→ 디자인 마이그레이션 → 이 README 갱신까지 마친 뒤에만 다음 ID로 이동한다.
+디자인 판정은 과거 QA 문서보다 원본 앱의 현재 실제 코드를 우선한다.
 
 | ID | 페이지 | 원본 실제 코드 | `ai-pt` 실제 코드 | 원본 코드 | 현재 코드 | 상태 정렬 | 규칙 추출 | 공통화 | 반영 | 실기 검증 |
 |---|---|---|---|---|---|---|---|---|---|---|
-| P-01 | [홈 `/`](pages/home.md) | [`app/(tabs)/index.tsx`](<../../../../2026-07-13/my-PT-Diary/app/(tabs)/index.tsx>) | [`src/pages/index.tsx`](../../src/pages/index.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | 🟨 | ⬜ |
-| P-02 | [기록 `/exercise`](pages/exercise.md) | [`app/(tabs)/exercise.tsx`](<../../../../2026-07-13/my-PT-Diary/app/(tabs)/exercise.tsx>) | [`src/pages/exercise.tsx`](../../src/pages/exercise.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | 🟨 | ⬜ |
-| P-03 | [PT `/pt-log`](pages/pt-log.md) | [`app/(tabs)/pt-log.tsx`](<../../../../2026-07-13/my-PT-Diary/app/(tabs)/pt-log.tsx>) | [`src/pages/pt-log.tsx`](../../src/pages/pt-log.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | 🟨 | ⬜ |
-| P-04 | [AI `/ai-hub`](pages/ai-hub.md) | [`app/(tabs)/ai-hub.tsx`](<../../../../2026-07-13/my-PT-Diary/app/(tabs)/ai-hub.tsx>) | [`src/pages/ai-hub.tsx`](../../src/pages/ai-hub.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | 🟨 | ⬜ |
-| P-05 | [내 정보 `/condition`](pages/condition.md) | [`app/(tabs)/condition.tsx`](<../../../../2026-07-13/my-PT-Diary/app/(tabs)/condition.tsx>) | [`src/pages/condition.tsx`](../../src/pages/condition.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | 🟨 | ⬜ |
-| P-06 | [운동 진행 `/active-workout`](pages/active-workout.md) | [`app/active-workout.tsx`](../../../../2026-07-13/my-PT-Diary/app/active-workout.tsx) | [`src/pages/active-workout.tsx`](../../src/pages/active-workout.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | 🟨 | ⬜ |
-| P-07 | [야외운동 `/outdoor-workout`](pages/outdoor-workout.md) | [`app/(tabs)/outdoor-workout.tsx`](<../../../../2026-07-13/my-PT-Diary/app/(tabs)/outdoor-workout.tsx>) | [`src/pages/outdoor-workout.tsx`](../../src/pages/outdoor-workout.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | ⬜ | ⬜ |
-| P-08 | [야외운동 결과 `/outdoor-workout-result`](pages/outdoor-workout-result.md) | [`app/(tabs)/outdoor-workout-result.tsx`](<../../../../2026-07-13/my-PT-Diary/app/(tabs)/outdoor-workout-result.tsx>) | [`src/pages/outdoor-workout-result.tsx`](../../src/pages/outdoor-workout-result.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | ⬜ | ⬜ |
-| P-09 | [운동배우기 `/exercise-guide`](pages/exercise-guide.md) | [`app/exercise-guide.tsx`](../../../../2026-07-13/my-PT-Diary/app/exercise-guide.tsx) | [`src/pages/exercise-guide.tsx`](../../src/pages/exercise-guide.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | ⬜ | ⬜ |
-| P-10 | [운동 영상 `/exercise-video-viewer`](pages/exercise-video-viewer.md) | [`app/exercise-video-viewer.tsx`](../../../../2026-07-13/my-PT-Diary/app/exercise-video-viewer.tsx) | [`src/pages/exercise-video-viewer.tsx`](../../src/pages/exercise-video-viewer.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | ⬜ | ⬜ |
+| P-01 | [홈 `/`](pages/home.md) | [`app/(tabs)/index.tsx`](<../../../../2026-07-13/my-PT-Diary/app/(tabs)/index.tsx>) | [`src/pages/index.tsx`](../../src/pages/index.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | ✅ | ⬜ |
+| P-02 | [기록 `/exercise`](pages/exercise.md) | [`app/(tabs)/exercise.tsx`](<../../../../2026-07-13/my-PT-Diary/app/(tabs)/exercise.tsx>) | [`src/pages/exercise.tsx`](../../src/pages/exercise.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | ✅ | ⬜ |
+| P-03 | [PT `/pt-log`](pages/pt-log.md) | [`app/(tabs)/pt-log.tsx`](<../../../../2026-07-13/my-PT-Diary/app/(tabs)/pt-log.tsx>) | [`src/pages/pt-log.tsx`](../../src/pages/pt-log.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | ✅ | ⬜ |
+| P-04 | [AI `/ai-hub`](pages/ai-hub.md) | [`app/(tabs)/ai-hub.tsx`](<../../../../2026-07-13/my-PT-Diary/app/(tabs)/ai-hub.tsx>) | [`src/pages/ai-hub.tsx`](../../src/pages/ai-hub.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | ✅ | ⬜ |
+| P-05 | [내 정보 `/condition`](pages/condition.md) | [`app/(tabs)/condition.tsx`](<../../../../2026-07-13/my-PT-Diary/app/(tabs)/condition.tsx>) | [`src/pages/condition.tsx`](../../src/pages/condition.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | ✅ | ⬜ |
+| P-06 | [운동 진행 `/active-workout`](pages/active-workout.md) | [`app/active-workout.tsx`](../../../../2026-07-13/my-PT-Diary/app/active-workout.tsx) | [`src/pages/active-workout.tsx`](../../src/pages/active-workout.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | ✅ | ⬜ |
+| P-07 | [야외운동 `/outdoor-workout`](pages/outdoor-workout.md) | [`app/(tabs)/outdoor-workout.tsx`](<../../../../2026-07-13/my-PT-Diary/app/(tabs)/outdoor-workout.tsx>) | [`src/pages/outdoor-workout.tsx`](../../src/pages/outdoor-workout.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | ✅ | ⬜ |
+| P-08 | [야외운동 결과 `/outdoor-workout-result`](pages/outdoor-workout-result.md) | [`app/(tabs)/outdoor-workout-result.tsx`](<../../../../2026-07-13/my-PT-Diary/app/(tabs)/outdoor-workout-result.tsx>) | [`src/pages/outdoor-workout-result.tsx`](../../src/pages/outdoor-workout-result.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | ✅ | ⬜ |
+| P-09 | [운동배우기 `/exercise-guide`](pages/exercise-guide.md) | [`app/exercise-guide.tsx`](../../../../2026-07-13/my-PT-Diary/app/exercise-guide.tsx) | [`src/pages/exercise-guide.tsx`](../../src/pages/exercise-guide.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | ✅ | ⬜ |
+| P-10 | [운동 영상 `/exercise-video-viewer`](pages/exercise-video-viewer.md) | [`app/exercise-video-viewer.tsx`](../../../../2026-07-13/my-PT-Diary/app/exercise-video-viewer.tsx) | [`src/pages/exercise-video-viewer.tsx`](../../src/pages/exercise-video-viewer.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | ✅ | ⬜ |
 | P-11 | [운동 기록 목록 `/exercise-list`](pages/exercise-list.md) | [`app/exercise-list.tsx`](../../../../2026-07-13/my-PT-Diary/app/exercise-list.tsx) | [`src/pages/exercise-list.tsx`](../../src/pages/exercise-list.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | ⬜ | ⬜ |
 | P-12 | [운동 기록 상세 `/exercise-record-detail`](pages/exercise-record-detail.md) | 원본에 독립 라우트 없음. `exercise-list`·`exercise-form` 흐름에서 실제 대응 범위 판정 | [`src/pages/exercise-record-detail.tsx`](../../src/pages/exercise-record-detail.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | ⬜ | ⬜ |
 | P-13 | [운동 기록 작성·수정 `/exercise-form`](pages/exercise-form.md) | [`app/exercise-form.tsx`](../../../../2026-07-13/my-PT-Diary/app/exercise-form.tsx) | [`src/pages/exercise-form.tsx`](../../src/pages/exercise-form.tsx) | ✅ | ✅ | 🟨 | ✅ | ✅ | ⬜ | ⬜ |

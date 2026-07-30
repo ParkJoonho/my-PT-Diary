@@ -17,9 +17,11 @@ export function WeeklyTrackerCard({
     <View style={styles.card}>
       <View style={styles.header}>
         <Text style={styles.title}>주간 트래커</Text>
-        <View style={styles.streakBadge}>
-          <Text style={styles.streakBadgeText}>{streakCount}일 연속</Text>
-        </View>
+        {streakCount > 0 ? (
+          <View style={styles.streakBadge}>
+            <Text style={styles.streakBadgeText}>{streakCount}일 연속</Text>
+          </View>
+        ) : null}
       </View>
 
       <View style={styles.dayRow}>
@@ -67,7 +69,7 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    gap: 16,
   },
   streakBadge: {
     alignItems: 'center',

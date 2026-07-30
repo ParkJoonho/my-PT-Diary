@@ -7,16 +7,15 @@
 - 상태 정렬: 부분 완료
 - 시각 규칙 추출: 완료
 - 공통화 판정: 완료
-- 코드 반영: 미진행
+- 코드 반영: 완료
 - 동일 상태 실기 검증: 미진행
 
-이 페이지의 핵심 차이는 색상 팔레트가 아니라 control primitive다. 원본은 하나의 흰 카드
-안에 `회색 track + 흰 active segment` 구조를 반복해서 쓰고, 현재 `ai-pt`는 이를
-`개별 chip 카드 + accent active fill` 패턴으로 바꿨다. 그래서 기능은 비슷해도 전체
-질감이 원본보다 더 “태그/필터 UI”처럼 보인다.
+이 페이지의 핵심 차이는 색상 팔레트가 아니라 control primitive였다. 원본의
+`회색 track + 흰 active segment` 구조, 카드·CTA 수치, 위치 SVG, 체형 분석 연동을
+실제 코드 기준으로 복원했다.
 
-헤더도 원본은 자체 앱 브랜드형이고 현재는 텍스트 뒤로/닫기형이지만, 사용자 지시상
-헤더 자체는 현재 수정 범위의 핵심이 아니므로 이 문서에서는 구조 차이로만 기록한다.
+원본 자체 앱 브랜드 헤더는 Apps in Toss 네이티브 상단 헤더 제외 규칙에 따라 이관하지
+않았다. 반영 전 임시 텍스트 뒤로/닫기 헤더도 제거하고 페이지 본문 title을 복원했다.
 
 ## 실제 코드 경로
 
@@ -58,25 +57,23 @@ OutdoorWorkoutScreen
 
 ```text
 ai-pt
-OutdoorWorkoutScreen
-├── text header
-│   ├── 뒤로
-│   ├── "야외운동"
-│   └── 닫기
-├── ScrollView
-│   ├── location row
-│   └── control card
-│       ├── 운동 선택 chips
-│       ├── 거리 선택 chips
-│       ├── iOS toggle row
-│       ├── CTA
-│       ├── divider
-│       └── static AI tip
-└── location unavailable / loading states
+TabPageLayout
+├── OutdoorWorkoutScreen
+│   ├── ScrollView
+│   │   ├── page title "야외운동"
+│   │   ├── location row + original SVG
+│   │   └── control card
+│   │       ├── 운동 선택 inset segmented control
+│   │       ├── 거리 선택 inset segmented control
+│   │       ├── iOS toggle row
+│   │       ├── CTA
+│   │       ├── divider
+│   │       └── Suspense 체형 분석 tip
+│   └── location unavailable / loading states
+└── MemberTabBar
 ```
 
-원본은 branded header와 page title을 분리하고, 카드 내부는 segmented-control 계열로
-밀도 있게 구성한다. 현재는 헤더와 카드 내부 선택 UI를 모두 generic하게 단순화했다.
+Apps in Toss 상단 헤더를 제외한 본문과 하단 tab 구조는 원본과 같은 밀도로 정렬했다.
 
 ## 상태 매트릭스
 
@@ -87,8 +84,8 @@ OutdoorWorkoutScreen
 | 기본 선택 상태 | 있음 | 있음 | 가능 | control primitive가 다름 |
 | 자동 목적지 off | 있음 | 있음 | 가능 | subtitle tone만 다름 |
 | 자동 목적지 on | 있음 | 있음 | 가능 | 거의 동일 |
-| 체형 분석 데이터 없음 | 안내 + `/ai-analysis` 이동 | 안내 + 준비중 alert | 가능 | 현재가 축소됨 |
-| 체형 분석 데이터 있음 | 개인화 문구 반영 | 해당 상태 없음 | 가능 | 현재에 없음 |
+| 체형 분석 데이터 없음 | 안내 + `/ai-analysis` 이동 | 동일 | 가능 | 일치 |
+| 체형 분석 데이터 있음 | 개인화 문구 반영 | Suspense query 결과로 동일 문구 반영 | 가능 | 일치 |
 | 코스 설계 중 | 있음 | 있음 | 가능 | 거의 동일 |
 
 ## 실제 시각 규칙 대조
@@ -99,21 +96,22 @@ OutdoorWorkoutScreen
 |---|---|---|---|
 | 배경 | `#F4F5F7` | 동일 | 일치 |
 | header 배경 | white | `Colors.card`(실질 white) | 거의 일치 |
-| header 구조 | 로고형 branded header | 텍스트 back/title/close | 구조 다름 |
-| scroll 상단 | page title 별도 존재 | 별도 page title 없음 | 다름 |
-| scroll padding top | `24` | title block이 없어서 상대적으로 더 바로 시작 | 다름 |
+| header 구조 | 로고형 branded header | Apps in Toss 네이티브 헤더 | 플랫폼 제외 |
+| scroll 상단 | page title 별도 존재 | page title 별도 존재 | 일치 |
+| scroll padding top | `24` | `24` | 일치 |
+| 하단 tab | global member tab | `TabPageLayout` member tab | 일치 |
+| 하단 여백 | web tab + `60`, native safe area + tab + `40` | 동일 계산 | 일치 |
 
-헤더는 수정 범위 밖이지만, 여기서도 현재가 원본의 page chrome을 generic modal header처럼
-단순화한 것은 기록해둘 필요가 있다.
+원본 브랜드 헤더와 Apps in Toss 네이티브 헤더는 비교 대상에서 제외했다.
 
 ### 2. 위치 row
 
 | 영역 | 원본 실제 값 | `ai-pt` 실제 값 | 판정 |
 |---|---|---|---|
-| leading icon | custom orange location svg | orange dot 문자 | 다름 |
-| 위치명 | `14` Medium | `15` SemiBold | 다름 |
-| reset chip | white pill, border, `10/5` or `10/6` | 거의 동일 | 거의 일치 |
-| row margin | 카드 바깥 여백 있음 | scroll 내부 기본 배치 | 다름 |
+| leading icon | custom orange location svg | 같은 path SVG | 일치 |
+| 위치명 | `14` Medium | `14` Medium | 일치 |
+| reset chip | white pill, border, `10/5`, refresh `12` | 동일 | 일치 |
+| row gap | `6` | `6` | 일치 |
 
 위치 row는 정보 구조는 같지만 icon과 font weight가 달라져서 원본보다 조금 더 무겁게 보인다.
 
@@ -121,11 +119,11 @@ OutdoorWorkoutScreen
 
 | 영역 | 원본 실제 값 | `ai-pt` 실제 값 | 판정 |
 |---|---|---|---|
-| 카드 radius | `16` | `24` | 다름 |
-| 카드 padding | `16/24` | `18/20` | 다름 |
-| 카드 shadow | 매우 약한 `iosShadow` | 동일 계열 | 거의 일치 |
-| section label | `13` Medium, muted | `15` SemiBold, text color | 다름 |
-| divider | `#F0F2F5`, top `24` | `Colors.divider`, top `20` | 다름 |
+| 카드 radius | `16` | `16` | 일치 |
+| 카드 padding | `16/24` | `16/24` | 일치 |
+| 카드 shadow | `0,0 / 0.05 / radius 1` | 페이지 전용으로 동일 | 일치 |
+| section label | `13` Medium, muted | 동일 | 일치 |
+| divider | `#F0F2F5`, top `24`, horizontal `8` | 동일 | 일치 |
 
 현재는 control card가 더 둥글고, section label이 더 크고 진하다. 이 조합이 원본보다
 카드 자체를 더 “블록형”으로 느끼게 만든다.
@@ -134,11 +132,11 @@ OutdoorWorkoutScreen
 
 | 영역 | 원본 실제 값 | `ai-pt` 실제 값 | 판정 |
 |---|---|---|---|
-| 선택 방식 | grouped segmented control | 독립 chip list | 구조 다름 |
-| outer shell | `#F0F2F5`, radius `10`, padding `3`, height `44` | 없음 | 다름 |
-| item base | 배경 없음 | `surfaceMuted`, radius `14`, shadow | 다름 |
-| active item | white surface + 약한 shadow | accent fill | 다름 |
-| text active | dark text | white text | 다름 |
+| 선택 방식 | grouped segmented control | grouped segmented control | 일치 |
+| outer shell | `#F0F2F5`, radius `10`, padding `3`, height `44` | 동일 | 일치 |
+| item base | 배경 없음, radius `8` | 동일 | 일치 |
+| active item | white surface + `0,1 / 0.06 / radius 3` | 동일 | 일치 |
+| text active | dark text | dark text | 일치 |
 | item font | `14` SemiBold | `14` SemiBold | 일치 |
 
 이 페이지의 가장 중요한 차이다. 원본은 “control inset” 느낌이고, 현재는 “필터 chip”
@@ -150,7 +148,7 @@ OutdoorWorkoutScreen
 | 영역 | 원본 실제 값 | `ai-pt` 실제 값 | 판정 |
 |---|---|---|---|
 | iOS toggle 애니메이션 | 있음 | 동일 계열 | 거의 일치 |
-| row gap | `12` | `14` | 다름 |
+| row gap | `12` | `12` | 일치 |
 | title | `14` SemiBold | 유사 | 거의 일치 |
 | subtitle 기본 | `12` Regular, muted | 유사 | 거의 일치 |
 | subtitle active | accent | 동일 | 일치 |
@@ -161,12 +159,12 @@ toggle 자체는 큰 문제가 없다. 오히려 이 영역은 원본에 충실�
 
 | 영역 | 원본 실제 값 | `ai-pt` 실제 값 | 판정 |
 |---|---|---|---|
-| CTA radius | `14` | `16` | 다름 |
-| CTA height | `56` | `52` minHeight | 다름 |
-| CTA text | `16` Medium | `15` SemiBold | 다름 |
-| tip icon | custom orange svg | `AIInfoIcon` | 다름 |
-| tip link 행동 | 실제 `/ai-analysis` 이동 또는 체형 결과 반영 | 준비중 alert | 다름 |
-| personalized tip | 있음 | 없음 | 다름 |
+| CTA radius | `14` | `14` | 일치 |
+| CTA height | `56` | `56` | 일치 |
+| CTA text | `16` Medium | `16` Medium | 일치 |
+| tip icon | custom orange svg | 같은 path의 `AIInfoIcon` | 일치 |
+| tip link 행동 | 실제 `/ai-analysis` 이동 또는 체형 결과 반영 | 동일 | 일치 |
+| personalized tip | 있음 | 최근 body 분석 record로 동일 문구 구성 | 일치 |
 
 AI tip은 원본에서 “실제 다른 기능과 연결되는 cross-page card hint”인데, 현재는 단순
 설명 블록으로 축소돼 있다.
@@ -177,7 +175,8 @@ AI tip은 원본에서 “실제 다른 기능과 연결되는 cross-page card h
 
 | 후보 | 분류 | 판정 | 이유 |
 |---|---|---|---|
-| iOS animated toggle | primitive 후보 | 가능 | 원본과 현재 모두 비슷한 구현을 유지 |
+| iOS animated toggle | primitive 후보 | 가능 | 원본과 현재가 같은 구현을 유지 |
+| inset segmented control | primitive 후보 | feature-local 유지 | P-07 안에서 두 번 반복되지만 다른 페이지 확인 전 전역 승격 보류 |
 | location row + reset chip | pattern 후보 | 보류 | 결과 화면 P-08까지 확인 후 판단 |
 | info tip row | pattern 후보 | 보류 | AI 안내 카드 계열로 반복되는지 추가 확인 필요 |
 
@@ -185,40 +184,41 @@ AI tip은 원본에서 “실제 다른 기능과 연결되는 cross-page card h
 
 | 후보 | 분류 | 판정 | 이유 |
 |---|---|---|---|
-| 현재 `chip/chipActive` | reject | 전역 선택 primitive 금지 | 원본은 segmented control 계열 |
-| 현재 `controlCard radius 24` | reject | 기준 card shell 금지 | 원본과 시각 톤이 다름 |
-| 현재 placeholder AI tip link | reject | 공통 CTA 규칙 금지 | 원본은 실제 연결/개인화 문구가 있음 |
+| 기존 `chip/chipActive` | reject | 제거 완료 | 원본은 segmented control 계열 |
+| 기존 `controlCard radius 24` | reject | 제거 완료 | 원본과 시각 톤이 다름 |
+| 기존 placeholder AI tip link | reject | 제거 완료 | 원본은 실제 연결/개인화 문구가 있음 |
 
 ## 시스템 관점 결론
 
-이 페이지는 “왜 전체적으로 달라졌는가”에 대한 근거를 잘 보여준다.
+이 페이지에서 임의로 재해석됐던 chip control을 제거하고 원본의 조밀한 inset control을
+복원했다. body 분석 데이터는 기존 Orval Suspense query를 소비처인 tip 가까이에서
+호출하며, 코스 생성 payload에도 실제 qualitative/quantitative data를 전달한다.
 
-원본은
+## 반영
 
-1. 하나의 card 안에서
-2. 회색 track 위에
-3. 흰 active inset을 올리는
-4. 조밀한 control system
+- [`src/features/outdoor-workout/components/outdoor-workout-screen.tsx`](../../../src/features/outdoor-workout/components/outdoor-workout-screen.tsx)에서
+  임시 텍스트 헤더를 제거하고 page title, 위치 SVG·refresh 아이콘, 원본형 inset
+  segmented control, 카드·CTA·divider·toggle 수치를 복원했다.
+- 같은 화면의 체형 tip에 기존
+  [`useAnalysisRecords`](../../../src/features/body-analysis/api/analysis-records.ts)를
+  Suspense 경계와 함께 연결했다. 분석이 없으면 `/ai-analysis`로 이동하고, 있으면
+  원본 개인화 문구와 코스 생성 payload에 반영한다.
+- [`src/pages/outdoor-workout.tsx`](../../../src/pages/outdoor-workout.tsx)에
+  `TabPageLayout`을 적용해 web/native 하단 tab과 safe area 여백, 상세 tab 선택 없음
+  상태를 복원했다.
+- 화면 전용 control shadow는 전역 `iosShadow`로 뭉개지 않고 원본의 더 약한 값을
+  페이지 안에 유지했다.
 
-을 반복한다.
+## 잔여 이슈
 
-현재는 이를
+- 원본과 현재 모두 실제 도로 geometry가 아니라 반경 기반 목적지와 직선 보간점으로
+  계획을 생성한다. 디자인 이관과 별개로 지도 라우팅 엔진이 필요한 기능 한계다.
+- 위치 권한·실제 GPS와 Apps in Toss 하단 탭을 포함한 동일 상태 실기 캡처는 실행
+  환경이 없어 진행하지 못했다.
 
-1. 개별 chip 카드
-2. accent active fill
-3. 더 큰 radius
-4. 더 진한 section label
+## 반영 검증
 
-로 다시 해석했다.
-
-즉 앞으로 원본에 맞추려면 `선택 chip`을 계속 재활용하는 게 아니라, 원본 계열의
-`SegmentedInsetControl` primitive를 별도로 만들어야 한다.
-
-## 수정 후보
-
-이 문서는 코드 수정 범위를 확정하기 위한 점검 결과이며 아직 구현하지 않았다.
-
-1. 야외운동의 선택 UI를 현재 `chip` 계열이 아니라 원본형 `segmented inset control`로 재정의
-2. control card radius/padding/section label 무게를 원본 값으로 복원
-3. AI tip을 단순 설명 블록이 아니라 실제 연동 가능한 cross-page hint pattern으로 복원
-4. 위치 row leading icon과 text weight를 원본 기준으로 정리
+- outdoor-workout 관련 Jest 3 suites, 8 tests 통과
+- TypeScript `tsc --noEmit` 통과
+- 변경 파일 Biome check 통과
+- `git diff --check` 통과

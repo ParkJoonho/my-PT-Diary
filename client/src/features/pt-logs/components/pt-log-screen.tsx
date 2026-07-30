@@ -1,11 +1,9 @@
 import { useNavigation } from '@granite-js/react-native';
 import { useQueryClient } from '@tanstack/react-query';
-import { Calendar, ClipboardList, Plus } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import {
   Alert,
   FlatList,
-  Image,
   Pressable,
   RefreshControl,
   StyleSheet,
@@ -15,7 +13,11 @@ import {
 import { useTrackerUserKey } from 'shared/api/user-key';
 import { getWeeklyTrackerSummaryQueryKeyPrefix } from 'shared/api/weekly-tracker';
 import { SuspenseSection } from 'shared/components/async-state';
-import { SemanticIcon } from 'shared/components/icons/pt-diary-icons';
+import {
+  OriginalAppIcon,
+  SemanticIcon,
+} from 'shared/components/icons/pt-diary-icons';
+import { RowActionCard } from 'shared/components/row-action-card';
 import { TabPageLayout } from 'shared/components/tab-page-layout';
 import Colors, { iosShadow } from 'shared/constants/colors';
 import { ptTypography } from 'shared/constants/typography';
@@ -122,7 +124,11 @@ function PtLogContent({
         keyExtractor={(item) => item.id}
         ListEmptyComponent={
           <View style={styles.emptyCard}>
-            <ClipboardList color={Colors.textMuted} size={32} />
+            <OriginalAppIcon
+              color={Colors.textMuted}
+              name="clipboardOutline"
+              size={32}
+            />
             <Text style={styles.emptyTitle}>
               {isFiltered
                 ? '해당 기간에 수업일지가 없어요'
@@ -144,32 +150,21 @@ function PtLogContent({
             <Text style={[styles.sectionTitle, styles.trainerSectionTitle]}>
               AI 추천 트레이너
             </Text>
-            <Pressable
-              onPress={() =>
-                navigation.navigate({ name: '/ai-trainer-match', params: {} })
-              }
-              style={({ pressed }) => [
-                styles.trainerCard,
-                pressed && styles.trainerCardPressed,
-              ]}
-            >
-              <Image
-                resizeMode="contain"
-                source={require('../../../assets/images/trainer-icon.png')}
-                style={styles.trainerIcon}
+            <View style={styles.trainerCardWrap}>
+              <RowActionCard
+                imageSource={require('../../../assets/images/trainer-icon.png')}
+                pressedOpacity={0.85}
+                pressedScale={0.98}
+                subtitle="나에게 딱 맞는 트레이너를 추천해드려요."
+                title="트레이너 연결"
+                onPress={() =>
+                  navigation.navigate({
+                    name: '/ai-trainer-match',
+                    params: {},
+                  })
+                }
               />
-              <View style={styles.trainerTextWrap}>
-                <Text style={styles.trainerTitle}>트레이너 연결</Text>
-                <Text style={styles.trainerSubtitle}>
-                  나에게 딱 맞는 트레이너를 추천해드려요.
-                </Text>
-              </View>
-              <SemanticIcon
-                color={Colors.iconMuted}
-                name="chevronRight"
-                size={20}
-              />
-            </Pressable>
+            </View>
 
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>PT 수업일지</Text>
@@ -180,9 +175,10 @@ function PtLogContent({
                   isFiltered && styles.filterButtonActive,
                 ]}
               >
-                <Calendar
+                <OriginalAppIcon
                   color={isFiltered ? Colors.accent : Colors.textSecondary}
-                  size={14}
+                  name="calendarOutline"
+                  size={13}
                 />
                 <Text
                   style={[
@@ -195,7 +191,7 @@ function PtLogContent({
                 <SemanticIcon
                   color={isFiltered ? Colors.accent : Colors.textSecondary}
                   name="chevronDown"
-                  size={14}
+                  size={13}
                 />
               </Pressable>
             </View>
@@ -225,7 +221,7 @@ function PtLogContent({
         }
         style={[styles.fab, { bottom: metrics.floatingActionBottomInset }]}
       >
-        <Plus color={Colors.white} size={28} />
+        <OriginalAppIcon color={Colors.white} name="add" size={28} />
       </Pressable>
 
       <PtLogCalendarModal
@@ -255,7 +251,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: Colors.card,
     borderRadius: 16,
-    gap: 10,
+    gap: 8,
     paddingHorizontal: 20,
     paddingVertical: 24,
   },
@@ -270,11 +266,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: Colors.accent,
     borderRadius: 26,
+    elevation: 8,
     height: 52,
     justifyContent: 'center',
     position: 'absolute',
     right: 20,
+    shadowColor: Colors.accent,
+    shadowOffset: { height: 4, width: 0 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
     width: 52,
+    zIndex: 200,
   },
   filterButton: {
     alignItems: 'center',
@@ -285,7 +287,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 5,
     paddingHorizontal: 12,
-    paddingVertical: 7,
+    paddingVertical: 6,
   },
   filterButtonActive: {
     backgroundColor: `${Colors.accent}12`,
@@ -312,37 +314,7 @@ const styles = StyleSheet.create({
   trainerSectionTitle: {
     marginBottom: 10,
   },
-  trainerCard: {
-    ...iosShadow,
-    alignItems: 'center',
-    backgroundColor: Colors.card,
-    borderRadius: 16,
-    flexDirection: 'row',
-    gap: 14,
+  trainerCardWrap: {
     marginBottom: 20,
-    minHeight: 72,
-    paddingHorizontal: 16,
-    paddingVertical: 19,
-  },
-  trainerCardPressed: {
-    opacity: 0.84,
-    transform: [{ scale: 0.98 }],
-  },
-  trainerIcon: {
-    borderRadius: 999,
-    height: 34,
-    width: 34,
-  },
-  trainerSubtitle: {
-    color: '#8E8E8E',
-    ...ptTypography.rowActionSubtitle,
-  },
-  trainerTextWrap: {
-    flex: 1,
-    gap: 4,
-  },
-  trainerTitle: {
-    color: '#00192B',
-    ...ptTypography.rowActionTitle,
   },
 });

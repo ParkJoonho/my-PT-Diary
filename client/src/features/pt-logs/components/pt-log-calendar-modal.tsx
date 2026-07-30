@@ -1,4 +1,4 @@
-import { ChevronLeft } from 'lucide-react-native';
+import { useSafeAreaInsets } from '@granite-js/native/react-native-safe-area-context';
 import { useEffect, useMemo, useState } from 'react';
 import {
   Modal,
@@ -10,7 +10,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { SemanticIcon } from 'shared/components/icons/pt-diary-icons';
-import Colors, { iosShadow } from 'shared/constants/colors';
+import Colors from 'shared/constants/colors';
 import { KOREAN_DAYS } from '../data/pt-log-options';
 import { formatShortPtDate } from '../lib/pt-log-format';
 import type { PtDateRange } from '../types/pt-log';
@@ -32,6 +32,7 @@ export function PtLogCalendarModal({
   onClose,
   visible,
 }: PtLogCalendarModalProps) {
+  const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const today = new Date();
   const [viewYear, setViewYear] = useState(today.getFullYear());
@@ -134,7 +135,12 @@ export function PtLogCalendarModal({
     );
 
   return (
-    <Modal onRequestClose={onClose} transparent visible={visible}>
+    <Modal
+      animationType="fade"
+      onRequestClose={onClose}
+      transparent
+      visible={visible}
+    >
       <TouchableOpacity
         activeOpacity={1}
         onPress={onClose}
@@ -144,14 +150,23 @@ export function PtLogCalendarModal({
           activeOpacity={1}
           onPress={(event) => event.stopPropagation()}
         >
-          <View style={[styles.sheet, { width: calendarWidth }]}>
+          <View
+            style={[
+              styles.sheet,
+              { marginTop: insets.top + 90, width: calendarWidth },
+            ]}
+          >
             <View style={styles.monthRow}>
               <Pressable
                 hitSlop={8}
                 onPress={() => changeMonth('prev')}
                 style={styles.navButton}
               >
-                <ChevronLeft color={Colors.text} size={20} />
+                <SemanticIcon
+                  color={Colors.text}
+                  name="chevronLeft"
+                  size={20}
+                />
               </Pressable>
               <Text style={styles.monthTitle}>
                 {viewYear}년 {viewMonth}월
@@ -191,7 +206,7 @@ export function PtLogCalendarModal({
             </View>
 
             <View style={styles.grid}>
-              {cells.map((cell) => {
+              {cells.map((cell, cellIndex) => {
                 const { day, key } = cell;
 
                 if (!day) {
@@ -209,6 +224,8 @@ export function PtLogCalendarModal({
                   dateString === localRange.end;
                 const todayString = new Date().toISOString().slice(0, 10);
                 const hasRecord = markedDates.has(dateString);
+                const isSunday = cellIndex % 7 === 0;
+                const isSaturday = cellIndex % 7 === 6;
 
                 return (
                   <View
@@ -258,6 +275,14 @@ export function PtLogCalendarModal({
                           !selected &&
                             dateString === todayString &&
                             styles.todayDayLabel,
+                          !selected &&
+                            !isInRange(dateString) &&
+                            isSunday &&
+                            styles.sundayDayLabel,
+                          !selected &&
+                            !isInRange(dateString) &&
+                            isSaturday &&
+                            styles.saturdayDayLabel,
                         ]}
                       >
                         {day}
@@ -341,7 +366,7 @@ const styles = StyleSheet.create({
   dot: {
     backgroundColor: Colors.textMuted,
     borderRadius: 2,
-    bottom: 4,
+    bottom: 2,
     height: 4,
     position: 'absolute',
     width: 4,
@@ -381,16 +406,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#00000055',
     flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 24,
   },
   primaryButton: {
     alignItems: 'center',
     backgroundColor: Colors.accent,
     borderRadius: 12,
     flex: 1,
-    justifyContent: 'center',
-    minHeight: 46,
+    paddingVertical: 12,
   },
   primaryButtonDisabled: {
     backgroundColor: Colors.inputBg,
@@ -426,13 +448,15 @@ const styles = StyleSheet.create({
   saturdayLabel: {
     color: Colors.info,
   },
+  saturdayDayLabel: {
+    color: Colors.info,
+  },
   secondaryButton: {
     alignItems: 'center',
     backgroundColor: Colors.inputBg,
     borderRadius: 12,
     flex: 1,
-    justifyContent: 'center',
-    minHeight: 46,
+    paddingVertical: 12,
   },
   secondaryButtonText: {
     color: Colors.textSecondary,
@@ -450,12 +474,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF99',
   },
   sheet: {
-    ...iosShadow,
     backgroundColor: Colors.card,
     borderRadius: 20,
+    elevation: 16,
     padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { height: 8, width: 0 },
+    shadowOpacity: 0.18,
+    shadowRadius: 24,
   },
   sundayLabel: {
+    color: Colors.danger,
+  },
+  sundayDayLabel: {
     color: Colors.danger,
   },
   todayDayLabel: {

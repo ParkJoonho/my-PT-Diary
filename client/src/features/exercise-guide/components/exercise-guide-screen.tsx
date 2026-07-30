@@ -1,79 +1,75 @@
-import { useNavigation } from "@granite-js/react-native";
-import { useMemo, useState } from "react";
+import { useSafeAreaInsets } from '@granite-js/native/react-native-safe-area-context';
+import { useNavigation } from '@granite-js/react-native';
+import { useMemo, useState } from 'react';
 import {
   Alert,
   Image,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
-} from "react-native";
+} from 'react-native';
+import { SuspenseSection } from 'shared/components/async-state';
+import { OriginalAppIcon } from 'shared/components/icons/pt-diary-icons';
+import Colors, { iosShadowLight } from 'shared/constants/colors';
 import {
   useExerciseGuides,
   useSetExerciseGuideLike,
-} from "../api/exercise-guides";
-import {
-  BODY_PART_FILTERS,
-  EQUIPMENT_FILTERS,
-} from "../data/exercise-guide-filters";
-import {
-  filterBodyPartGuides,
-  filterEquipmentGuides,
-} from "../lib/filter-exercise-guides";
-import type {
-  BodyPartFilter,
-  EquipmentFilter,
-  ExerciseGuideTab,
-} from "../types/exercise-guide";
-import { ExerciseGuideCard } from "./exercise-guide-card";
-import { ExerciseGuideFilterRow } from "./exercise-guide-filter-row";
-import { ExerciseGuideTabSelector } from "./exercise-guide-tab-selector";
-import { SuspenseSection } from "shared/components/async-state";
-import Colors, { iosShadow } from "shared/constants/colors";
+} from '../api/exercise-guides';
+import { BODY_PART_FILTERS } from '../data/exercise-guide-filters';
+import { filterBodyPartGuides } from '../lib/filter-exercise-guides';
+import type { BodyPartFilter, ExerciseGuideTab } from '../types/exercise-guide';
+import { ExerciseGuideCard } from './exercise-guide-card';
+import { ExerciseGuideFilterRow } from './exercise-guide-filter-row';
+import { ExerciseGuideTabSelector } from './exercise-guide-tab-selector';
 
-const CAMERA_ICON = require("../../../assets/icons/camera.png");
-const GALLERY_ICON = require("../../../assets/icons/gallery.png");
+const CAMERA_ICON = require('../../../assets/icons/camera.png');
+const GALLERY_ICON = require('../../../assets/icons/gallery.png');
 
-export function ExerciseGuideScreen() {
+type ExerciseGuideScreenProps = {
+  contentBottomInset: number;
+};
+
+export function ExerciseGuideScreen({
+  contentBottomInset,
+}: ExerciseGuideScreenProps) {
   return (
     <SuspenseSection errorMessage="운동 가이드를 불러오지 못했어요.">
-      <ExerciseGuideScreenContent />
+      <ExerciseGuideScreenContent contentBottomInset={contentBottomInset} />
     </SuspenseSection>
   );
 }
 
-function ExerciseGuideScreenContent() {
+function ExerciseGuideScreenContent({
+  contentBottomInset,
+}: ExerciseGuideScreenProps) {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const { data } = useExerciseGuides();
   const likeMutation = useSetExerciseGuideLike();
-  const [selectedTab, setSelectedTab] = useState<ExerciseGuideTab>("부위별");
+  const [selectedTab, setSelectedTab] = useState<ExerciseGuideTab>('부위별');
   const [selectedBodyPart, setSelectedBodyPart] =
-    useState<BodyPartFilter>("전체");
-  const [selectedEquipment, setSelectedEquipment] =
-    useState<EquipmentFilter>("전체");
+    useState<BodyPartFilter>('전체');
   const [showActionSheet, setShowActionSheet] = useState(false);
   const [pendingGuideId, setPendingGuideId] = useState<string | null>(null);
 
   const bodyPartGuides = useMemo(
     () =>
       filterBodyPartGuides(
-        data.filter((guide) => guide.catalogType === "body_part"),
+        data.filter((guide) => guide.catalogType === 'body_part'),
         selectedBodyPart,
       ),
     [data, selectedBodyPart],
   );
   const equipmentGuides = useMemo(
-    () =>
-      filterEquipmentGuides(
-        data.filter((guide) => guide.catalogType === "equipment"),
-        selectedEquipment,
-      ),
-    [data, selectedEquipment],
+    () => data.filter((guide) => guide.catalogType === 'equipment'),
+    [data],
   );
   const visibleGuides =
-    selectedTab === "부위별" ? bodyPartGuides : equipmentGuides;
+    selectedTab === '부위별' ? bodyPartGuides : equipmentGuides;
 
   const handleToggleLike = async (guideId: string, likedByMe: boolean) => {
     if (pendingGuideId) {
@@ -88,7 +84,7 @@ function ExerciseGuideScreenContent() {
         liked: !likedByMe,
       });
     } catch {
-      Alert.alert("오류", "좋아요를 저장하지 못했어요.");
+      Alert.alert('오류', '좋아요를 저장하지 못했어요.');
     } finally {
       setPendingGuideId(null);
     }
@@ -96,15 +92,8 @@ function ExerciseGuideScreenContent() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Pressable
-          onPress={() => navigation.goBack()}
-          style={styles.headerButton}
-        >
-          <Text style={styles.headerButtonText}>닫기</Text>
-        </Pressable>
-        <Text style={styles.headerTitle}>운동 배우기</Text>
-        <View style={styles.headerSide} />
+      <View style={styles.titleArea}>
+        <Text style={styles.title}>운동 배우기</Text>
       </View>
 
       <ExerciseGuideTabSelector
@@ -112,11 +101,10 @@ function ExerciseGuideScreenContent() {
         selectedTab={selectedTab}
       />
 
-      {selectedTab === "부위별" ? (
+      {selectedTab === '부위별' ? (
         <View style={styles.filterArea}>
           <ExerciseGuideFilterRow
             items={BODY_PART_FILTERS}
-            mode="body"
             onSelect={(key) => setSelectedBodyPart(key as BodyPartFilter)}
             selectedKey={selectedBodyPart}
           />
@@ -130,19 +118,14 @@ function ExerciseGuideScreenContent() {
             <Image source={CAMERA_ICON} style={styles.cameraIcon} />
             <Text style={styles.cameraText}>사진으로 기구 찾기</Text>
           </Pressable>
-          <View style={styles.filterArea}>
-            <ExerciseGuideFilterRow
-              items={EQUIPMENT_FILTERS}
-              mode="equipment"
-              onSelect={(key) => setSelectedEquipment(key as EquipmentFilter)}
-              selectedKey={selectedEquipment}
-            />
-          </View>
         </>
       )}
 
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: contentBottomInset },
+        ]}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.listCard}>
@@ -150,14 +133,14 @@ function ExerciseGuideScreenContent() {
             visibleGuides.map((guide, index) => (
               <ExerciseGuideCard
                 guide={guide}
-                isEquipmentTab={selectedTab === "기구별"}
+                isEquipmentTab={selectedTab === '기구별'}
                 isFirst={index === 0}
                 isLast={index === visibleGuides.length - 1}
                 key={guide.id}
                 likeDisabled={pendingGuideId === guide.id}
                 onPress={() =>
                   navigation.navigate({
-                    name: "/exercise-video-viewer",
+                    name: '/exercise-video-viewer',
                     params: { guideId: guide.id },
                   })
                 }
@@ -166,10 +149,8 @@ function ExerciseGuideScreenContent() {
             ))
           ) : (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyTitle}>운동이 없습니다</Text>
-              <Text style={styles.emptySubtitle}>
-                다른 필터를 선택해보세요.
-              </Text>
+              <OriginalAppIcon color="#C7C7CC" name="searchOutline" size={40} />
+              <Text style={styles.emptyText}>운동이 없습니다</Text>
             </View>
           )}
         </View>
@@ -185,7 +166,12 @@ function ExerciseGuideScreenContent() {
           onPress={() => setShowActionSheet(false)}
           style={styles.modalOverlay}
         />
-        <View style={styles.modalSheet}>
+        <View
+          style={[
+            styles.modalSheet,
+            { paddingBottom: Platform.OS === 'web' ? 34 : insets.bottom + 8 },
+          ]}
+        >
           <View style={styles.modalHandle} />
           <View style={styles.modalCard}>
             <ModalOption
@@ -193,16 +179,16 @@ function ExerciseGuideScreenContent() {
               label="카메라로 촬영"
               onPress={() => {
                 setShowActionSheet(false);
-                Alert.alert("카메라로 촬영", "준비 중입니다.");
+                Alert.alert('카메라로 촬영', '준비 중입니다.');
               }}
             />
             <View style={styles.modalDivider} />
             <ModalOption
               icon={GALLERY_ICON}
-              label="앨범에서 선택"
+              label="갤러리에서 선택"
               onPress={() => {
                 setShowActionSheet(false);
-                Alert.alert("앨범에서 선택", "준비 중입니다.");
+                Alert.alert('갤러리에서 선택', '준비 중입니다.');
               }}
             />
           </View>
@@ -237,136 +223,118 @@ function ModalOption({
 
 const styles = StyleSheet.create({
   cameraCard: {
-    ...iosShadow,
-    alignItems: "center",
-    backgroundColor: Colors.accent,
-    borderRadius: 16,
-    flexDirection: "row",
-    gap: 12,
+    ...iosShadowLight,
+    alignItems: 'center',
+    backgroundColor: Colors.white,
+    borderRadius: 14,
+    flexDirection: 'row',
+    gap: 8,
+    justifyContent: 'center',
+    marginBottom: 16,
     marginHorizontal: 16,
     marginTop: 4,
-    paddingHorizontal: 18,
-    paddingVertical: 14,
+    paddingVertical: 16,
   },
   cameraIcon: {
-    height: 24,
-    tintColor: Colors.white,
-    width: 24,
+    height: 20,
+    width: 20,
   },
   cameraText: {
-    color: Colors.white,
-    fontFamily: "Pretendard-SemiBold",
+    color: Colors.text,
+    fontFamily: 'Pretendard-Medium',
     fontSize: 15,
   },
   container: {
-    backgroundColor: Colors.background,
+    backgroundColor: '#F2F2F7',
     flex: 1,
-    paddingTop: 16,
   },
   emptyState: {
-    alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 24,
-    paddingVertical: 32,
+    alignItems: 'center',
+    gap: 12,
+    paddingTop: 60,
   },
-  emptySubtitle: {
+  emptyText: {
     color: Colors.textMuted,
-    fontFamily: "Pretendard-Regular",
-    fontSize: 13,
-  },
-  emptyTitle: {
-    color: Colors.text,
-    fontFamily: "Pretendard-SemiBold",
-    fontSize: 16,
+    fontFamily: 'Pretendard-Regular',
+    fontSize: 15,
   },
   filterArea: {
-    marginBottom: 8,
-  },
-  header: {
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-  },
-  headerButton: {
-    minWidth: 44,
-    paddingVertical: 8,
-  },
-  headerButtonText: {
-    color: Colors.text,
-    fontFamily: "Pretendard-Regular",
-    fontSize: 16,
-  },
-  headerSide: {
-    width: 44,
-  },
-  headerTitle: {
-    color: Colors.text,
-    fontFamily: "Pretendard-SemiBold",
-    fontSize: 18,
+    marginTop: 4,
+    paddingBottom: 16,
   },
   listCard: {
-    backgroundColor: Colors.card,
-    borderRadius: 18,
-    overflow: "hidden",
-  },
-  modalCancel: {
-    alignItems: "center",
+    ...iosShadowLight,
     backgroundColor: Colors.card,
     borderRadius: 14,
-    marginTop: 10,
-    paddingVertical: 16,
+    marginBottom: 16,
+    overflow: 'hidden',
+  },
+  modalCancel: {
+    alignItems: 'center',
+    backgroundColor: '#F3F4F7',
+    borderRadius: 14,
+    marginBottom: 8,
+    paddingVertical: 18,
   },
   modalCancelText: {
-    color: Colors.info,
-    fontFamily: "Pretendard-SemiBold",
-    fontSize: 17,
+    color: Colors.text,
+    fontFamily: 'Pretendard-SemiBold',
+    fontSize: 16,
   },
   modalCard: {
-    backgroundColor: Colors.card,
-    borderRadius: 18,
-    overflow: "hidden",
+    backgroundColor: Colors.white,
   },
   modalDivider: {
-    backgroundColor: Colors.divider,
+    backgroundColor: '#E5E5EA',
     height: StyleSheet.hairlineWidth,
+    marginLeft: 56,
   },
   modalHandle: {
-    alignSelf: "center",
-    backgroundColor: Colors.systemGray3,
-    borderRadius: 999,
-    height: 5,
-    marginBottom: 12,
-    width: 48,
+    alignSelf: 'center',
+    backgroundColor: '#C7C7CC',
+    borderRadius: 2,
+    height: 4,
+    marginBottom: 4,
+    width: 36,
   },
   modalIcon: {
-    height: 26,
-    width: 26,
+    height: 22,
+    width: 22,
   },
   modalOption: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 12,
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 14,
     paddingHorizontal: 20,
     paddingVertical: 18,
   },
   modalOptionText: {
     color: Colors.text,
-    fontFamily: "Pretendard-Regular",
+    fontFamily: 'Pretendard-Medium',
     fontSize: 16,
   },
   modalOverlay: {
-    backgroundColor: "rgba(0, 0, 0, 0.2)",
+    backgroundColor: 'rgba(0,0,0,0.4)',
     flex: 1,
   },
   modalSheet: {
-    backgroundColor: Colors.groupedBg,
-    paddingHorizontal: 12,
-    paddingTop: 8,
-    paddingBottom: 16,
+    backgroundColor: Colors.white,
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingTop: 12,
   },
   scrollContent: {
-    paddingBottom: 32,
     paddingHorizontal: 16,
+  },
+  title: {
+    color: Colors.text,
+    fontFamily: 'Pretendard-Medium',
+    fontSize: 18,
+    marginBottom: 4,
+  },
+  titleArea: {
+    paddingBottom: 0,
+    paddingHorizontal: 16,
+    paddingTop: 24,
   },
 });

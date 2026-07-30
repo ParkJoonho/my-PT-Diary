@@ -7,12 +7,13 @@
 - 상태 정렬: 부분 완료
 - 시각 규칙 추출: 완료
 - 공통화 판정: 완료
-- 코드 반영: 일부 완료
+- 코드 반영: 완료
 - 동일 상태 실기 검증: 미진행
 
 공통 반영으로 `TabPageLayout`의 탭·safe-area·본문 하단 계산을 적용하고, section/row
-typography와 quick action·routine의 chevron/play를 semantic icon으로 교체했다.
-아래 수정 후보 중 홈 전용 카드·상태 차이는 아직 남아 있다.
+typography와 quick action·routine의 chevron/play를 semantic icon으로 교체했다. 이어
+홈 전용 주간 배지 조건과 배치, 루틴 초기 접힘, 카드 밀도, segmented shadow,
+아코디언 typography·간격·연결선을 원본 값으로 복원했다.
 
 제공된 원본·현재 홈 캡처는 선택 탭, 루틴 확장 상태, 주간 데이터가 서로 달라 전체
 화면 pixel 비교에는 사용할 수 없다. 코드와 캡처에서 동일 상태로 확인할 수 있는
@@ -76,16 +77,16 @@ HomeScreen
 
 | 상태 | 원본 실제 코드 | `ai-pt` 실제 코드 | 비교 가능 | 판정 |
 |---|---|---|---|---|
-| 초기 루틴 | `AI추천`, 헬스장, 모두 접힘 | `AI추천`, 헬스장, 첫 루틴 펼침 | 아니오 | 초기 확장 상태가 다름 |
+| 초기 루틴 | `AI추천`, 헬스장, 모두 접힘 | 동일 | 코드 비교 가능 | 반영 완료 |
 | 주간 기록 없음 | 월·화를 강제로 완료 처리 | API 결과를 그대로 표시 | 아니오 | 원본의 mock성 로직과 현재 실제 데이터가 다름 |
-| streak 0 | 배지를 렌더링하지 않음 | `0일 연속` 배지를 렌더링 | 코드 비교 가능 | 현재 조건 분기 누락 |
+| streak 0 | 배지를 렌더링하지 않음 | 동일 | 코드·테스트 비교 가능 | 반영 완료 |
 | 주간 데이터 로딩 | 별도 주간 카드 loading 없음 | Suspense loading card | 아니오 | 현재에 새 상태 추가 |
 | 주간 데이터 오류 | 별도 주간 카드 오류 없음 | error card | 아니오 | 현재에 새 상태 추가 |
 | AI 루틴 로딩 | 전용 loading UI 존재 | mock routine을 즉시 표시 | 아니오 | 상태 모델이 다름 |
 | AI 루틴 없음 | 전용 empty UI 존재 | mock routine을 즉시 표시 | 아니오 | 상태 모델이 다름 |
 | AI 루틴 있음 | API 결과 | mock data | fixture 필요 | 동일 fixture 미확보 |
 | 루틴 탭 전환 | AI·헬스장·크로스핏·홈트 | 동일 | 코드 비교 가능 | 큰 구조 동일 |
-| 루틴 펼침 | 사용자 조작 후 펼침 | 최초 진입부터 첫 항목 펼침 | 아니오 | 초기 상태 수정 필요 |
+| 루틴 펼침 | 사용자 조작 후 펼침 | 동일 | 코드·테스트 비교 가능 | 반영 완료 |
 | AI fitness score | 데이터가 있으면 주간 카드에 추가 | 미구현 | fixture 필요 | 원본 상태 누락 |
 
 제공된 홈 캡처도 원본은 `헬스장` 탭의 접힌 상태, 현재는 `AI추천`의 펼친 상태라 루틴
@@ -113,9 +114,9 @@ HomeScreen
 | padding | 좌우 `16`, 상하 `24` | 동일 | 일치 |
 | 내부 gap | `16` | `16` | 일치 |
 | 제목 | `17`, Medium | 동일 | 등록 충돌을 제외하면 코드 일치 |
-| 제목·배지 배치 | `flex-start`, `gap: 16` | `space-between` | 다름 |
+| 제목·배지 배치 | `flex-start`, `gap: 16` | 동일 | 일치 |
 | streak 배지 | `height: 21`, radius `9`, 좌우 `8` | 동일 | 일치 |
-| streak 표시 조건 | `streakCount > 0` | 항상 표시 | 다름 |
+| streak 표시 조건 | `streakCount > 0` | 동일 | 일치 |
 | 요일 원 | `24 × 24`, radius `12` | 동일 | 일치 |
 | 요일 텍스트 | `13`, Regular | 동일 | 일치 |
 | 완료 아이콘 | 원본 `CheckIcon` | 같은 SVG path | 일치 |
@@ -128,16 +129,15 @@ HomeScreen
 | 영역 | 원본 실제 값 | `ai-pt` 실제 값 | 판정 |
 |---|---|---|---|
 | surface | 흰색, radius `16`, `iosShadow` | 동일 | 일치 |
-| padding | 가로 `16`, 세로 `24` | 전체 `16` | 다름 |
-| 자식 gap | `14` | `16` | 다름 |
+| padding | 가로 `16`, 세로 `24` | 동일 | 일치 |
+| 자식 gap | `14` | 동일 | 일치 |
 | 제목 | `17`, Medium | 동일 | 코드 일치 |
 | 4개 탭 | 높이 `40`, indicator `2`, 글자 `15` | 동일 | 일치 |
 | AI 설명 | gap `10`, 글자 `13/20` | 동일 | 일치 |
 | 위치 segmented | 높이 `38`, radius `8`, padding `3` | 동일 | 일치 |
-| 활성 segmented | 흰색과 radius `7`, 약한 shadow | 흰색과 radius `7`, border `1` | 표면 처리 다름 |
+| 활성 segmented | 흰색과 radius `7`, 약한 shadow | 동일 | 일치 |
 
-현재 카드의 상하 padding이 원본보다 각각 `8` 작다. 이 차이는 카드 내부 전체를
-조밀하게 만들며 자식 gap 변경과 함께 누적된다.
+원본의 web `boxShadow`와 native shadow/elevation 분기를 그대로 적용했다.
 
 ### 루틴 아코디언
 
@@ -145,20 +145,20 @@ HomeScreen
 |---|---|---|---|
 | 접힌 행 | 최소 높이 `56`, 좌우 `16`, 세로 `16` | 고정 높이 `56`, 좌우 `16` | 거의 동일 |
 | 행 배경·radius | `#F0F2F5`, radius `8` | 동일 | 일치 |
-| 행 제목 | `15`, Regular | `15`, Medium | 다름 |
-| chevron | Ionicons `20` | Text `⌃/⌄`, `20` | glyph 다름 |
-| body padding | 좌우 `16`, 위 `14`, 아래 `16` | 좌우 `16`, 위 `16`, 아래 `16` | 위 `2` 차이 |
-| 휴식행 gap | `6` | `8` | 다름 |
-| 단계 연결선 | width `2`, 상하 margin `4`, minHeight `14` | width `1`, marginTop `4` | 다름 |
-| 단계 간 padding | `32`, 마지막 `0` | `28`, 마지막 `12` | 다름 |
-| 운동명 | `14`, SemiBold | `15`, Medium | 다름 |
-| 우측 상세 | `13`, SemiBold | `14`, SemiBold | 다름 |
-| tag | radius `100`, `11` Regular | radius `999`, `11` Regular | 실효 형태 동일 |
-| 시작 버튼 간격 | `marginTop: 24` | `marginTop: 8` | 다름 |
-| 시작 아이콘 | Ionicons play `16` | Text `▶`, `13` | glyph 다름 |
+| 행 제목 | `15`, Regular | 동일 | 일치 |
+| chevron | Ionicons `20` | 동일 path의 semantic SVG `20` | 일치 |
+| body padding | 좌우 `16`, 위 `14`, 아래 `16` | 동일 | 일치 |
+| 휴식행 gap | `6` | 동일 | 일치 |
+| 단계 연결선 | width `2`, 상하 margin `4`, minHeight `14` | 동일 | 일치 |
+| 단계 간 padding | `32`, 마지막 `0` | 동일 | 일치 |
+| 운동명 | `14`, SemiBold | 동일 | 일치 |
+| 우측 상세 | `13`, SemiBold | 동일 | 일치 |
+| tag | radius `100`, `11` Regular | 동일 | 일치 |
+| 시작 버튼 간격 | `marginTop: 24` | 동일 | 일치 |
+| 시작 아이콘 | Ionicons play `16` | 동일 path의 semantic SVG `16` | 일치 |
 
-루틴 아코디언은 원본과 비슷한 구조를 유지하지만 typography, 단계 간격, 연결선,
-버튼 앞 간격이 동시에 바뀌었다. 전체적인 밀도 차이가 가장 많이 누적되는 부분이다.
+아코디언의 원본 실효값을 복원했다. React Native web·native에서 같은 path를 쓰도록
+아이콘 구현만 semantic SVG primitive로 유지한다.
 
 ### 빠른 진입 카드
 
@@ -171,10 +171,9 @@ HomeScreen
 | 이미지 | `34 × 34` | 동일 asset, 동일 크기 | 일치 |
 | 제목 | `16`, Medium | 동일 | 코드 일치 |
 | 설명 | `13`, Regular | 동일 | 일치 |
-| chevron | Ionicons `20` | Text `›`, `24/24` | glyph 다름 |
+| chevron | Ionicons `20` | 동일 path의 semantic SVG `20` | 일치 |
 
-`shoes.png`, `video.png`의 파일 hash도 원본과 동일하다. 빠른 진입 카드에서 남은
-주요 차이는 chevron 구현이다.
+`shoes.png`, `video.png`의 파일 hash도 원본과 동일하다.
 
 ## 공통화 판정
 
@@ -207,20 +206,35 @@ HomeScreen
 홈 내부에서는 반복되지만 다른 루트 페이지의 실제 코드 점검이 끝나지 않았다.
 두 번째 페이지에서 같은 의미와 값이 확인될 때 공통 token 또는 primitive로 올린다.
 
-## 수정 후보
+## 반영 결과와 잔여 이슈
 
-이 문서는 코드 수정 범위를 확정하기 위한 점검 결과이며 아직 구현하지 않았다.
+### 반영 완료
 
 1. 공통 `TabPageLayout`과 safe-area 기반 bottom inset
-2. 하단 탭의 원본 높이·가로 보정·letter spacing 복원
-3. 주간 streak 배치와 `streakCount > 0` 조건 복원
-4. 원본과 동일한 루틴 초기 접힘 상태
-5. 루틴 카드 세로 padding `24`, gap `14` 복원
-6. segmented 활성 surface의 원본 shadow 복원
-7. 아코디언 typography·간격·연결선 복원
-8. Text glyph chevron·play를 semantic vector icon으로 교체
-9. 원본 AI 루틴 loading·empty·loaded 상태와 현재 API 전략 정렬
-10. 동일 fixture를 만든 후 원본·`ai-pt` 실행 화면 재촬영
+2. 하단 탭의 원본 높이·가로 보정·letter spacing
+3. 주간 streak 배치와 `streakCount > 0` 조건
+4. 루틴의 초기·탭 전환·장소 전환 접힘 상태
+5. 루틴 카드 세로 padding `24`, gap `14`
+6. segmented 활성 surface의 원본 shadow
+7. 아코디언 typography·간격·연결선
+8. chevron·play semantic vector icon
+
+### 잔여 이슈
+
+1. 원본은 AI 루틴 API의 loading·empty·loaded 상태를 가지지만 현재 서버·Orval
+   계약에는 대응 API가 없어 정적 mock 루틴을 표시한다. 디자인 값과 별개인 API
+   마이그레이션 단위에서 계약을 먼저 확정해야 한다.
+2. 원본의 `AI Fitness Score`는 데이터가 있을 때 주간 카드에 나타나지만 현재 대응
+   API와 동일 fixture가 없다.
+3. 동일 fixture로 Apps in Toss 실행 화면을 촬영할 수 없어 실기 검증은 아직
+   완료로 표시하지 않는다.
+
+## 코드 검증
+
+- `WeeklyTrackerCard`: streak 0 비노출과 양수 배지 노출 컴포넌트 테스트 추가
+- `RoutineCard`: 초기 접힘, 장소 전환 시 접힘, 펼친 루틴 시작 전달 테스트
+- 변경 파일 Biome 검사 통과
+- TypeScript `tsc --noEmit` 통과
 
 ## 실기 검증에 필요한 fixture
 

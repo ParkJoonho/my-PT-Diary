@@ -7,12 +7,13 @@
 - 상태 정렬: 부분 완료
 - 시각 규칙 추출: 완료
 - 공통화 판정: 완료
-- 코드 반영: 일부 완료
+- 코드 반영: 완료
 - 동일 상태 실기 검증: 미진행
 
-공통 반영으로 `TabPageLayout`의 탭·safe-area·본문/FAB 하단 계산, section/row
-typography, trainer row와 filter의 semantic chevron을 적용했다. 카드 radius·tag와
-calendar sheet 위치 같은 PT 전용 차이는 아직 남아 있다.
+공통 반영으로 `TabPageLayout`의 탭·safe-area·본문/FAB 하단 계산과 section/row
+typography를 적용했다. 이어 P-01과 반복되는 row action card를 공통 pattern으로
+승격하고, PT 카드 radius·tag, 원본 icon path, FAB shadow, calendar sheet 위치와
+주말 색상을 원본 값으로 복원했다.
 
 제공된 PT 캡처는 원본과 `ai-pt` 모두 수업일지가 없는 기본 상태를 보여주지만, calendar
 modal과 데이터가 있는 카드 상태는 확인되지 않았다. empty state와 trainer 진입 card는
@@ -34,14 +35,15 @@ calendar modal을 [`pt-log.tsx`](<../../../../../2026-07-13/my-PT-Diary/app/(tab
 
 - 라우트: [`src/pages/pt-log.tsx`](../../../src/pages/pt-log.tsx)
 - 화면 조립: [`features/pt-logs/components/pt-log-screen.tsx`](../../../src/features/pt-logs/components/pt-log-screen.tsx)
+- 공통 진입 카드: [`shared/components/row-action-card.tsx`](../../../src/shared/components/row-action-card.tsx)
 - 수업일지 카드: [`features/pt-logs/components/pt-lesson-card.tsx`](../../../src/features/pt-logs/components/pt-lesson-card.tsx)
 - 날짜 필터 modal: [`features/pt-logs/components/pt-log-calendar-modal.tsx`](../../../src/features/pt-logs/components/pt-log-calendar-modal.tsx)
 - 포맷 함수: [`features/pt-logs/lib/pt-log-format.ts`](../../../src/features/pt-logs/lib/pt-log-format.ts)
 - 탭 shell: [`shared/components/tab-page-layout.tsx`](../../../src/shared/components/tab-page-layout.tsx)
 - 하단 탭: [`shared/components/member-tab-bar.tsx`](../../../src/shared/components/member-tab-bar.tsx)
 
-현재는 원본의 시각 구조를 비교적 충실하게 옮겼지만, chevron/icon 체계와 card radius,
-calendar modal 배치처럼 전체 인상에 누적되는 작은 차이가 남아 있다.
+원본의 화면 구조와 시각 실효값을 유지하면서 API 조회·삭제는 현재 Orval suspense
+query 흐름을 사용한다.
 
 ## 렌더 트리 대조
 
@@ -87,8 +89,8 @@ card radius/tag spacing, calendar modal의 배치 방식에서 나온다.
 |---|---|---|---|---|
 | 기본 empty | empty card | empty card | 예 | 시각 비교 가능 |
 | 기간 필터 empty | `해당 기간에 수업일지가 없어요` | 동일 문구 | 코드 비교 가능 | modal 적용 상태 캡처 필요 |
-| 수업일지 있음 | PTLessonCard list | PtLessonCard list | 코드 비교 가능 | card shell과 tag 차이 존재 |
-| 날짜 범위 선택 | inline calendar modal | inline calendar modal | 코드 비교 가능 | 위치와 shadow가 다름 |
+| 수업일지 있음 | PTLessonCard list | PtLessonCard list | 코드·테스트 비교 가능 | 반영 완료 |
+| 날짜 범위 선택 | inline calendar modal | inline calendar modal | 코드 비교 가능 | 위치·shadow 반영 완료 |
 | pull to refresh | local reload | query invalidate | 아니오 | 시각보다는 데이터 흐름 차이 |
 | 로딩·오류 | 별도 loading/error 없음 | Suspense error 추가 | 아니오 | 현재에만 새 상태 추가 |
 
@@ -105,7 +107,7 @@ modal 위치는 동일 fixture로 다시 찍어야 한다.
 | 좌우 padding | `16` | `16` | 일치 |
 | 상단 padding | `20` | `20` | 일치 |
 | 하단 padding | `GLOBAL_TAB_BAR_CONTENT_H + inset + 80` | 동일 계산 | 공통 반영 완료 |
-| FAB | `52 × 52`, radius `26`, accent, shadow, bottom `tab + inset + 16` | bottom 계산 동일, shadow 단순화 | shell 계산 반영 완료 |
+| FAB | `52 × 52`, radius `26`, accent, shadow, bottom `tab + inset + 16` | 동일 | 일치 |
 
 이 페이지의 큰 화면 인상은 root shell보다 내부 card 규칙이 더 중요하다. bottom inset은
 [`공통 영역 F-03·F-05`](../common.md)를 따른다.
@@ -121,9 +123,9 @@ modal 위치는 동일 fixture로 다시 찍어야 한다.
 | icon | `34 × 34`, trainer-icon.png | 동일 asset, 동일 크기 | 일치 |
 | title | `16`, Medium, `#00192B` | 동일 | 코드 일치 |
 | subtitle | `13`, Regular, `#8E8E8E` | 동일 | 코드 일치 |
-| text gap | `5` | `4` | 미세 차이 |
-| chevron | Ionicons `chevron-forward 20` | `ArrowRight 18` | glyph 다름 |
-| pressed | `opacity: 0.85`, scale `0.98` | `opacity: 0.84`, scale `0.98` | 미세 차이 |
+| text gap | `5` | 동일 | 일치 |
+| chevron | Ionicons `chevron-forward 20` | 동일 path의 semantic SVG `20` | 일치 |
+| pressed | `opacity: 0.85`, scale `0.98` | 동일 | 일치 |
 
 이 card는 홈의 quick action card와 같은 계열이다. 원본과 현재가 둘 다 `34` 아이콘,
 `16/19` padding, `72` 높이, title `16`, subtitle `13`, trailing chevron 구조를
@@ -135,10 +137,10 @@ modal 위치는 동일 fixture로 다시 찍어야 한다.
 |---|---|---|---|
 | section title | `17`, Medium | 동일 | 일치 |
 | header marginBottom | `12` | `12` | 일치 |
-| 필터 shell | radius `20`, border `1`, gap `5`, `12/6` padding | radius `20`, border `1`, gap `5`, `12/7` padding | 거의 동일 |
+| 필터 shell | radius `20`, border `1`, gap `5`, `12/6` padding | 동일 | 일치 |
 | 필터 active bg | `accent + 12%` | 동일 | 일치 |
 | 필터 text | `13`, Medium | 동일 | 일치 |
-| icon size | Ionicons `13` | Lucide `14` | 미세 차이 |
+| icon size | Ionicons `13` | 원본 SVG path `13` | 일치 |
 
 날짜 필터 버튼은 거의 동일하다. 이 영역은 token drift보다 icon primitive 차이가 크다.
 
@@ -149,45 +151,45 @@ modal 위치는 동일 fixture로 다시 찍어야 한다.
 | surface | 흰색, radius `16`, `iosShadow` | 동일 | 일치 |
 | padding | `20/24` | `20/24` | 일치 |
 | 정렬 | center | center | 일치 |
-| 내부 gap | `8` | `10` | 다름 |
-| icon | `clipboard-outline 32` | `ClipboardList 32` | glyph 다름 |
+| 내부 gap | `8` | 동일 | 일치 |
+| icon | `clipboard-outline 32` | 원본 SVG path `32` | 일치 |
 | 본문 | `13`, Regular, lineHeight `20` | 동일 | 코드 일치 |
 | CTA | `13` SemiBold accent, 배경 없음 | 동일 | 코드 일치 |
 
-empty card는 전체적으로 가깝다. 현재 차이는 아이콘 glyph와 gap `2` 정도라, 다른
-페이지에 비해 복원 비용이 낮다.
+empty card의 원본 gap과 icon을 복원했다.
 
 ### PT 수업일지 카드
 
 | 영역 | 원본 실제 값 | `ai-pt` 실제 값 | 판정 |
 |---|---|---|---|
-| surface | 흰색, radius `14`, `iosShadow` | radius `16`, `iosShadow` | 다름 |
+| surface | 흰색, radius `14`, `iosShadow` | 동일 | 일치 |
 | padding | `16/14` | `16/14` | 일치 |
 | metric row | 3열, divider `1 × 36`, marginHorizontal `12` | 동일 | 일치 |
-| metric icon | Ionicons `13` | Lucide `14` | 미세 차이 |
+| metric icon | Ionicons `13` | 원본 SVG path `13` | 일치 |
 | metric label | `11`, Regular | 동일 | 일치 |
 | metric value | `15`, SemiBold | 동일 | 일치 |
-| tag row | borderTop `1`, marginTop `10`, paddingTop `10`, gap `5` | 동일 구조, gap `6` | 미세 차이 |
-| tag chip | radius `5`, `7/2` padding | radius `6`, `8/3` padding | 다름 |
+| tag row | borderTop `1`, marginTop `10`, paddingTop `10`, gap `5` | 동일 | 일치 |
+| tag chip | radius `5`, `7/2` padding | 동일 | 일치 |
 
-원본과 아주 비슷하지만, radius `14 → 16`과 tag chip 확대가 누적되면 카드가 더 둥글고
-부풀어 보인다.
+목록 카드의 원본 radius와 tag 밀도를 복원했다.
 
 ### calendar modal
 
 | 영역 | 원본 실제 값 | `ai-pt` 실제 값 | 판정 |
 |---|---|---|---|
-| overlay | `alignItems: center`, 상단 배치 | `alignItems: center`, `justifyContent: center`, `paddingHorizontal: 24` | 다름 |
-| sheet 위치 | `marginTop: insets.top + 90` | 중앙 정렬 | 다름 |
-| sheet shell | radius `20`, padding `16`, custom shadow | radius `20`, padding `16`, shared `iosShadow` | 거의 동일 |
+| overlay | `alignItems: center`, 상단 배치 | 동일 | 일치 |
+| sheet 위치 | `marginTop: insets.top + 90` | 동일 | 일치 |
+| sheet shell | radius `20`, padding `16`, custom shadow | 동일 | 일치 |
 | month title | `16`, SemiBold | 동일 | 일치 |
 | week label | `11`, Medium | 동일 | 일치 |
 | day label | `14`, Regular | 동일 | 일치 |
 | range background | `accent + 1A` | 동일 | 일치 |
-| action buttons | radius `12`, `14` text | 동일 계열, `minHeight: 46` 사용 | 거의 동일 |
+| action buttons | radius `12`, `14` text, 세로 padding `12` | 동일 | 일치 |
+| day weekend | 일요일 danger, 토요일 info | 동일 | 일치 |
+| record dot | `bottom: 2`, `4 × 4` | 동일 | 일치 |
 
-calendar modal은 selection logic과 내부 cell 규칙은 사실상 그대로 옮겨졌다. 가장 큰
-시각 차이는 sheet를 화면 위쪽에 띄우느냐, 가운데에 띄우느냐이다.
+calendar modal의 selection logic을 유지하면서 원본 상단 위치·shadow·cell 색상을
+복원했다.
 
 ## 공통화 판정
 
@@ -195,11 +197,12 @@ calendar modal은 selection logic과 내부 cell 규칙은 사실상 그대로 �
 
 | 후보 | 분류 | 사용 페이지 | 원본 근거 | 결정 |
 |---|---|---|---|---|
-| icon + title + subtitle + chevron row card | pattern | P-01 홈 quick action, P-03 PT trainer card | 두 화면 모두 `34` 아이콘, `16/19` padding, `72` 높이, title `16`, subtitle `13`, trailing chevron | 공통 후보 확정 |
+| icon + title + subtitle + chevron row card | pattern | P-01 홈 quick action, P-03 PT trainer card | 두 화면 모두 `34` 아이콘, `16/19` padding, `72` 높이, title `16`, subtitle `13`, trailing chevron | `RowActionCard`로 공통화 완료 |
 
-위 pattern은 현재 홈의 [`QuickActionCard`](../../../src/features/home/components/quick-action-card.tsx)
-와 PT의 trainer card가 사실상 같은 구조임을 보여준다. 이름은 `QuickActionCard`에
-묶기보다 더 중립적인 공통 row action pattern으로 재정의하는 편이 낫다.
+공통 shell은 [`RowActionCard`](../../../src/shared/components/row-action-card.tsx)로
+분리했다. 홈의 [`QuickActionCard`](../../../src/features/home/components/quick-action-card.tsx)는
+asset 종류와 미구현 badge 여부만 감싸며, PT는 원본의 pressed opacity·scale만
+페이지 사용처에서 전달한다.
 
 ### 아직 공통화하지 않을 항목
 
@@ -209,16 +212,29 @@ calendar modal은 selection logic과 내부 cell 규칙은 사실상 그대로 �
 | calendar filter button | primitive 후보 | 보류 | 다른 날짜 필터 페이지와 같은지 아직 확인되지 않음 |
 | calendar modal top anchoring | layout rule | 보류 | 다른 modal도 같은 위치 규칙을 쓰는지 추가 확인 필요 |
 
-## 수정 후보
+## 반영 결과와 잔여 이슈
 
-이 문서는 코드 수정 범위를 확정하기 위한 점검 결과이며 아직 구현하지 않았다.
+### 반영 완료
 
-1. 홈 quick action과 PT trainer card를 같은 공통 row action pattern으로 재정의
-2. chevron 계열 icon primitive를 원본 glyph에 맞는 semantic icon으로 통일
-3. PT lesson card radius와 tag chip spacing을 원본 값으로 복원
-4. empty card gap을 원본 `8`로 복원
-5. calendar modal을 원본처럼 상단 기준으로 띄울지 다른 modal 점검 후 결정
-6. 데이터가 있는 list 상태와 date-range 선택 상태를 같은 fixture로 다시 촬영
+1. 홈 quick action과 PT trainer card의 `RowActionCard` 공통화
+2. chevron·calendar·clipboard·metric·add icon의 원본 SVG path
+3. PT lesson card radius `14`와 tag gap/radius/padding
+4. empty card gap `8`
+5. FAB shadow
+6. calendar modal의 safe-area 기반 상단 배치와 custom shadow
+7. calendar 주말 날짜 색상과 record dot 위치
+
+### 잔여 이슈
+
+- 데이터가 있는 list, date-range 선택, modal open 상태의 동일 fixture 캡처가 없어
+  실기 검증은 아직 완료하지 않았다.
+
+## 코드 검증
+
+- `PtLessonCard`의 3열 값·body part tag·press 전달 테스트 추가
+- 공통 `RowActionCard`의 내용·press 전달 테스트 추가
+- 홈 화면 회귀 테스트를 포함한 관련 테스트 11개 통과
+- TypeScript `tsc --noEmit` 및 변경 파일 Biome 검사 통과
 
 ## 실기 검증에 필요한 fixture
 

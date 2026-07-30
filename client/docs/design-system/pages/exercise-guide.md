@@ -7,19 +7,16 @@
 - 상태 정렬: 부분 완료
 - 시각 규칙 추출: 완료
 - 공통화 판정: 완료
-- 코드 반영: 미진행
+- 코드 반영: 완료
 - 동일 상태 실기 검증: 미진행
 
-이 페이지는 전체 레이아웃 틀은 비교적 원본을 따라왔지만, 일부 핵심 primitive를 더
-단순하거나 다른 의미로 바꾸면서 톤이 달라졌다. 특히
+상단 title area, camera utility card, 목록 shell, like asset, empty state와 action sheet를
+원본 실제 코드 기준으로 복원했다.
 
-1. 상단 타이틀/헤더 처리
-2. 기구별 camera card
-3. 기구별 filter 표현 방식
-4. like affordance
-5. 액션시트 톤
-
-에서 차이가 크다.
+기존 문서에는 원본 기구별 탭이 icon filter를 렌더한다고 적혀 있었지만 실제 JSX를
+재확인하면 `EQUIPMENT_TYPES`와 `FilterIcon`은 정의만 되고 소비되지 않는다. 원본
+기구별 탭은 camera card와 전체 기구 목록만 렌더하므로 현재의 텍스트 기구 필터를
+제거했다. 이 문서는 과거 판정보다 실제 렌더 코드를 우선해 정정했다.
 
 ## 실제 코드 경로
 
@@ -47,8 +44,8 @@ ExerciseGuideScreen
 ├── title area
 ├── segment tab
 ├── filter row
-│   ├── 부위별: 이미지/아이콘 필터
-│   └── 기구별: camera card + 아이콘 필터
+│   └── 부위별: 이미지 필터
+├── 기구별 camera utility card
 ├── list card
 │   └── routine cards
 └── bottom action sheet
@@ -56,30 +53,30 @@ ExerciseGuideScreen
 
 ```text
 ai-pt
-ExerciseGuideScreen
-├── in-page text header
-├── segment tab
-├── filter row
-│   ├── 부위별: 이미지/All 필터
-│   └── 기구별: accent camera card + 텍스트 필터
-├── list card
-│   └── guide cards
-└── bottom modal sheet
+TabPageLayout
+├── ExerciseGuideScreen
+│   ├── title area
+│   ├── segment tab
+│   ├── 부위별 이미지/All 필터
+│   ├── 기구별 camera utility card
+│   ├── list card
+│   │   └── guide cards
+│   └── iOS-like bottom action sheet
+└── MemberTabBar(선택 없음)
 ```
 
-구조는 비슷하지만, 현재는 원본의 “도구/아이콘/브랜드 밀도”를 줄이고 generic 텍스트 UI로
-대체한 부분이 많다.
+Apps in Toss 상단 헤더를 제외한 실제 렌더 구조를 원본과 맞췄다.
 
 ## 상태 매트릭스
 
 | 상태 | 원본 실제 코드 | `ai-pt` 실제 코드 | 비교 가능 | 판정 |
 |---|---|---|---|---|
 | 부위별 기본 목록 | 있음 | 있음 | 가능 | 전반 구조 유사 |
-| 기구별 기본 목록 | 있음 | 있음 | 가능 | filter 표현 다름 |
-| camera card 노출 | 있음 | 있음 | 가능 | 톤이 다름 |
-| 목록 비어 있음 | icon + text empty | 텍스트 empty | 가능 | 현재가 축소됨 |
-| like 토글 | local store | server mutation | 기능 비교 어려움 | 시각 affordance는 다름 |
-| action sheet | 실제 촬영/앨범 진입형 레이아웃 | 준비중 alert modal | 가능 | 현재가 축소됨 |
+| 기구별 기본 목록 | 필터 없이 전체 표시 | 필터 없이 전체 표시 | 가능 | 일치 |
+| camera card 노출 | 있음 | 동일 shell | 가능 | 일치 |
+| 목록 비어 있음 | search icon + text | 같은 path SVG + text | 가능 | 일치 |
+| like 토글 | local store | server mutation | 기능 비교 어려움 | 시각 affordance 일치 |
+| action sheet | 두 option 모두 준비중 alert | 동일 | 가능 | 일치 |
 
 ## 실제 시각 규칙 대조
 
@@ -87,9 +84,10 @@ ExerciseGuideScreen
 
 | 영역 | 원본 실제 값 | `ai-pt` 실제 값 | 판정 |
 |---|---|---|---|
-| 화면 진입 상단 | 앱 헤더 아래 title area | 닫기/제목/빈칸 header | 구조 다름 |
-| title 크기 | `18`, Medium | `18`, SemiBold | 다름 |
-| 상단 padding | safe area + `APP_HEADER_H` + title area `24` | container `paddingTop: 16` | 다름 |
+| 화면 진입 상단 | 앱 헤더 아래 title area | Apps in Toss 헤더 아래 title area | 플랫폼 제외 후 일치 |
+| title 크기 | `18`, Medium | `18`, Medium | 일치 |
+| title area | horizontal `16`, top `24`, bottom `0` | 동일 | 일치 |
+| 하단 tab | 상세 route라 선택 없음 | `TabPageLayout activeKey={null}` | 일치 |
 
 헤더는 범위 밖이지만, 현재는 원본의 title area를 in-page modal header로 바꿔서 상단
 리듬이 다르다.
@@ -105,29 +103,28 @@ ExerciseGuideScreen
 
 탭 selector는 거의 그대로 옮겨왔다. 이 페이지에서 문제의 중심은 탭이 아니다.
 
-### 3. 부위별 / 기구별 필터
+### 3. 부위별 필터와 기구별 실제 렌더
 
 | 영역 | 원본 실제 값 | `ai-pt` 실제 값 | 판정 |
 |---|---|---|---|
-| 부위별 icon tile | `44×44`, white, active accent border | 거의 동일 | 거의 일치 |
+| 부위별 icon tile | `44×44`, white, active accent border | 동일 | 일치 |
 | 부위별 label | `11`, active accent | 동일 | 일치 |
-| 기구별 filter | icon 기반 (`Ionicons`/`MaterialCommunityIcons`) | 텍스트 기반 | 다름 |
-| 기구별 tile 내부 | icon 1개 | 텍스트 1개 | 다름 |
-| 기구별 tile 아래 label | 1개 | 내부 텍스트와 외부 label가 중복 | 다름 |
+| 부위 item width | `52` | `52` | 일치 |
+| 기구 filter 상수 | 정의됨 | 이관하지 않음 | 원본 미사용 코드 |
+| 기구 filter 실제 JSX | 렌더되지 않음 | 렌더되지 않음 | 일치 |
 
-현재 기구별 필터는 원본의 “아이콘 분류 UI”가 아니라 “텍스트가 안팎으로 반복되는 tile”
-처럼 보이게 된다. 이건 페이지 전체 인상을 무겁고 덜 정돈되게 만드는 직접 원인이다.
+원본의 미사용 `EQUIPMENT_TYPES` 선언을 실행 디자인의 근거로 오인하지 않는다.
 
 ### 4. camera card
 
 | 영역 | 원본 실제 값 | `ai-pt` 실제 값 | 판정 |
 |---|---|---|---|
-| 배경 | white | accent fill | 다름 |
-| 아이콘 크기 | `20` | `24` | 다름 |
-| 텍스트 | `15` Medium, dark text | `15` SemiBold, white text | 다름 |
-| gap | `8` | `12` | 다름 |
-| radius | `14` | `16` | 다름 |
-| shadow | `iosShadowLight` | `iosShadow` | 다름 |
+| 배경 | white | white | 일치 |
+| 아이콘 크기 | `20` | `20` | 일치 |
+| 텍스트 | `15` Medium, dark text | 동일 | 일치 |
+| gap | `8` | `8` | 일치 |
+| radius | `14` | `14` | 일치 |
+| shadow | `iosShadowLight` | 동일 | 일치 |
 
 원본 camera card는 “보조 기능 entry card”이고, 현재는 메인 CTA처럼 강조돼 있다.
 이 차이도 화면 전체를 더 공격적으로 보이게 만든다.
@@ -136,13 +133,14 @@ ExerciseGuideScreen
 
 | 영역 | 원본 실제 값 | `ai-pt` 실제 값 | 판정 |
 |---|---|---|---|
-| list shell | white, radius `14`, `iosShadowLight` | `Colors.card`, radius `18`, shadow 없음 | 다름 |
+| list shell | white, radius `14`, `iosShadowLight` | 동일 | 일치 |
 | row padding | `24 / 16` | 동일 | 일치 |
 | title | `15` Regular | 동일 | 일치 |
 | meta | `13` Regular | 동일 | 일치 |
 | body badge | `#F2F3F6`, radius `5` | 동일 | 일치 |
-| like icon | heart image | text glyph `♥ / ♡` | 다름 |
-| like 노출 | likes > 0일 때만 | 항상 버튼 렌더 | 다름 |
+| like icon | heart PNG `16` | 원본과 hash가 같은 PNG `16` | 일치 |
+| like 노출 | likes > 0일 때만 | `likeCount > 0`일 때만 | 일치 |
+| like 저장 | local store | server mutation | 현재가 서버 연동으로 개선 |
 
 list 내부 row rhythm은 많이 맞췄지만, card shell과 like affordance가 달라서 결과적으로
 “원본 느낌”은 약해진다.
@@ -151,11 +149,12 @@ list 내부 row rhythm은 많이 맞췄지만, card shell과 like affordance가 
 
 | 영역 | 원본 실제 값 | `ai-pt` 실제 값 | 판정 |
 |---|---|---|---|
-| empty state | search icon + text | title/subtitle 텍스트만 | 다름 |
-| modal overlay | black `0.4` | black `0.2` | 다름 |
-| modal container | white sheet | groupedBg sheet | 다름 |
-| cancel card | 회색 배경 + dark text | white 배경 + blue text | 다름 |
-| option text | `16` Medium | `16` Regular | 다름 |
+| empty state | search icon `40` + text | 같은 path SVG `40` + text | 일치 |
+| modal overlay | black `0.4` | black `0.4` | 일치 |
+| modal container | white, horizontal `16`, top `12` | 동일 + safe area | 일치 |
+| cancel card | `#F3F4F7`, radius `14`, dark text | 동일 | 일치 |
+| option text | `16` Medium | `16` Medium | 일치 |
+| handle | `36×4`, radius `2` | 동일 | 일치 |
 
 원본 action sheet는 iOS 네이티브스러운 neutral 톤이고, 현재는 더 가벼운 커스텀 modal처럼
 보인다.
@@ -174,49 +173,41 @@ list 내부 row rhythm은 많이 맞췄지만, card shell과 like affordance가 
 
 | 후보 | 분류 | 판정 | 이유 |
 |---|---|---|---|
-| 현재 기구별 텍스트 filter tile | reject | 기준 filter 금지 | 원본은 아이콘 기반 |
-| 현재 accent-filled camera card | reject | 기준 quick CTA 금지 | 원본은 neutral utility card |
-| 현재 text-heart like button | reject | 전역 like affordance 금지 | 원본은 image heart + 조건부 노출 |
-| 현재 modal cancel 스타일 | reject | 기준 action sheet 금지 | 원본과 감성이 다름 |
+| 기존 기구별 텍스트 filter tile | reject | 제거 완료 | 원본 실제 JSX에는 filter 없음 |
+| 기존 accent-filled camera card | reject | 제거 완료 | 원본은 neutral utility card |
+| 기존 text-heart like button | reject | 제거 완료 | 원본은 image heart + 조건부 노출 |
+| 기존 modal cancel 스타일 | reject | 제거 완료 | 원본과 감성이 다름 |
 
 ## 시스템 관점 결론
 
-이 페이지는 “전체적으로 왜 달라졌는가”를 꽤 잘 보여준다.
+원본의 neutral utility card, light list shell, 조건부 heart affordance, iOS-like action
+sheet를 복원했다. segment tab과 body filter는 이미 일치해 유지했다.
 
-원본은
+## 반영
 
-1. neutral utility card
-2. icon-heavy filter system
-3. very light list shell
-4. iOS-like action sheet
+- [`src/features/exercise-guide/components/exercise-guide-screen.tsx`](../../../src/features/exercise-guide/components/exercise-guide-screen.tsx)에서
+  임시 닫기 header를 제거하고 원본 title area, neutral camera card, empty state,
+  action sheet 수치와 safe area를 복원했다.
+- 원본 실제 JSX에 없는 기구별 filter를 제거하고 기구 catalog 전체를 표시한다. 현재의
+  `filterEquipmentGuides` helper는 다른 소비 가능성을 위해 삭제하지 않았지만 이
+  화면 디자인에는 사용하지 않는다.
+- [`src/features/exercise-guide/components/exercise-guide-card.tsx`](../../../src/features/exercise-guide/components/exercise-guide-card.tsx)에서
+  원본 heart PNG와 `likeCount > 0` 노출 조건을 복원하고 서버 mutation은 유지했다.
+- [`src/features/exercise-guide/components/exercise-guide-filter-row.tsx`](../../../src/features/exercise-guide/components/exercise-guide-filter-row.tsx)는
+  실제 소비 범위인 부위 이미지 필터만 소유하도록 정리하고 item width `52`를 복원했다.
+- [`src/pages/exercise-guide.tsx`](../../../src/pages/exercise-guide.tsx)에
+  `TabPageLayout`을 적용해 상세 route의 선택 없는 tab과 원본 web/native scroll
+  bottom inset을 복원했다.
 
-를 쓴다.
+## 잔여 이슈
 
-현재는
+- 원본과 현재 모두 camera/gallery option은 실제 기구 판별 flow 대신 준비중 alert를
+  표시한다. 플랫폼 이미지 선택과 기구 분석 API 계약이 정해져야 실제 기능을 연결할 수 있다.
+- Apps in Toss 실기 환경에서 action sheet safe area와 하단 tab 중첩은 확인하지 못했다.
 
-1. 강조된 accent card
-2. text-heavy filter system
-3. slightly heavier list shell
-4. custom modal sheet
+## 반영 검증
 
-로 바뀌었다.
-
-즉 앞으로 운동배우기 계열을 원본에 맞추려면, 지금의 generic card/filter/modal을 확장하는
-방식보다 원본 기준
-
-- `SegmentInsetTab`
-- `IconFilterTile`
-- `UtilityEntryCard`
-- `IOSActionSheet`
-
-패턴을 따로 정리하는 쪽이 맞다.
-
-## 수정 후보
-
-이 문서는 코드 수정 범위를 확정하기 위한 점검 결과이며 아직 구현하지 않았다.
-
-1. 기구별 filter를 원본의 icon tile 방식으로 복원
-2. camera card를 accent CTA가 아니라 neutral utility card로 복원
-3. list shell radius/shadow를 원본 기준으로 복원
-4. like affordance를 원본 heart asset/노출 규칙 기준으로 재정의
-5. action sheet overlay, cancel card, option typography를 원본 기준으로 복원
+- exercise-guide 관련 Jest 5 suites, 14 tests 통과
+- TypeScript `tsc --noEmit` 통과
+- 변경 파일 Biome check 통과
+- `git diff --check` 통과

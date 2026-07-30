@@ -1,4 +1,5 @@
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { OriginalAppIcon } from 'shared/components/icons/pt-diary-icons';
 import Colors from 'shared/constants/colors';
 import { formatTimer } from '../lib/format-duration';
 
@@ -46,7 +47,7 @@ export function ActiveTimerBar({
           ]}
           testID="end-workout"
         >
-          <Text style={styles.closeText}>×</Text>
+          <OriginalAppIcon color={Colors.white} name="close" size={20} />
         </Pressable>
       </View>
     </View>
@@ -77,12 +78,6 @@ const styles = StyleSheet.create({
     height: 32,
     justifyContent: 'center',
     width: 32,
-  },
-  closeText: {
-    color: Colors.white,
-    fontFamily: 'Pretendard-Medium',
-    fontSize: 24,
-    lineHeight: 26,
   },
   iconButton: {
     alignItems: 'center',

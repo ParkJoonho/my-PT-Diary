@@ -2,7 +2,8 @@ import { createRoute } from '@granite-js/react-native';
 import { ActiveWorkoutScreen } from 'features/active-workout/components/active-workout-screen';
 import { resolveActiveWorkoutRouteRoutine } from 'features/active-workout/lib/resolve-active-workout-routine';
 import { useActiveWorkoutStore } from 'features/active-workout/stores/use-active-workout-store';
-import { StyleSheet, Text, View } from 'react-native';
+import { Platform, StyleSheet, Text, View } from 'react-native';
+import { TabPageLayout } from 'shared/components/tab-page-layout';
 import Colors from 'shared/constants/colors';
 
 type ActiveWorkoutRouteParams = {
@@ -47,17 +48,25 @@ function ActiveWorkoutRoute() {
   }
 
   return (
-    <ActiveWorkoutScreen
-      onCancel={() => {
-        clearSelectedRoutine();
-        navigation.goBack();
-      }}
-      onCompleted={() => {
-        clearSelectedRoutine();
-        navigation.navigate('/');
-      }}
-      routine={routine}
-    />
+    <TabPageLayout
+      activeKey={null}
+      contentBottomSpacing={Platform.OS === 'web' ? 16 : 40}
+    >
+      {({ contentBottomInset }) => (
+        <ActiveWorkoutScreen
+          contentBottomInset={contentBottomInset}
+          onCancel={() => {
+            clearSelectedRoutine();
+            navigation.goBack();
+          }}
+          onCompleted={() => {
+            clearSelectedRoutine();
+            navigation.navigate('/');
+          }}
+          routine={routine}
+        />
+      )}
+    </TabPageLayout>
   );
 }
 

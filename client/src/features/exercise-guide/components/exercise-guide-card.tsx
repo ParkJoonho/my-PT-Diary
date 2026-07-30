@@ -1,6 +1,8 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
-import Colors from "shared/constants/colors";
-import type { ExerciseGuide } from "../types/exercise-guide";
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import Colors from 'shared/constants/colors';
+import type { ExerciseGuide } from '../types/exercise-guide';
+
+const HEART_ICON = require('../../../assets/icons/heart.png');
 
 export function ExerciseGuideCard({
   guide,
@@ -50,22 +52,17 @@ export function ExerciseGuideCard({
               ? `${guide.bodyPart} · ${guide.duration}`
               : `${guide.equipment} · ${guide.duration}`}
           </Text>
-          <Pressable
-            disabled={likeDisabled}
-            hitSlop={8}
-            onPress={onToggleLike}
-            style={styles.likeButton}
-          >
-            <Text
-              style={[
-                styles.heart,
-                guide.likedByMe ? styles.heartActive : styles.heartInactive,
-              ]}
+          {guide.likeCount > 0 ? (
+            <Pressable
+              disabled={likeDisabled}
+              hitSlop={8}
+              onPress={onToggleLike}
+              style={styles.likeButton}
             >
-              {guide.likedByMe ? "♥" : "♡"}
-            </Text>
-            <Text style={styles.likeCount}>{guide.likeCount}</Text>
-          </Pressable>
+              <Image source={HEART_ICON} style={styles.heartImage} />
+              <Text style={styles.likeCount}>{guide.likeCount}</Text>
+            </Pressable>
+          ) : null}
         </View>
       </View>
       {!isLast ? <View style={styles.divider} /> : null}
@@ -75,7 +72,7 @@ export function ExerciseGuideCard({
 
 const styles = StyleSheet.create({
   badge: {
-    backgroundColor: "#f2f3f6",
+    backgroundColor: '#f2f3f6',
     borderRadius: 5,
     flexShrink: 0,
     paddingHorizontal: 6,
@@ -83,12 +80,12 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     color: Colors.textMuted,
-    fontFamily: "Pretendard-SemiBold",
+    fontFamily: 'Pretendard-SemiBold',
     fontSize: 11,
   },
   card: {
     backgroundColor: Colors.card,
-    flexDirection: "column",
+    flexDirection: 'column',
     paddingHorizontal: 24,
     paddingTop: 16,
   },
@@ -103,51 +100,45 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   divider: {
-    backgroundColor: "#e5e5ea",
+    backgroundColor: '#e5e5ea',
     height: StyleSheet.hairlineWidth,
     marginTop: 16,
   },
-  heart: {
-    fontSize: 15,
-    lineHeight: 18,
-  },
-  heartActive: {
-    color: Colors.danger,
-  },
-  heartInactive: {
-    color: Colors.textMuted,
+  heartImage: {
+    height: 16,
+    width: 16,
   },
   likeButton: {
-    alignItems: "center",
-    flexDirection: "row",
+    alignItems: 'center',
+    flexDirection: 'row',
     gap: 4,
   },
   likeCount: {
     color: Colors.textMuted,
-    fontFamily: "Pretendard-Medium",
+    fontFamily: 'Pretendard-Medium',
     fontSize: 12,
   },
   meta: {
     color: Colors.textMuted,
     flex: 1,
-    fontFamily: "Pretendard-Regular",
+    fontFamily: 'Pretendard-Regular',
     fontSize: 13,
     paddingRight: 8,
   },
   metaRow: {
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "space-between",
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   title: {
     color: Colors.text,
     flexShrink: 1,
-    fontFamily: "Pretendard-Regular",
+    fontFamily: 'Pretendard-Regular',
     fontSize: 15,
   },
   titleRow: {
-    alignItems: "center",
-    flexDirection: "row",
+    alignItems: 'center',
+    flexDirection: 'row',
     gap: 10,
   },
 });

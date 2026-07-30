@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { AIInfoIcon } from 'shared/components/icons/pt-diary-icons';
 import Colors, { iosShadow } from 'shared/constants/colors';
 import { ptTypography } from 'shared/constants/typography';
@@ -33,7 +33,7 @@ export function RoutineCard({ onStartRoutine }: RoutineCardProps) {
   const [activeTab, setActiveTab] = useState<HomeRoutineTab>('ai');
   const [selectedLocation, setSelectedLocation] = useState<HomeLocation>('gym');
   const [expandedRoutineId, setExpandedRoutineId] = useState<string | null>(
-    'ai_gym_60',
+    null,
   );
 
   const routines = useMemo(() => {
@@ -108,7 +108,7 @@ export function RoutineCard({ onStartRoutine }: RoutineCardProps) {
               label="헬스장"
               onPress={() => {
                 setSelectedLocation('gym');
-                setExpandedRoutineId('ai_gym_60');
+                setExpandedRoutineId(null);
               }}
             />
             <SubTabButton
@@ -116,7 +116,7 @@ export function RoutineCard({ onStartRoutine }: RoutineCardProps) {
               label="홈트"
               onPress={() => {
                 setSelectedLocation('home');
-                setExpandedRoutineId('ai_home_30');
+                setExpandedRoutineId(null);
               }}
             />
           </View>
@@ -191,8 +191,9 @@ const styles = StyleSheet.create({
     ...iosShadow,
     backgroundColor: Colors.card,
     borderRadius: 16,
-    gap: 16,
-    padding: 16,
+    gap: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 24,
   },
   pressed: {
     opacity: 0.78,
@@ -205,8 +206,15 @@ const styles = StyleSheet.create({
   },
   subTabActive: {
     backgroundColor: Colors.white,
-    borderColor: Colors.cardBorder,
-    borderWidth: 1,
+    ...(Platform.OS === 'web'
+      ? { boxShadow: 'rgba(0,0,0,0.05) 0px 0px 1px' }
+      : {
+          elevation: 1,
+          shadowColor: '#000',
+          shadowOffset: { height: 0, width: 0 },
+          shadowOpacity: 0.05,
+          shadowRadius: 1,
+        }),
   },
   subTabRow: {
     backgroundColor: Colors.surfaceMuted,

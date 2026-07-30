@@ -7,14 +7,12 @@
 - 상태 정렬: 부분 완료
 - 시각 규칙 추출: 완료
 - 공통화 판정: 완료
-- 코드 반영: 미진행
+- 코드 반영: 완료
 - 동일 상태 실기 검증: 미진행
 
-이 페이지는 겉보기에는 원본을 꽤 닮았지만, 실제로는 결과 카드 shell, 통계 row,
-하단 액션 바, 운동 중 overlay가 전부 더 generic한 관리형 패턴으로 바뀌어 있다.
-
-즉 “무슨 정보가 보이느냐”는 비슷한데, “그 정보가 어떤 화면 장치 위에 놓이느냐”가 달라서
-전체 인상이 달라진다.
+결과 카드 shell, 통계 row, SVG gradient 고도 그래프, 하단 액션 바, 운동 중 overlay를
+원본 실제 코드 기준으로 복원했다. 저장 API와 현재 store는 유지하면서 화면 장치만
+원본 야외운동 결과 계열로 정렬했다.
 
 ## 실제 코드 경로
 
@@ -61,38 +59,33 @@ OutdoorWorkoutResultScreen
 
 ```text
 ai-pt
-OutdoorWorkoutResultScreen
-├── text header
-├── ScrollView
-│   ├── oversized page title
-│   ├── 코스 요약 card
-│   │   ├── difficulty chip
-│   │   ├── summary text
-│   │   └── wrapping stats grid
-│   ├── 고도 그래프 card
-│   │   ├── flat color bars
-│   │   └── segment list
-│   └── 맞춤 조언 card
-├── inline bottom bar
-├── inline countdown panel
-└── inline workout control panel
+TabPageLayout
+├── OutdoorWorkoutResultScreen
+│   ├── ScrollView
+│   │   ├── page title
+│   │   ├── compact 코스 요약 card + 4칸 metric strip
+│   │   ├── SVG gradient 고도 그래프 card + segment legend
+│   │   └── 맞춤 조언 card
+│   ├── fixed bottom bar
+│   ├── absolute dark countdown overlay
+│   └── absolute dark workout overlay
+└── MemberTabBar(선택 없음)
 ```
 
-원본은 “결과 화면 위에 운동 세션 layer를 덧씌우는 구조”이고, 현재는 “결과 화면 아래에
-상태 패널을 추가하는 구조”에 가깝다.
+결과 화면 위에 운동 세션 layer를 덧씌우는 원본 구조를 복원했다.
 
 ## 상태 매트릭스
 
 | 상태 | 원본 실제 코드 | `ai-pt` 실제 코드 | 비교 가능 | 판정 |
 |---|---|---|---|---|
-| 결과 없음 | spinner 후 이전/홈 복귀 | EmptyState + 이전 화면 버튼 | 가능 | 현재가 다른 empty UX |
+| 결과 없음 | spinner 후 이전/홈 복귀 | spinner + `goBack` | 가능 | 일치 |
 | 코스 요약 표시 | 있음 | 있음 | 가능 | 구조는 유사 |
 | 고도 그래프 표시 | 있음 | 있음 | 가능 | 시각 처리 다름 |
 | 맞춤 조언 표시 | 있음 | 있음 | 가능 | 거의 유사 |
-| 저장 전 bottom bar | 있음 | 있음 | 가능 | 배치와 버튼 shell 다름 |
-| 저장 완료 상태 | 있음 | 있음 | 가능 | 색/아이콘 표현 다름 |
-| 카운트다운 | dark absolute overlay | white inline panel | 가능 | 구조 다름 |
-| 운동 중 컨트롤 | dark absolute overlay | white inline panel | 가능 | 구조 다름 |
+| 저장 전 bottom bar | 있음 | tab 위 fixed bar | 가능 | 일치 |
+| 저장 완료 상태 | green CTA + white check icon | 동일 | 가능 | 일치 |
+| 카운트다운 | dark absolute overlay | 동일 | 가능 | 일치 |
+| 운동 중 컨트롤 | dark absolute overlay | 동일 | 가능 | 일치 |
 | 음성 안내 | UI 토글 only | UI 토글 only | 가능 | 기능 의미는 동일 |
 
 ## 실제 시각 규칙 대조
@@ -101,9 +94,10 @@ OutdoorWorkoutResultScreen
 
 | 영역 | 원본 실제 값 | `ai-pt` 실제 값 | 판정 |
 |---|---|---|---|
-| header 구조 | branded header + logo/action cluster | 텍스트 back/title/close | 구조 다름 |
-| page title | `18`, Medium | `28`, SemiBold | 다름 |
-| scroll 상단 리듬 | `padding: 16`, title marginBottom `4` | title marginTop `20`, marginHorizontal `18` | 다름 |
+| header 구조 | branded header + logo/action cluster | Apps in Toss 네이티브 헤더 | 플랫폼 제외 |
+| page title | `18`, Medium | `18`, Medium | 일치 |
+| scroll 상단 리듬 | `padding: 16`, title marginBottom `4` | 동일 | 일치 |
+| 하단 tab 활성 상태 | 상세 route라 선택 없음 | `activeKey={null}` | 일치 |
 
 헤더 자체는 제외 범위지만, title scale이 여기서도 크게 달라져 있다. 이건 전역 title token보다
 현재 페이지가 원본보다 “상세 페이지형 대제목”을 쓰도록 바뀐 결과다.
@@ -112,10 +106,11 @@ OutdoorWorkoutResultScreen
 
 | 영역 | 원본 실제 값 | `ai-pt` 실제 값 | 판정 |
 |---|---|---|---|
-| card radius | `16` | `24` | 다름 |
-| card padding | `24/20` | `18/18` | 다름 |
-| card title | `16`, Medium | `17`, SemiBold | 다름 |
-| summary text | `13`, lineHeight `20`, marginBottom `16` | `14`, lineHeight `22`, marginTop `10` | 다름 |
+| card radius | `16` | `16` | 일치 |
+| card padding | `24/20` | `24/20` | 일치 |
+| card title | `16`, Medium | `16`, Medium | 일치 |
+| summary text | `13`, lineHeight `20`, marginBottom `16` | 동일 | 일치 |
+| card shadow | `0,0 / 0.05 / radius 1` | 페이지 전용으로 동일 | 일치 |
 
 현재는 카드가 더 크고 둥글고 제목도 더 무겁다. 그래서 원본보다 결과 화면이 덜 조밀하고
 더 “대시보드 카드”처럼 보인다.
@@ -124,11 +119,11 @@ OutdoorWorkoutResultScreen
 
 | 영역 | 원본 실제 값 | `ai-pt` 실제 값 | 판정 |
 |---|---|---|---|
-| 배치 | 한 줄 4칸 + 세로 divider | wrap 가능한 4칸 grid | 다름 |
-| label | `11` Regular | `12` Regular | 다름 |
-| value | `16` Medium + unit 분리 | `15` SemiBold | 다름 |
-| divider | 있음 | 없음 | 다름 |
-| top spacing | `4` | `16` | 다름 |
+| 배치 | 한 줄 4칸 + 세로 divider | 동일 | 일치 |
+| label | `11` Regular | `11` Regular | 일치 |
+| value | `16` Medium + unit `13` SemiBold | 동일 parsing 적용 | 일치 |
+| divider | `1 × 32`, `#F0F2F5` | 동일 | 일치 |
+| top spacing | `4` | `4` | 일치 |
 
 이 영역이 체감 차이를 크게 만든다. 원본은 compact metric strip이고, 현재는 일반적인
 summary grid다.
@@ -137,12 +132,12 @@ summary grid다.
 
 | 영역 | 원본 실제 값 | `ai-pt` 실제 값 | 판정 |
 |---|---|---|---|
-| bar chart top spacing | `32` | `16` | 다름 |
-| bar fill | gradient | flat color | 다름 |
-| bar gap | `6` | `10` | 다름 |
-| segment row | divider 기준 row | top-border 기반 item | 다름 |
-| segment name | `13` SemiBold | `15` SemiBold | 다름 |
-| segment meta | `12` Regular | `13` Regular + margin-left | 다름 |
+| bar chart top spacing | `32` | `32` | 일치 |
+| bar fill | gradient | `react-native-svg` linear gradient | 일치 |
+| bar gap | `6` | `6` | 일치 |
+| segment row | 별도 divider + padding `12` | 동일 | 일치 |
+| segment name | `13` SemiBold | `13` SemiBold | 일치 |
+| segment meta | `12` Regular | `12` Regular | 일치 |
 
 현재도 정보량은 비슷하지만, 원본의 chart card는 더 촘촘하고 시각적 강조가 강하다.
 
@@ -150,11 +145,11 @@ summary grid다.
 
 | 영역 | 원본 실제 값 | `ai-pt` 실제 값 | 판정 |
 |---|---|---|---|
-| 위치 | absolute, tab bar 위 고정 | 일반 bottom section | 다름 |
-| safe area / tab bar 보정 | 있음 | 없음 | 다름 |
-| save button | 회색 fill, radius `14`, 고정 height `56` | white card + border, radius `16` | 다름 |
-| start button | accent fill + play icon | accent fill, icon 없음 | 다름 |
-| saved state | green accent button + check icon | pale green panel + custom check icon | 다름 |
+| 위치 | absolute, tab bar 위 고정 | 동일 | 일치 |
+| safe area / tab bar 보정 | 있음 | `TabPageLayout.tabBarHeight` 반영 | 일치 |
+| save button | 회색 fill, radius `14`, height `56` | 동일 | 일치 |
+| start button | accent fill + play `16` | 같은 path SVG 포함 | 일치 |
+| saved state | green accent button + check `20` | 같은 path SVG 포함 | 일치 |
 
 원본은 “운동 세션을 시작하는 고정 액션 바” 느낌이고, 현재는 “폼 하단 저장 영역”에 더 가깝다.
 
@@ -162,13 +157,13 @@ summary grid다.
 
 | 영역 | 원본 실제 값 | `ai-pt` 실제 값 | 판정 |
 |---|---|---|---|
-| 패널 위치 | absolute floating overlay | inline panel | 다름 |
-| 패널 배경 | `rgba(0,0,0,0.8)` | `rgba(255,255,255,0.94)` | 다름 |
-| countdown circle | 투명 + white stroke | white fill circle | 다름 |
-| countdown 숫자 | `42`, white Medium | `40`, accent SemiBold | 다름 |
-| active timer | `52`, white Medium | `36`, dark SemiBold | 다름 |
-| control row gap | `36` | `28` | 다름 |
-| icon size | `36` | `28` | 다름 |
+| 패널 위치 | tab 위 `10`, 좌우 `10`, absolute | 동일 | 일치 |
+| 패널 배경 | `rgba(0,0,0,0.8)`, radius `20`, height `170` | 동일 | 일치 |
+| countdown circle | `90`, 투명 + white stroke `3` | 동일 | 일치 |
+| countdown 숫자 | `42`, white Medium | 동일 | 일치 |
+| active timer | `52`, white Medium, letterSpacing `2` | 동일 | 일치 |
+| control row gap | `36` | `36` | 일치 |
+| icon size | `36` | 원본과 hash가 같은 PNG `36` | 일치 |
 
 이 부분은 사실상 별도 component family다. 원본의 “세션 overlay”가 현재에선 일반 패널로
 바뀌어서, 결과 화면의 긴장감이 사라졌다.
@@ -187,42 +182,44 @@ summary grid다.
 
 | 후보 | 분류 | 판정 | 이유 |
 |---|---|---|---|
-| 현재 `card radius 24` shell | reject | 기준 card 금지 | 원본 결과 카드와 톤이 다름 |
-| 현재 wrapping stats grid | reject | 결과 summary 공통화 금지 | 원본은 compact strip + divider |
-| 현재 white inline overlay | reject | 세션 overlay 공통화 금지 | 원본은 dark floating overlay |
-| 현재 empty state | reject | 기준 empty 패턴 금지 | 원본은 empty screen보다 복귀 흐름에 가까움 |
+| 기존 `card radius 24` shell | reject | 제거 완료 | 원본 결과 카드와 톤이 다름 |
+| 기존 wrapping stats grid | reject | 제거 완료 | 원본은 compact strip + divider |
+| 기존 white inline overlay | reject | 제거 완료 | 원본은 dark floating overlay |
+| 기존 EmptyState | reject | 제거 완료 | 원본은 spinner 후 복귀 흐름 |
 
 ## 시스템 관점 결론
 
-이 페이지는 `P-07`과 연결해서 보면 더 명확하다.
+P-07/P-08 야외운동 계열은 generic dashboard 카드와 inline panel에서 분리했다. 결과
+카드와 세션 overlay의 수치는 이 화면 안에서 원본대로 유지하며, 다른 결과 화면을
+확인하기 전에는 전역 card primitive로 승격하지 않는다.
 
-야외운동 계열 원본은
+## 반영
 
-1. branded header
-2. compact white result cards
-3. fixed bottom CTA
-4. dark floating session overlay
+- [`src/features/outdoor-workout/components/outdoor-workout-result-screen.tsx`](../../../src/features/outdoor-workout/components/outdoor-workout-result-screen.tsx)에서
+  compact card, difficulty chip, 단위가 분리된 4칸 metric strip을 복원했다.
+- Expo LinearGradient를 추가하지 않고 기존 `react-native-svg`의 gradient로 원본 고도
+  막대를 재현하고 segment divider·타이포그래피를 정렬했다.
+- CTA bar를 tab 위 absolute 위치로 옮기고 save/start/saved 세 상태의 shell과
+  play/check 아이콘을 복원했다.
+- countdown과 active workout을 좌우 `10`, tab 위 `10`인 dark overlay로 복원하고
+  timer·control 아이콘·텍스트 수치를 정렬했다.
+- [`src/pages/outdoor-workout-result.tsx`](../../../src/pages/outdoor-workout-result.tsx)에
+  `TabPageLayout`을 적용해 scroll bottom inset과 fixed layer의 tab 높이를 한 계산에서
+  사용한다.
+- [`src/shared/components/tab-page-layout.tsx`](../../../src/shared/components/tab-page-layout.tsx)와
+  [`src/shared/components/member-tab-bar.tsx`](../../../src/shared/components/member-tab-bar.tsx)는
+  상세 route에서 원본처럼 선택 탭이 없는 `activeKey={null}`을 허용한다.
 
-라는 독자적인 화면 언어가 있다.
+## 잔여 이슈
 
-현재 `ai-pt`는 이를
+- 원본과 현재 모두 음성안내 toggle은 실제 TTS를 연결하지 않고 UI 상태만 변경한다.
+- 실제 GPS session 추적 없이 화면 timer와 계획값 기반 저장을 사용하는 원본 기능
+  한계도 그대로 남아 있다.
+- Apps in Toss 실기 환경에서 tab·fixed CTA·overlay 중첩 캡처는 진행하지 못했다.
 
-1. generic text header
-2. 더 큰 radius의 dashboard card
-3. 일반 bottom section
-4. white inline state panel
+## 반영 검증
 
-로 바꿨다.
-
-즉 이 계열을 원본에 맞추려면 `야외운동 결과 카드/오버레이`를 별도 패턴으로 정의해야지,
-현재 일반 카드 시스템에 흡수하면 계속 원본과 멀어진다.
-
-## 수정 후보
-
-이 문서는 코드 수정 범위를 확정하기 위한 점검 결과이며 아직 구현하지 않았다.
-
-1. 결과 card shell을 원본 기준 radius/padding/title weight로 복원
-2. stats 영역을 wrapping grid가 아니라 compact metric strip으로 복원
-3. 고도 그래프의 gradient/spacing/segment row 구조 복원
-4. bottom CTA를 fixed action bar 패턴으로 복원
-5. countdown/workout 패널을 white inline panel이 아니라 dark floating overlay로 복원
+- outdoor-workout 전체 Jest 4 suites, 11 tests 통과
+- TypeScript `tsc --noEmit` 통과
+- 변경 파일 Biome check 통과
+- `git diff --check` 통과

@@ -1,19 +1,28 @@
 import { useNavigation } from '@granite-js/react-native';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCreateManualWorkoutRecord } from 'features/workout-records/api/workout-records';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
   Image,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
-import { CheckIcon } from 'shared/components/icons/pt-diary-icons';
-import { EmptyState } from 'shared/components/async-state';
-import Colors, { iosShadow } from 'shared/constants/colors';
-import { useCreateManualWorkoutRecord } from 'features/workout-records/api/workout-records';
+import Svg, {
+  Defs,
+  LinearGradient as SvgLinearGradient,
+  Rect,
+  Stop,
+} from 'react-native-svg';
+import {
+  OriginalAppIcon,
+  SemanticIcon,
+} from 'shared/components/icons/pt-diary-icons';
+import Colors from 'shared/constants/colors';
 import { buildOutdoorWorkoutRecordPayload } from '../lib/build-outdoor-workout-record-payload';
 import { useOutdoorWorkoutStore } from '../stores/use-outdoor-workout-store';
 
@@ -23,11 +32,23 @@ const PAUSE_ICON = require('../../../assets/icons/pause.png');
 const STOP_ICON = require('../../../assets/icons/stop.png');
 const PLAY_ICON = require('../../../assets/icons/play.png');
 const SEGMENT_COLORS = ['#22C55E', '#FFA500', '#3B82F6'];
+const SEGMENT_GRADIENTS = [
+  ['#15C47E', '#76E4B8'],
+  ['#FE9800', '#FFBD51'],
+  ['#3182F6', '#64A8FF'],
+] as const;
 
-export function OutdoorWorkoutResultScreen() {
+type OutdoorWorkoutResultScreenProps = {
+  contentBottomInset: number;
+  tabBarHeight: number;
+};
+
+export function OutdoorWorkoutResultScreen({
+  contentBottomInset,
+  tabBarHeight,
+}: OutdoorWorkoutResultScreenProps) {
   const navigation = useNavigation();
   const createManualWorkoutRecord = useCreateManualWorkoutRecord();
-  const clearPlanResult = useOutdoorWorkoutStore((state) => state.clearPlanResult);
   const planResult = useOutdoorWorkoutStore((state) => state.planResult);
   const [workoutActive, setWorkoutActive] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
@@ -51,6 +72,12 @@ export function OutdoorWorkoutResultScreen() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!planResult) {
+      navigation.goBack();
+    }
+  }, [navigation, planResult]);
+
   const plan = planResult?.plan;
   const elevationPoints = planResult?.elevationPoints ?? [];
   const workoutMode = planResult?.workoutMode ?? 'walking';
@@ -68,11 +95,6 @@ export function OutdoorWorkoutResultScreen() {
     () => formatElapsedSeconds(elapsedSeconds),
     [elapsedSeconds],
   );
-
-  const handleExitToHome = () => {
-    clearPlanResult();
-    navigation.navigate({ name: '/', params: {} });
-  };
 
   const handleStartWorkout = () => {
     setCountdown(3);
@@ -123,7 +145,10 @@ export function OutdoorWorkoutResultScreen() {
 
     setWorkoutActive(false);
     setWorkoutPaused(false);
-    Alert.alert('운동 종료', `운동 시간: ${formatElapsedSeconds(elapsedSeconds)}`);
+    Alert.alert(
+      '운동 종료',
+      `운동 시간: ${formatElapsedSeconds(elapsedSeconds)}`,
+    );
   };
 
   const handleSave = async () => {
@@ -156,31 +181,18 @@ export function OutdoorWorkoutResultScreen() {
   if (!planResult || !plan) {
     return (
       <View style={styles.emptyContainer}>
-        <EmptyState message="코스 결과를 찾지 못했어요. 다시 설계해 주세요." />
-        <Pressable
-          onPress={() => navigation.goBack()}
-          style={styles.secondaryButton}
-        >
-          <Text style={styles.secondaryButtonText}>이전 화면으로</Text>
-        </Pressable>
+        <ActivityIndicator color={Colors.accent} size="large" />
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Pressable onPress={() => navigation.goBack()} style={styles.headerButton}>
-          <Text style={styles.headerButtonText}>뒤로</Text>
-        </Pressable>
-        <Text style={styles.headerTitle}>야외운동</Text>
-        <Pressable onPress={handleExitToHome} style={styles.headerButton}>
-          <Text style={styles.headerButtonText}>닫기</Text>
-        </Pressable>
-      </View>
-
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: contentBottomInset },
+        ]}
         showsVerticalScrollIndicator={false}
       >
         <Text style={styles.pageTitle}>야외운동</Text>
@@ -192,12 +204,33 @@ export function OutdoorWorkoutResultScreen() {
               <DifficultyChip label={plan.difficulty} />
             ) : null}
           </View>
-          {plan.summary ? <Text style={styles.summaryText}>{plan.summary}</Text> : null}
+          {plan.summary ? (
+            <Text style={styles.summaryText}>{plan.summary}</Text>
+          ) : null}
           <View style={styles.statsRow}>
-            <StatItem label="거리" value={plan.totalDistance || '-'} />
-            <StatItem label="소요시간" value={plan.estimatedTime || '-'} />
-            <StatItem label="칼로리" value={plan.estimatedCalories || '-'} />
-            <StatItem label="고도차" value={plan.elevationGain || '-'} />
+            <StatItem
+              fallbackUnit="km"
+              label="거리"
+              value={plan.totalDistance || '-'}
+            />
+            <View style={styles.statDivider} />
+            <StatItem
+              fallbackUnit="분"
+              label="소요시간"
+              value={plan.estimatedTime || '-'}
+            />
+            <View style={styles.statDivider} />
+            <StatItem
+              fallbackUnit="kcal"
+              label="칼로리"
+              value={plan.estimatedCalories || '-'}
+            />
+            <View style={styles.statDivider} />
+            <StatItem
+              fallbackUnit="m"
+              label="고도차"
+              value={plan.elevationGain || '-'}
+            />
           </View>
         </View>
 
@@ -214,25 +247,25 @@ export function OutdoorWorkoutResultScreen() {
                       0.35 * 150,
                   ) || 16;
 
+                const gradientIndex = getSegmentGradientIndex(
+                  index,
+                  elevationPoints.length,
+                );
+
                 return (
                   <View key={`${point.point}-${index}`} style={styles.barWrap}>
                     <Text
                       style={[
                         styles.barLabel,
-                        { color: SEGMENT_COLORS[index % SEGMENT_COLORS.length] },
+                        { color: SEGMENT_COLORS[gradientIndex] },
                       ]}
                     >
                       {Math.round(point.elevation)}m
                     </Text>
-                    <View
-                      style={[
-                        styles.bar,
-                        {
-                          backgroundColor:
-                            SEGMENT_COLORS[index % SEGMENT_COLORS.length],
-                          height,
-                        },
-                      ]}
+                    <GradientBar
+                      colors={SEGMENT_GRADIENTS[gradientIndex]}
+                      height={height}
+                      index={index}
                     />
                   </View>
                 );
@@ -242,40 +275,44 @@ export function OutdoorWorkoutResultScreen() {
             {plan.segments.length > 0 ? (
               <View style={styles.segmentList}>
                 {plan.segments.map((segment, index) => (
-                  <View
-                    key={`${segment.name}-${index}`}
-                    style={[
-                      styles.segmentItem,
-                      index > 0 ? styles.segmentItemWithDivider : null,
-                    ]}
-                  >
-                    <View style={styles.segmentTitleRow}>
-                      <View
-                        style={[
-                          styles.segmentDot,
-                          {
-                            backgroundColor:
-                              SEGMENT_COLORS[index % SEGMENT_COLORS.length],
-                          },
-                        ]}
-                      />
-                      <Text style={styles.segmentName}>
-                        {segment.name || `구간 ${index + 1}`}
-                      </Text>
-                      {segment.difficulty ? (
-                        <DifficultyChip label={segment.difficulty} />
-                      ) : null}
+                  <Fragment key={`${segment.name}-${index}`}>
+                    {index > 0 ? <View style={styles.segmentDivider} /> : null}
+                    <View
+                      style={[
+                        styles.segmentItem,
+                        index === 0 ? styles.firstSegmentItem : null,
+                      ]}
+                    >
+                      <View style={styles.segmentContent}>
+                        <View style={styles.segmentTitleRow}>
+                          <View
+                            style={[
+                              styles.segmentDot,
+                              {
+                                backgroundColor:
+                                  SEGMENT_COLORS[index % SEGMENT_COLORS.length],
+                              },
+                            ]}
+                          />
+                          <Text style={styles.segmentName}>
+                            {segment.name || `구간 ${index + 1}`}
+                          </Text>
+                          {segment.difficulty ? (
+                            <DifficultyChip label={segment.difficulty} />
+                          ) : null}
+                        </View>
+                        <Text style={styles.segmentMeta}>
+                          {[
+                            segment.distance ? `${segment.distance}km` : null,
+                            segment.terrainType,
+                            segment.slopeInfo,
+                          ]
+                            .filter(Boolean)
+                            .join(' · ')}
+                        </Text>
+                      </View>
                     </View>
-                    <Text style={styles.segmentMeta}>
-                      {[
-                        segment.distance ? `${segment.distance}km` : null,
-                        segment.terrainType,
-                        segment.slopeInfo,
-                      ]
-                        .filter(Boolean)
-                        .join(' · ')}
-                    </Text>
-                  </View>
+                  </Fragment>
                 ))}
               </View>
             ) : null}
@@ -288,8 +325,8 @@ export function OutdoorWorkoutResultScreen() {
             {plan.personalizedNote ? (
               <Text style={styles.adviceText}>{plan.personalizedNote}</Text>
             ) : (
-              plan.generalTips?.map((tip, index) => (
-                <Text key={`${tip}-${index}`} style={styles.adviceText}>
+              plan.generalTips?.map((tip) => (
+                <Text key={tip} style={styles.adviceText}>
                   {tip}
                 </Text>
               ))
@@ -299,22 +336,36 @@ export function OutdoorWorkoutResultScreen() {
       </ScrollView>
 
       {!workoutActive && countdown === null ? (
-        <View style={styles.bottomBar}>
+        <View style={[styles.bottomBar, { bottom: tabBarHeight }]}>
           {saved ? (
-            <View style={styles.savedButton}>
-              <CheckIcon />
-              <Text style={styles.savedButtonText}>기록 저장 완료</Text>
+            <View style={[styles.startButton, styles.savedButton]}>
+              <OriginalAppIcon
+                color={Colors.white}
+                name="checkmarkCircle"
+                size={20}
+              />
+              <Text style={styles.startButtonText}>기록 저장 완료</Text>
             </View>
           ) : (
             <View style={styles.bottomButtonRow}>
-              <Pressable onPress={() => void handleSave()} style={styles.saveButton}>
+              <Pressable
+                onPress={() => void handleSave()}
+                style={styles.saveButton}
+              >
                 {createManualWorkoutRecord.isPending ? (
-                  <ActivityIndicator color={Colors.textSecondary} size="small" />
+                  <ActivityIndicator
+                    color={Colors.textSecondary}
+                    size="small"
+                  />
                 ) : (
                   <Text style={styles.saveButtonText}>기록 저장</Text>
                 )}
               </Pressable>
-              <Pressable onPress={handleStartWorkout} style={styles.startButton}>
+              <Pressable
+                onPress={handleStartWorkout}
+                style={styles.startButton}
+              >
+                <SemanticIcon color={Colors.white} name="play" size={16} />
                 <Text style={styles.startButtonText}>운동시작</Text>
               </Pressable>
             </View>
@@ -323,7 +374,7 @@ export function OutdoorWorkoutResultScreen() {
       ) : null}
 
       {countdown !== null ? (
-        <View style={styles.overlay}>
+        <View style={[styles.overlay, { bottom: tabBarHeight + 10 }]}>
           <View style={styles.countdownCircle}>
             <Text style={styles.countdownText}>{countdown}</Text>
           </View>
@@ -331,7 +382,7 @@ export function OutdoorWorkoutResultScreen() {
       ) : null}
 
       {workoutActive ? (
-        <View style={styles.overlay}>
+        <View style={[styles.overlay, { bottom: tabBarHeight + 10 }]}>
           <Text style={styles.activeTimer}>{activeTimerText}</Text>
           <View style={styles.workoutControlRow}>
             <WorkoutControl
@@ -357,16 +408,18 @@ export function OutdoorWorkoutResultScreen() {
 }
 
 function DifficultyChip({ label }: { label: string }) {
-  const backgroundColor = label.includes('쉬움')
-    ? '#D0F1E4'
-    : label.includes('보통') || label.includes('중간')
-      ? '#FFF3E0'
-      : '#FFE5E5';
-  const color = label.includes('쉬움')
-    ? '#16BB76'
-    : label.includes('보통') || label.includes('중간')
-      ? '#FF9500'
-      : '#FF3B30';
+  const backgroundColor =
+    label.includes('쉬움') || label.includes('완만')
+      ? '#D0F1E4'
+      : label.includes('보통') || label.includes('중간')
+        ? '#FFF3E0'
+        : '#FFE5E5';
+  const color =
+    label.includes('쉬움') || label.includes('완만')
+      ? '#16BB76'
+      : label.includes('보통') || label.includes('중간')
+        ? '#FF9500'
+        : '#FF3B30';
 
   return (
     <View style={[styles.difficultyChip, { backgroundColor }]}>
@@ -375,13 +428,86 @@ function DifficultyChip({ label }: { label: string }) {
   );
 }
 
-function StatItem({ label, value }: { label: string; value: string }) {
+function StatItem({
+  fallbackUnit,
+  label,
+  value,
+}: {
+  fallbackUnit: string;
+  label: string;
+  value: string;
+}) {
   return (
     <View style={styles.statItem}>
       <Text style={styles.statLabel}>{label}</Text>
-      <Text style={styles.statValue}>{value}</Text>
+      <StatValue fallbackUnit={fallbackUnit} value={value} />
     </View>
   );
+}
+
+function StatValue({
+  fallbackUnit,
+  value,
+}: {
+  fallbackUnit: string;
+  value: string;
+}) {
+  if (!value || value === '-') {
+    return <Text style={styles.statValue}>-</Text>;
+  }
+
+  const match = value.match(/^(약\s*)?([+-]?[\d.]+)\s*(.+)?$/);
+  if (!match) {
+    return <Text style={styles.statValue}>{value}</Text>;
+  }
+
+  const prefix = match[1] ?? '';
+  const number = match[2] ?? value;
+  const unit = match[3]?.trim() || fallbackUnit;
+
+  return (
+    <Text style={styles.statValue}>
+      {prefix ? <Text style={styles.statUnit}>{prefix}</Text> : null}
+      {number}
+      {unit ? <Text style={styles.statUnit}>{unit}</Text> : null}
+    </Text>
+  );
+}
+
+function GradientBar({
+  colors,
+  height,
+  index,
+}: {
+  colors: readonly [string, string];
+  height: number;
+  index: number;
+}) {
+  const gradientId = `outdoor-elevation-${index}`;
+
+  return (
+    <View style={[styles.bar, { height }]}>
+      <Svg height="100%" width="100%">
+        <Defs>
+          <SvgLinearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
+            <Stop offset="0" stopColor={colors[0]} />
+            <Stop offset="1" stopColor={colors[1]} />
+          </SvgLinearGradient>
+        </Defs>
+        <Rect fill={`url(#${gradientId})`} height="100%" rx="5" width="100%" />
+      </Svg>
+    </View>
+  );
+}
+
+function getSegmentGradientIndex(index: number, total: number) {
+  const ratio = index / total;
+
+  if (ratio < 0.25) {
+    return 0;
+  }
+
+  return ratio < 0.8 ? 1 : 2;
 }
 
 function WorkoutControl({
@@ -421,68 +547,85 @@ function formatElapsedSeconds(totalSeconds: number) {
 // 운동 시작/종료 여부와 무관하게 계획값 기반 payload를 바로 DB에 저장해요.
 // 추후 실측 세션 개념이 들어오면 저장 버튼 노출 조건과 payload 구조를 다시 설계해야 해요.
 
+const outdoorResultCardShadow =
+  Platform.OS === 'web'
+    ? { boxShadow: 'rgba(0,0,0,0.05) 0px 0px 1px' }
+    : {
+        elevation: 1,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.05,
+        shadowRadius: 1,
+      };
+
 const styles = StyleSheet.create({
   activeTimer: {
-    color: Colors.text,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 36,
+    color: Colors.white,
+    fontFamily: 'Pretendard-Medium',
+    fontSize: 52,
+    letterSpacing: 2,
   },
   adviceText: {
     color: Colors.textSecondary,
     fontFamily: 'Pretendard-Regular',
-    fontSize: 14,
+    fontSize: 13,
     lineHeight: 22,
     marginTop: 8,
   },
   bar: {
-    borderRadius: 8,
-    width: 22,
+    borderRadius: 5,
+    minHeight: 10,
+    overflow: 'hidden',
+    width: '100%',
   },
   barChart: {
     alignItems: 'flex-end',
     flexDirection: 'row',
-    gap: 10,
-    justifyContent: 'space-between',
-    marginTop: 16,
+    gap: 6,
+    height: 150,
+    marginBottom: 0,
+    marginTop: 32,
   },
   barLabel: {
     fontFamily: 'Pretendard-Medium',
     fontSize: 11,
-    marginBottom: 6,
+    marginBottom: 5,
   },
   barWrap: {
     alignItems: 'center',
     flex: 1,
+    justifyContent: 'flex-end',
   },
   bottomBar: {
     backgroundColor: Colors.background,
-    borderTopColor: Colors.divider,
-    borderTopWidth: StyleSheet.hairlineWidth,
+    left: 0,
+    paddingBottom: 12,
     paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingTop: 8,
+    position: 'absolute',
+    right: 0,
   },
   bottomButtonRow: {
     flexDirection: 'row',
     gap: 10,
   },
   card: {
-    ...iosShadow,
+    ...outdoorResultCardShadow,
     backgroundColor: Colors.card,
-    borderRadius: 24,
-    marginHorizontal: 16,
-    marginTop: 16,
-    paddingHorizontal: 18,
-    paddingVertical: 18,
+    borderRadius: 16,
+    paddingHorizontal: 24,
+    paddingVertical: 20,
   },
   cardTitle: {
     color: Colors.text,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 17,
+    fontFamily: 'Pretendard-Medium',
+    fontSize: 16,
   },
   cardTitleRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    gap: 10,
+    marginBottom: 10,
   },
   container: {
     backgroundColor: Colors.background,
@@ -490,119 +633,85 @@ const styles = StyleSheet.create({
   },
   countdownCircle: {
     alignItems: 'center',
-    backgroundColor: Colors.card,
-    borderRadius: 999,
-    height: 96,
+    backgroundColor: 'transparent',
+    borderColor: Colors.white,
+    borderRadius: 45,
+    borderWidth: 3,
+    height: 90,
     justifyContent: 'center',
-    width: 96,
+    width: 90,
   },
   countdownText: {
-    color: Colors.accent,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 40,
+    color: Colors.white,
+    fontFamily: 'Pretendard-Medium',
+    fontSize: 42,
   },
   difficultyChip: {
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    alignItems: 'center',
+    borderRadius: 9,
+    height: 21,
+    justifyContent: 'center',
+    paddingHorizontal: 8,
   },
   difficultyChipText: {
     fontFamily: 'Pretendard-SemiBold',
-    fontSize: 12,
+    fontSize: 10,
+    lineHeight: 14,
   },
   emptyContainer: {
+    alignItems: 'center',
     backgroundColor: Colors.background,
     flex: 1,
-    gap: 16,
     justifyContent: 'center',
-    padding: 24,
   },
-  header: {
-    alignItems: 'center',
-    backgroundColor: Colors.card,
-    borderBottomColor: Colors.divider,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-  },
-  headerButton: {
-    minWidth: 44,
-    paddingVertical: 6,
-  },
-  headerButtonText: {
-    color: Colors.textSecondary,
-    fontFamily: 'Pretendard-Medium',
-    fontSize: 14,
-  },
-  headerTitle: {
-    color: Colors.text,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 17,
+  firstSegmentItem: {
+    paddingTop: 0,
   },
   overlay: {
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.94)',
-    borderTopColor: Colors.divider,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    gap: 18,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    borderRadius: 20,
+    gap: 20,
+    height: 170,
+    justifyContent: 'center',
+    left: 10,
+    position: 'absolute',
+    right: 10,
+    zIndex: 100,
   },
   pageTitle: {
     color: Colors.text,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 28,
-    marginHorizontal: 18,
-    marginTop: 20,
+    fontFamily: 'Pretendard-Medium',
+    fontSize: 18,
+    marginBottom: 4,
   },
   savedButton: {
-    alignItems: 'center',
-    backgroundColor: '#E7F7EC',
-    borderRadius: 16,
-    flexDirection: 'row',
-    gap: 10,
-    justifyContent: 'center',
-    minHeight: 56,
-  },
-  savedButtonText: {
-    color: '#16A34A',
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 15,
+    backgroundColor: '#22C55E',
   },
   saveButton: {
     alignItems: 'center',
-    backgroundColor: Colors.card,
-    borderColor: Colors.divider,
-    borderRadius: 16,
-    borderWidth: StyleSheet.hairlineWidth,
+    backgroundColor: '#ECEEF2',
+    borderRadius: 14,
+    flex: 1,
+    height: 56,
     justifyContent: 'center',
-    minHeight: 56,
-    minWidth: 120,
-    paddingHorizontal: 20,
   },
   saveButtonText: {
-    color: Colors.textSecondary,
+    color: '#4B5563',
     fontFamily: 'Pretendard-SemiBold',
     fontSize: 15,
   },
   scrollContent: {
-    paddingBottom: 40,
+    gap: 12,
+    padding: 16,
   },
-  secondaryButton: {
-    alignItems: 'center',
-    backgroundColor: Colors.card,
-    borderColor: Colors.divider,
-    borderRadius: 16,
-    borderWidth: StyleSheet.hairlineWidth,
-    justifyContent: 'center',
-    minHeight: 52,
+  segmentContent: {
+    flex: 1,
+    gap: 3,
   },
-  secondaryButtonText: {
-    color: Colors.accent,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 15,
+  segmentDivider: {
+    backgroundColor: '#F0F2F5',
+    height: 1,
   },
   segmentDot: {
     borderRadius: 999,
@@ -610,12 +719,8 @@ const styles = StyleSheet.create({
     width: 10,
   },
   segmentItem: {
-    paddingTop: 14,
-  },
-  segmentItemWithDivider: {
-    borderTopColor: Colors.divider,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    marginTop: 14,
+    flexDirection: 'row',
+    paddingVertical: 12,
   },
   segmentList: {
     marginTop: 20,
@@ -623,79 +728,87 @@ const styles = StyleSheet.create({
   segmentMeta: {
     color: Colors.textSecondary,
     fontFamily: 'Pretendard-Regular',
-    fontSize: 13,
-    marginLeft: 18,
-    marginTop: 6,
+    fontSize: 12,
   },
   segmentName: {
     color: Colors.text,
-    flex: 1,
     fontFamily: 'Pretendard-SemiBold',
-    fontSize: 15,
+    fontSize: 13,
   },
   segmentTitleRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 8,
+    gap: 10,
   },
   startButton: {
     alignItems: 'center',
     backgroundColor: Colors.accent,
-    borderRadius: 16,
+    borderRadius: 14,
     flex: 1,
+    flexDirection: 'row',
+    gap: 8,
+    height: 56,
     justifyContent: 'center',
-    minHeight: 56,
   },
   startButtonText: {
     color: Colors.white,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 15,
+    fontFamily: 'Pretendard-Medium',
+    fontSize: 16,
+  },
+  statDivider: {
+    backgroundColor: '#F0F2F5',
+    height: 32,
+    width: 1,
   },
   statItem: {
-    flex: 1,
-    minWidth: '22%',
+    alignItems: 'flex-start',
+    gap: 4,
   },
   statLabel: {
     color: Colors.textSecondary,
     fontFamily: 'Pretendard-Regular',
-    fontSize: 12,
+    fontSize: 11,
+  },
+  statUnit: {
+    color: Colors.text,
+    fontFamily: 'Pretendard-SemiBold',
+    fontSize: 13,
   },
   statValue: {
     color: Colors.text,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 15,
-    marginTop: 6,
+    fontFamily: 'Pretendard-Medium',
+    fontSize: 16,
   },
   statsRow: {
+    alignItems: 'center',
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginTop: 16,
+    justifyContent: 'space-between',
+    marginTop: 4,
   },
   summaryText: {
     color: Colors.textSecondary,
     fontFamily: 'Pretendard-Regular',
-    fontSize: 14,
-    lineHeight: 22,
-    marginTop: 10,
+    fontSize: 13,
+    lineHeight: 20,
+    marginBottom: 16,
   },
   workoutControlButton: {
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
   workoutControlIcon: {
-    height: 28,
-    width: 28,
+    height: 36,
+    width: 36,
   },
   workoutControlRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 28,
+    gap: 36,
     justifyContent: 'center',
   },
   workoutControlText: {
-    color: Colors.textSecondary,
+    color: '#8E8E8E',
     fontFamily: 'Pretendard-Medium',
-    fontSize: 12,
+    fontSize: 11,
   },
 });

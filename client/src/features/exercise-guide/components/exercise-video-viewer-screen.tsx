@@ -1,5 +1,4 @@
-import { useNavigation } from "@granite-js/react-native";
-import { useState } from "react";
+import { useState } from 'react';
 import {
   Alert,
   Pressable,
@@ -7,47 +6,46 @@ import {
   StyleSheet,
   Text,
   View,
-} from "react-native";
+} from 'react-native';
+import { SuspenseSection } from 'shared/components/async-state';
+import {
+  OriginalAppIcon,
+  type OriginalAppIconName,
+} from 'shared/components/icons/pt-diary-icons';
+import Colors from 'shared/constants/colors';
 import {
   useExerciseGuide,
   useSetExerciseGuideLike,
-} from "../api/exercise-guides";
-import { getYoutubeEmbedUrl } from "../lib/get-youtube-embed-url";
-import { YoutubeVideoPlayer } from "./youtube-video-player";
-import { SuspenseSection } from "shared/components/async-state";
-import Colors from "shared/constants/colors";
+} from '../api/exercise-guides';
+import { getYoutubeEmbedUrl } from '../lib/get-youtube-embed-url';
+import { YoutubeVideoPlayer } from './youtube-video-player';
 
-export function ExerciseVideoViewerScreen({ guideId }: { guideId: string }) {
+export function ExerciseVideoViewerScreen({
+  contentBottomInset,
+  guideId,
+}: {
+  contentBottomInset: number;
+  guideId: string;
+}) {
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <VideoViewerHeader />
-      </View>
       <SuspenseSection errorMessage="운동 가이드를 불러오지 못했어요.">
-        <ExerciseVideoViewerContent guideId={guideId} />
+        <ExerciseVideoViewerContent
+          contentBottomInset={contentBottomInset}
+          guideId={guideId}
+        />
       </SuspenseSection>
     </View>
   );
 }
 
-function VideoViewerHeader() {
-  const navigation = useNavigation();
-
-  return (
-    <>
-      <Pressable
-        onPress={() => navigation.goBack()}
-        style={styles.headerButton}
-      >
-        <Text style={styles.headerButtonText}>닫기</Text>
-      </Pressable>
-      <Text style={styles.headerTitle}>운동 영상</Text>
-      <View style={styles.headerSide} />
-    </>
-  );
-}
-
-function ExerciseVideoViewerContent({ guideId }: { guideId: string }) {
+function ExerciseVideoViewerContent({
+  contentBottomInset,
+  guideId,
+}: {
+  contentBottomInset: number;
+  guideId: string;
+}) {
   const { data: guide } = useExerciseGuide(guideId);
   const likeMutation = useSetExerciseGuideLike();
   const [pending, setPending] = useState(false);
@@ -65,7 +63,7 @@ function ExerciseVideoViewerContent({ guideId }: { guideId: string }) {
         liked: !guide.likedByMe,
       });
     } catch {
-      Alert.alert("오류", "좋아요를 저장하지 못했어요.");
+      Alert.alert('오류', '좋아요를 저장하지 못했어요.');
     } finally {
       setPending(false);
     }
@@ -75,7 +73,10 @@ function ExerciseVideoViewerContent({ guideId }: { guideId: string }) {
     <>
       <YoutubeVideoPlayer embedUrl={getYoutubeEmbedUrl(guide.videoUrl)} />
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: contentBottomInset },
+        ]}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.titleRow}>
@@ -84,29 +85,38 @@ function ExerciseVideoViewerContent({ guideId }: { guideId: string }) {
             disabled={pending}
             onPress={handleLike}
             style={styles.likeButton}
+            testID="video-like-button"
           >
-            <Text
-              style={[
-                styles.likeHeart,
-                guide.likedByMe
-                  ? styles.likeHeartActive
-                  : styles.likeHeartInactive,
-              ]}
-            >
-              {guide.likedByMe ? "♥" : "♡"}
-            </Text>
-            <Text style={styles.likeCount}>{guide.likeCount}</Text>
+            <OriginalAppIcon
+              color={guide.likedByMe ? Colors.danger : Colors.textSecondary}
+              name={guide.likedByMe ? 'heart' : 'heartOutline'}
+              size={24}
+            />
+            {guide.likeCount > 0 ? (
+              <Text style={styles.likeCount}>{guide.likeCount}</Text>
+            ) : null}
           </Pressable>
         </View>
 
-        <View style={styles.metaRow}>
-          <MetaBadge label={guide.equipment} />
-          {guide.targetMuscles ? (
-            <MetaBadge label={guide.targetMuscles} />
-          ) : null}
-        </View>
+        {guide.equipment ? <MetaBadge label={guide.equipment} /> : null}
 
-        <InfoBlock label="운동 설명" value={guide.description} />
+        {guide.targetMuscles ? (
+          <InfoBlock
+            icon="body"
+            iconColor={Colors.info}
+            label="타겟 근육"
+            value={guide.targetMuscles}
+          />
+        ) : null}
+
+        {guide.description ? (
+          <InfoBlock
+            icon="documentText"
+            iconColor={Colors.accent}
+            label="운동 설명"
+            value={guide.description}
+          />
+        ) : null}
       </ScrollView>
     </>
   );
@@ -114,17 +124,33 @@ function ExerciseVideoViewerContent({ guideId }: { guideId: string }) {
 
 function MetaBadge({ label }: { label: string }) {
   return (
-    <View style={styles.metaBadge}>
-      <Text style={styles.metaBadgeText}>{label}</Text>
+    <View style={styles.metaRow}>
+      <View style={styles.metaBadge}>
+        <OriginalAppIcon color={Colors.primaryLight} name="barbell" size={14} />
+        <Text style={styles.metaBadgeText}>{label}</Text>
+      </View>
     </View>
   );
 }
 
-function InfoBlock({ label, value }: { label: string; value: string }) {
+function InfoBlock({
+  icon,
+  iconColor,
+  label,
+  value,
+}: {
+  icon: OriginalAppIconName;
+  iconColor: string;
+  label: string;
+  value: string;
+}) {
   return (
     <View style={styles.infoBlock}>
-      <Text style={styles.infoLabel}>{label}</Text>
-      <Text style={styles.infoText}>{value}</Text>
+      <OriginalAppIcon color={iconColor} name={icon} size={16} />
+      <View style={styles.infoBlockContent}>
+        <Text style={styles.infoLabel}>{label}</Text>
+        <Text style={styles.infoText}>{value}</Text>
+      </View>
     </View>
   );
 }
@@ -133,105 +159,77 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: Colors.background,
     flex: 1,
-    paddingTop: 16,
   },
   content: {
-    paddingBottom: 28,
     paddingHorizontal: 20,
     paddingTop: 16,
-  },
-  header: {
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-  },
-  headerButton: {
-    minWidth: 44,
-    paddingVertical: 8,
-  },
-  headerButtonText: {
-    color: Colors.text,
-    fontFamily: "Pretendard-Regular",
-    fontSize: 16,
-  },
-  headerSide: {
-    width: 44,
-  },
-  headerTitle: {
-    color: Colors.text,
-    fontFamily: "Pretendard-SemiBold",
-    fontSize: 18,
   },
   infoBlock: {
     backgroundColor: Colors.card,
     borderColor: Colors.cardBorder,
     borderRadius: 12,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 10,
     marginTop: 16,
     padding: 14,
   },
+  infoBlockContent: {
+    flex: 1,
+  },
   infoLabel: {
     color: Colors.textSecondary,
-    fontFamily: "Pretendard-SemiBold",
+    fontFamily: 'Pretendard-SemiBold',
     fontSize: 12,
-    marginBottom: 6,
+    marginBottom: 4,
   },
   infoText: {
     color: Colors.text,
-    fontFamily: "Pretendard-Regular",
+    fontFamily: 'Pretendard-Regular',
     fontSize: 14,
     lineHeight: 22,
   },
   likeButton: {
-    alignItems: "center",
-    flexDirection: "row",
+    alignItems: 'center',
+    flexDirection: 'row',
     gap: 4,
-    paddingVertical: 4,
+    paddingHorizontal: 4,
+    paddingVertical: 8,
   },
   likeCount: {
     color: Colors.textSecondary,
-    fontFamily: "Pretendard-Medium",
+    fontFamily: 'Pretendard-Medium',
     fontSize: 14,
   },
-  likeHeart: {
-    fontSize: 21,
-    lineHeight: 24,
-  },
-  likeHeartActive: {
-    color: Colors.danger,
-  },
-  likeHeartInactive: {
-    color: Colors.textSecondary,
-  },
   metaBadge: {
-    backgroundColor: "#eef2ff",
+    alignItems: 'center',
+    backgroundColor: '#eef2ff',
     borderRadius: 8,
+    flexDirection: 'row',
+    gap: 6,
     paddingHorizontal: 10,
     paddingVertical: 5,
   },
   metaBadgeText: {
     color: Colors.primaryLight,
-    fontFamily: "Pretendard-Medium",
+    fontFamily: 'Pretendard-Medium',
     fontSize: 13,
   },
   metaRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
+    flexDirection: 'row',
     gap: 8,
     marginTop: 10,
   },
   title: {
     color: Colors.text,
     flex: 1,
-    fontFamily: "Pretendard-Medium",
+    fontFamily: 'Pretendard-Medium',
     fontSize: 22,
     paddingRight: 12,
   },
   titleRow: {
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "space-between",
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
 });

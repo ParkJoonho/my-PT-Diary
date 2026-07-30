@@ -18,6 +18,7 @@ import Svg, {
   Text as SvgText,
 } from 'react-native-svg';
 import type { WorkoutReportSummaryDto } from 'shared/api/generated/models';
+import { OriginalAppIcon } from 'shared/components/icons/pt-diary-icons';
 import Colors, { iosShadow } from 'shared/constants/colors';
 import { useWorkoutReportStore } from '../stores/use-workout-report-store';
 import {
@@ -88,7 +89,11 @@ export function WorkoutReportChartSection({
               onPress={() => setActiveTab(tab.key)}
               style={[styles.tabButton, active && styles.tabButtonActive]}
             >
-              <View style={[styles.tabDot, active && styles.tabDotActive]} />
+              <OriginalAppIcon
+                color={active ? Colors.white : Colors.textSecondary}
+                name={tab.icon}
+                size={14}
+              />
               <Text
                 style={[
                   styles.tabButtonText,
@@ -163,9 +168,7 @@ export function WorkoutReportChartSection({
 
       {insightText ? (
         <View style={styles.insightCard}>
-          <View style={styles.insightBadge}>
-            <Text style={styles.insightBadgeText}>TIP</Text>
-          </View>
+          <OriginalAppIcon color="#D4AF37" name="lightbulbOutline" size={18} />
           <Text style={styles.insightText}>{insightText}</Text>
         </View>
       ) : null}
@@ -745,17 +748,6 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
   },
-  insightBadge: {
-    backgroundColor: '#FFE8A3',
-    borderRadius: 999,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-  },
-  insightBadgeText: {
-    color: '#8A5A00',
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 10,
-  },
   insightCard: {
     alignItems: 'flex-start',
     backgroundColor: '#FFFDF5',
@@ -799,15 +791,6 @@ const styles = StyleSheet.create({
   tabContent: {
     gap: 8,
     paddingRight: 4,
-  },
-  tabDot: {
-    backgroundColor: Colors.cardBorder,
-    borderRadius: 999,
-    height: 8,
-    width: 8,
-  },
-  tabDotActive: {
-    backgroundColor: Colors.white,
   },
   tabScroll: {
     marginBottom: 0,

@@ -1,26 +1,38 @@
 import { useNavigation } from '@granite-js/react-native';
+import { useAnalysisRecords } from 'features/body-analysis/api/analysis-records';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense } from 'react';
 import {
   ActivityIndicator,
   Alert,
   Animated,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
-import { AIInfoIcon } from 'shared/components/icons/pt-diary-icons';
-import Colors, { iosShadow, iosShadowLight } from 'shared/constants/colors';
-import type { CreateOutdoorWorkoutPlanDto } from 'shared/api/generated/models';
+import Svg, { Path } from 'react-native-svg';
+import type {
+  AnalysisRecordDto,
+  CreateOutdoorWorkoutPlanDto,
+} from 'shared/api/generated/models';
+import { AsyncErrorBoundary } from 'shared/components/async-state';
+import {
+  AIInfoIcon,
+  OriginalAppIcon,
+  SemanticIcon,
+} from 'shared/components/icons/pt-diary-icons';
+import Colors from 'shared/constants/colors';
 import { useCreateOutdoorWorkoutPlan } from '../api/outdoor-workout';
 import { calculateDistanceKilometers } from '../lib/calculate-distance';
 import { fetchElevationData } from '../lib/fetch-elevation-data';
+import { generateRoutePoints } from '../lib/generate-route-points';
 import {
   getCurrentLocation,
   getLocationDisplayName,
 } from '../lib/get-current-location';
-import { generateRoutePoints } from '../lib/generate-route-points';
 import { useOutdoorWorkoutStore } from '../stores/use-outdoor-workout-store';
 import type {
   OutdoorWorkoutLocation,
@@ -91,22 +103,29 @@ function IOSToggle({
   );
 }
 
-export function OutdoorWorkoutScreen() {
+type OutdoorWorkoutScreenProps = {
+  contentBottomInset: number;
+};
+
+export function OutdoorWorkoutScreen({
+  contentBottomInset,
+}: OutdoorWorkoutScreenProps) {
   const navigation = useNavigation();
   const createOutdoorWorkoutPlan = useCreateOutdoorWorkoutPlan();
   const setPlanResult = useOutdoorWorkoutStore((state) => state.setPlanResult);
   const [location, setLocation] = useState<OutdoorWorkoutLocation | null>(null);
   const [locationName, setLocationName] = useState('내 위치');
   const [loadingLocation, setLoadingLocation] = useState(true);
-  const [selectedRadius, setSelectedRadius] =
-    useState<OutdoorWorkoutRadius>(1);
+  const [selectedRadius, setSelectedRadius] = useState<OutdoorWorkoutRadius>(1);
   const [destination, setDestination] = useState<{
     latitude: number;
     longitude: number;
   } | null>(null);
   const [autoDestinationEnabled, setAutoDestinationEnabled] = useState(false);
-  const [workoutMode, setWorkoutMode] =
-    useState<OutdoorWorkoutMode>('walking');
+  const [workoutMode, setWorkoutMode] = useState<OutdoorWorkoutMode>('walking');
+  const [bodyAnalysis, setBodyAnalysis] = useState<AnalysisRecordDto | null>(
+    null,
+  );
 
   useEffect(() => {
     void requestLocation();
@@ -150,8 +169,7 @@ export function OutdoorWorkoutScreen() {
     }
 
     const angle = Math.random() * 2 * Math.PI;
-    const distance =
-      (0.3 + Math.random() * 0.7) * Number(selectedRadius);
+    const distance = (0.3 + Math.random() * 0.7) * Number(selectedRadius);
     const deltaLatitude = (distance / 111.32) * Math.cos(angle);
     const deltaLongitude =
       (distance / (111.32 * Math.cos((location.latitude * Math.PI) / 180))) *
@@ -172,11 +190,10 @@ export function OutdoorWorkoutScreen() {
       autoDestinationEnabled && !destination
         ? createRandomDestination(location, selectedRadius)
         : destination;
-    const target =
-      activeDestination ?? {
-        latitude: location.latitude + Number(selectedRadius) * 0.005,
-        longitude: location.longitude + Number(selectedRadius) * 0.005,
-      };
+    const target = activeDestination ?? {
+      latitude: location.latitude + Number(selectedRadius) * 0.005,
+      longitude: location.longitude + Number(selectedRadius) * 0.005,
+    };
 
     if (!destination && activeDestination) {
       setDestination(activeDestination);
@@ -193,6 +210,12 @@ export function OutdoorWorkoutScreen() {
       );
       const elevationData = await fetchElevationData(routePoints);
       const payload: CreateOutdoorWorkoutPlanDto = {
+        bodyAnalysis: bodyAnalysis
+          ? {
+              qualitativeData: bodyAnalysis.qualitativeData,
+              quantitativeData: bodyAnalysis.quantitativeData,
+            }
+          : undefined,
         distanceKm: Number(
           calculateDistanceKilometers(
             {
@@ -251,45 +274,38 @@ export function OutdoorWorkoutScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Pressable
-          onPress={() => navigation.goBack()}
-          style={styles.headerButton}
-          testID="outdoor-back-button"
-        >
-          <Text style={styles.headerButtonText}>뒤로</Text>
-        </Pressable>
-        <Text style={styles.headerTitle}>야외운동</Text>
-        <Pressable
-          onPress={() => navigation.navigate({ name: '/', params: {} })}
-          style={styles.headerButton}
-        >
-          <Text style={styles.headerButtonText}>닫기</Text>
-        </Pressable>
-      </View>
-
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: contentBottomInset },
+        ]}
         showsVerticalScrollIndicator={false}
       >
+        <Text style={styles.pageTitle}>야외운동</Text>
+
         <View style={styles.locationRow}>
-          <Text style={styles.locationDot}>●</Text>
+          <OutdoorLocationIcon />
           <Text style={styles.locationName}>{locationName}</Text>
           <Pressable onPress={requestLocation} style={styles.resetChip}>
+            <OriginalAppIcon
+              color={Colors.textSecondary}
+              name="refresh"
+              size={12}
+            />
             <Text style={styles.resetChipText}>재설정</Text>
           </Pressable>
         </View>
 
         <View style={styles.controlCard}>
           <Text style={styles.sectionLabel}>운동 선택</Text>
-          <View style={styles.segmentedControl}>
-            <SelectChip
+          <View style={styles.insetControl}>
+            <InsetSegment
               active={workoutMode === 'walking'}
               label="걷기/러닝"
               onPress={() => setWorkoutMode('walking')}
               testID="mode-walking"
             />
-            <SelectChip
+            <InsetSegment
               active={workoutMode === 'hiking'}
               label="등산"
               onPress={() => setWorkoutMode('hiking')}
@@ -300,13 +316,15 @@ export function OutdoorWorkoutScreen() {
           <Text style={[styles.sectionLabel, styles.sectionMargin]}>
             거리 선택
           </Text>
-          <View style={styles.radiusGroup}>
+          <View style={styles.insetControl}>
             {[1, 2, 3].map((radius) => (
-              <SelectChip
+              <InsetSegment
                 active={selectedRadius === radius}
                 key={radius}
                 label={`${radius}km`}
-                onPress={() => setSelectedRadius(radius as OutdoorWorkoutRadius)}
+                onPress={() =>
+                  setSelectedRadius(radius as OutdoorWorkoutRadius)
+                }
                 testID={`radius-${radius}`}
               />
             ))}
@@ -371,19 +389,16 @@ export function OutdoorWorkoutScreen() {
 
           <View style={styles.tipRow}>
             <AIInfoIcon />
-            <View style={styles.tipTextGroup}>
-              <Text style={styles.tipText}>
-                AI 체형 분석 시 내 체형에 맞춰 코스를 설계해요.
-              </Text>
-              <Pressable
-                onPress={() =>
-                  Alert.alert('내 체형 분석하기', '준비 중인 기능입니다.')
-                }
-                style={styles.tipLink}
-              >
-                <Text style={styles.tipLinkText}>내 체형 분석하기</Text>
-              </Pressable>
-            </View>
+            <AsyncErrorBoundary message="체형 분석 정보를 불러오지 못했어요.">
+              <Suspense fallback={<BodyAnalysisTipLoading />}>
+                <BodyAnalysisTip
+                  onBodyAnalysisChange={setBodyAnalysis}
+                  onOpenAnalysis={() =>
+                    navigation.navigate({ name: '/ai-analysis', params: {} })
+                  }
+                />
+              </Suspense>
+            </AsyncErrorBoundary>
           </View>
         </View>
       </ScrollView>
@@ -391,7 +406,7 @@ export function OutdoorWorkoutScreen() {
   );
 }
 
-function SelectChip({
+function InsetSegment({
   active,
   label,
   onPress,
@@ -405,15 +420,111 @@ function SelectChip({
   return (
     <Pressable
       onPress={onPress}
-      style={[styles.chip, active ? styles.chipActive : null]}
+      style={[styles.insetSegment, active ? styles.insetSegmentActive : null]}
       testID={testID}
     >
-      <Text style={[styles.chipText, active ? styles.chipTextActive : null]}>
+      <Text
+        style={[
+          styles.insetSegmentText,
+          active ? styles.insetSegmentTextActive : null,
+        ]}
+      >
         {label}
       </Text>
     </Pressable>
   );
 }
+
+function BodyAnalysisTip({
+  onBodyAnalysisChange,
+  onOpenAnalysis,
+}: {
+  onBodyAnalysisChange: (record: AnalysisRecordDto | null) => void;
+  onOpenAnalysis: () => void;
+}) {
+  const { data } = useAnalysisRecords({ type: 'body' });
+  const record = data[0] ?? null;
+
+  useEffect(() => {
+    onBodyAnalysisChange(record);
+  }, [onBodyAnalysisChange, record]);
+
+  const bodyType = getOptionalString(record?.qualitativeData?.bodyType);
+  const bodyTypeDescription = getOptionalString(
+    record?.qualitativeData?.bodyTypeDescription,
+  );
+
+  if (record && bodyType) {
+    return (
+      <Text style={styles.tipText}>
+        {`AI 체형 분석 결과 ${
+          bodyTypeDescription?.split(' ')[0] ?? ''
+        }(${bodyType}) 체형에 가까워요. 코스 설계에 반영할게요.`}
+      </Text>
+    );
+  }
+
+  return (
+    <View style={styles.tipTextGroup}>
+      <Text style={styles.tipText}>
+        AI 체형 분석 시 내 체형에 맞춰 코스를 설계해요.
+      </Text>
+      <Pressable onPress={onOpenAnalysis} style={styles.tipLink}>
+        <Text style={styles.tipLinkText}>내 체형 분석하기</Text>
+        <View style={styles.tipLinkIcon}>
+          <SemanticIcon color={Colors.accent} name="chevronRight" size={12} />
+        </View>
+      </Pressable>
+    </View>
+  );
+}
+
+function BodyAnalysisTipLoading() {
+  return (
+    <View style={styles.tipTextGroup}>
+      <Text style={styles.tipText}>체형 분석 정보를 확인하고 있어요.</Text>
+    </View>
+  );
+}
+
+function OutdoorLocationIcon() {
+  return (
+    <Svg width={20} height={20} viewBox="0 0 20 20" fill="none">
+      <Path
+        clipRule="evenodd"
+        d="M9.77386 10.7847c-.80801 0-1.55465-.431-1.95866-1.1308-.40401-.69976-.40401-1.5619 0-2.26167.40401-.69976 1.15065-1.13083 1.95866-1.13083 1.24904 0 2.26164 1.01258 2.26164 2.26167 0 1.24908-1.0126 2.26163-2.26164 2.26163ZM8.00219 1.03057C4.44386 1.82473 1.94886 5.1739 2.08886 8.81723c.11 2.86167 1.865 5.42167 7.09 10.44417.33.3167.85914.3183 1.18834.0008 5.4042-5.1941 7.0967-7.7541 7.0967-10.73913 0-4.825-4.4434-8.6125-9.46171-7.4925Z"
+        fill={Colors.accent}
+        fillRule="evenodd"
+      />
+    </Svg>
+  );
+}
+
+function getOptionalString(value: unknown) {
+  return typeof value === 'string' && value.trim() ? value : null;
+}
+
+const outdoorCardShadow =
+  Platform.OS === 'web'
+    ? { boxShadow: 'rgba(0,0,0,0.05) 0px 0px 1px' }
+    : {
+        elevation: 1,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.05,
+        shadowRadius: 1,
+      };
+
+const outdoorSegmentShadow =
+  Platform.OS === 'web'
+    ? { boxShadow: 'rgba(0,0,0,0.06) 0px 1px 3px' }
+    : {
+        elevation: 1,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.06,
+        shadowRadius: 3,
+      };
 
 function createRandomDestination(
   location: OutdoorWorkoutLocation,
@@ -451,76 +562,56 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 24,
   },
-  chip: {
-    ...iosShadowLight,
+  insetControl: {
+    backgroundColor: '#F0F2F5',
+    borderRadius: 10,
+    flexDirection: 'row',
+    gap: 3,
+    height: 44,
+    padding: 3,
+  },
+  insetSegment: {
     alignItems: 'center',
-    backgroundColor: Colors.surfaceMuted,
-    borderRadius: 14,
+    borderRadius: 8,
     flex: 1,
-    minHeight: 48,
     justifyContent: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
   },
-  chipActive: {
-    backgroundColor: Colors.accent,
+  insetSegmentActive: {
+    ...outdoorSegmentShadow,
+    backgroundColor: Colors.white,
   },
-  chipText: {
+  insetSegmentText: {
     color: Colors.textSecondary,
     fontFamily: 'Pretendard-SemiBold',
     fontSize: 14,
   },
-  chipTextActive: {
-    color: Colors.white,
+  insetSegmentTextActive: {
+    color: Colors.text,
   },
   container: {
     backgroundColor: Colors.background,
     flex: 1,
   },
   controlCard: {
-    ...iosShadow,
+    ...outdoorCardShadow,
     backgroundColor: Colors.card,
-    borderRadius: 24,
-    marginHorizontal: 16,
-    paddingHorizontal: 18,
-    paddingVertical: 20,
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 24,
   },
   disabledButton: {
     opacity: 0.6,
   },
   divider: {
-    backgroundColor: Colors.divider,
-    height: StyleSheet.hairlineWidth,
-    marginTop: 20,
+    backgroundColor: '#F0F2F5',
+    height: 1,
+    marginHorizontal: 8,
+    marginTop: 24,
   },
   emptyTitle: {
     color: Colors.text,
     fontFamily: 'Pretendard-SemiBold',
     fontSize: 18,
-  },
-  header: {
-    alignItems: 'center',
-    backgroundColor: Colors.card,
-    borderBottomColor: Colors.divider,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-  },
-  headerButton: {
-    minWidth: 44,
-    paddingVertical: 6,
-  },
-  headerButtonText: {
-    color: Colors.textSecondary,
-    fontFamily: 'Pretendard-Medium',
-    fontSize: 14,
-  },
-  headerTitle: {
-    color: Colors.text,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 17,
   },
   inlineRow: {
     alignItems: 'center',
@@ -532,48 +623,41 @@ const styles = StyleSheet.create({
     fontFamily: 'Pretendard-Regular',
     fontSize: 14,
   },
-  locationDot: {
-    color: Colors.accent,
-    fontSize: 12,
-  },
   locationName: {
     color: Colors.text,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 15,
+    fontFamily: 'Pretendard-Medium',
+    fontSize: 14,
   },
   locationRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 8,
-    marginBottom: 16,
-    marginHorizontal: 18,
-    marginTop: 20,
+    gap: 6,
   },
   primaryButton: {
     alignItems: 'center',
     backgroundColor: Colors.accent,
-    borderRadius: 16,
+    borderRadius: 14,
+    flexDirection: 'row',
+    gap: 8,
+    height: 56,
     justifyContent: 'center',
-    minHeight: 52,
     paddingHorizontal: 18,
   },
   primaryButtonText: {
     color: Colors.white,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 15,
-  },
-  radiusGroup: {
-    flexDirection: 'row',
-    gap: 10,
+    fontFamily: 'Pretendard-Medium',
+    fontSize: 16,
   },
   resetChip: {
     backgroundColor: Colors.card,
-    borderColor: Colors.divider,
+    borderColor: '#E0E3E8',
     borderRadius: 999,
-    borderWidth: StyleSheet.hairlineWidth,
-    marginLeft: 'auto',
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 4,
+    marginLeft: 4,
     paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingVertical: 5,
   },
   resetChipText: {
     color: Colors.textSecondary,
@@ -581,34 +665,42 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   scrollContent: {
-    paddingBottom: 40,
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingTop: 24,
   },
   sectionLabel: {
-    color: Colors.text,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 15,
-    marginBottom: 10,
+    color: Colors.textSecondary,
+    fontFamily: 'Pretendard-Medium',
+    fontSize: 13,
+    marginBottom: 8,
   },
   sectionMargin: {
-    marginTop: 18,
-  },
-  segmentedControl: {
-    flexDirection: 'row',
-    gap: 10,
+    marginTop: 16,
   },
   tipLink: {
+    alignItems: 'center',
     alignSelf: 'flex-start',
+    flexDirection: 'row',
+    gap: 2,
+  },
+  tipLinkIcon: {
+    height: 16,
+    justifyContent: 'center',
   },
   tipLinkText: {
     color: Colors.accent,
     fontFamily: 'Pretendard-SemiBold',
     fontSize: 13,
+    includeFontPadding: false,
+    lineHeight: 16,
+    textAlignVertical: 'center',
   },
   tipRow: {
     alignItems: 'flex-start',
     flexDirection: 'row',
     gap: 10,
-    marginTop: 18,
+    paddingTop: 24,
   },
   tipText: {
     color: Colors.textSecondary,
@@ -618,7 +710,7 @@ const styles = StyleSheet.create({
   },
   tipTextGroup: {
     flex: 1,
-    gap: 8,
+    gap: 10,
   },
   toggleRoot: {
     height: 32,
@@ -627,8 +719,9 @@ const styles = StyleSheet.create({
   toggleRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 14,
-    marginTop: 18,
+    gap: 12,
+    justifyContent: 'center',
+    marginTop: 16,
   },
   toggleSubtitle: {
     color: Colors.textSecondary,
@@ -639,7 +732,6 @@ const styles = StyleSheet.create({
     color: Colors.accent,
   },
   toggleTextGroup: {
-    flex: 1,
     gap: 4,
   },
   toggleThumb: {
@@ -659,5 +751,11 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     height: 32,
     width: 51,
+  },
+  pageTitle: {
+    color: Colors.text,
+    fontFamily: 'Pretendard-Medium',
+    fontSize: 18,
+    marginBottom: 4,
   },
 });

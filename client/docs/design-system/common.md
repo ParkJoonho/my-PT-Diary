@@ -144,6 +144,8 @@ TabPageLayout
 - [`src/shared/components/tab-page-layout.tsx`](../../src/shared/components/tab-page-layout.tsx)가
   native `60 + insets.bottom`, web `50 + 34`, 원본 가로 보정
   `(520 - width) / 8`을 계산한다.
+- 상세 라우트는 원본 `GlobalMemberTabBar`처럼 어느 루트 탭도 활성화하지 않는
+  `activeKey={null}`을 사용할 수 있다.
 - 탭 label의 `letterSpacing: -0.1`을 복원했다.
 - 홈·기록·PT·AI·내 정보와 현재 탭을 표시하는 트레이너 매칭에 적용했다.
 

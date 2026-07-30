@@ -12,6 +12,7 @@ import { ActiveTimerBar } from './active-timer-bar';
 import { WorkoutStepList } from './workout-step-list';
 
 type ActiveWorkoutScreenProps = {
+  contentBottomInset: number;
   onCancel: () => void;
   onCompleted: () => void;
   routine: HomeRoutine;
@@ -22,6 +23,7 @@ function createProgressSessionId() {
 }
 
 export function ActiveWorkoutScreen({
+  contentBottomInset,
   onCancel,
   onCompleted,
   routine,
@@ -178,6 +180,13 @@ export function ActiveWorkoutScreen({
     ]);
   };
 
+  const showUnavailablePlatformAction = (actionName: string) => {
+    Alert.alert(
+      actionName,
+      '현재 Apps in Toss 실행 환경에서는 이 기능을 지원하지 않아요.',
+    );
+  };
+
   return (
     <View style={styles.container}>
       {countdownDone ? (
@@ -192,10 +201,17 @@ export function ActiveWorkoutScreen({
       ) : null}
 
       <WorkoutStepList
+        contentBottomInset={contentBottomInset}
         completedSteps={completedSteps}
         errorMessage={errorMessage}
+        onRecordVideo={() => {
+          showUnavailablePlatformAction('영상촬영');
+        }}
         onToggleStep={(stepIndex) => {
           toggleStep(progressSessionId, stepIndex);
+        }}
+        onVoiceGuide={() => {
+          showUnavailablePlatformAction('음성가이드');
         }}
         routine={routine}
       />

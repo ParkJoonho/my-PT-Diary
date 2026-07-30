@@ -1,70 +1,66 @@
 import { useNavigation } from '@granite-js/react-native';
 import { useBodyAnalysisEntryStore } from 'features/body-analysis/stores/use-body-analysis-entry-store';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import {
-  Accessibility,
-  ChartColumnBig,
-  Footprints,
-  MessageCircleMore,
-  ScanFace,
-  Utensils,
-} from 'lucide-react-native';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SemanticIcon } from 'shared/components/icons/pt-diary-icons';
+  OriginalAppIcon,
+  type OriginalAppIconName,
+} from 'shared/components/icons/pt-diary-icons';
+import { RowActionCard } from 'shared/components/row-action-card';
 import { TabPageLayout } from 'shared/components/tab-page-layout';
-import { UnimplementedBadge } from 'shared/components/unimplemented-badge';
-import Colors, { iosShadow } from 'shared/constants/colors';
+import Colors from 'shared/constants/colors';
 
-const AI_FEATURES = [
+const AI_FEATURES: Array<{
+  accent: string;
+  icon: OriginalAppIconName;
+  iconBackground: string;
+  route: '/ai-analysis' | '/meal-analysis' | null;
+  subtitle: string;
+  title: string;
+}> = [
   {
     accent: Colors.accent,
-    icon: ScanFace,
+    icon: 'bodyOutline',
     iconBackground: '#FFF0EA',
-    implemented: true,
     route: '/ai-analysis',
     subtitle: '체형 타입 분석 및 체성분 예측',
     title: 'AI 체형 분석',
   },
   {
     accent: '#D4AF37',
-    icon: MessageCircleMore,
+    icon: 'chatbubbleEllipsesOutline',
     iconBackground: '#FFF8E1',
-    implemented: false,
     route: null,
     subtitle: '맞춤형 운동·식단·동기부여 코칭',
     title: 'AI 트레이너 아테나',
   },
   {
     accent: Colors.success,
-    icon: Utensils,
+    icon: 'restaurantOutline',
     iconBackground: '#E8F8EE',
-    implemented: true,
     route: '/meal-analysis',
     subtitle: '사진으로 칼로리·영양소 분석',
     title: 'AI 식단 분석',
   },
   {
     accent: Colors.info,
-    icon: Accessibility,
+    icon: 'accessibilityOutline',
     iconBackground: '#E5F0FF',
-    implemented: false,
     route: null,
     subtitle: '운동 자세 교정 및 피드백',
     title: 'AI 자세 분석',
   },
   {
     accent: Colors.warning,
-    icon: Footprints,
+    icon: 'footstepsOutline',
     iconBackground: '#FFF3E0',
-    implemented: true,
     route: '/ai-analysis',
     subtitle: '보행 분석 기반 맞춤 신발 추천',
     title: 'AI 신발 추천',
   },
   {
     accent: Colors.accent,
-    icon: ChartColumnBig,
+    icon: 'analyticsOutline',
     iconBackground: '#FFF0EA',
-    implemented: false,
     route: null,
     subtitle: '종합 점수·부상 위험도·체형 예측',
     title: 'AI 통합 피트니스 분석',
@@ -88,51 +84,42 @@ export function AiHubScreen() {
           showsVerticalScrollIndicator={false}
           style={styles.scrollView}
         >
-          {AI_FEATURES.map((feature) => (
-            <Pressable
-              key={feature.title}
-              onPress={() => {
-                if (!feature.route) {
-                  return;
-                }
-
-                setEntryPoint(
-                  feature.title === 'AI 신발 추천' ? 'shoe' : 'default',
-                );
-                navigation.navigate({ name: feature.route, params: {} });
-              }}
-              style={({ pressed }) => [
-                styles.featureCard,
-                iosShadow,
-                pressed && styles.featureCardPressed,
-              ]}
-            >
+          {AI_FEATURES.map((feature) => {
+            const leading = (
               <View
                 style={[
                   styles.featureCircle,
                   { backgroundColor: feature.iconBackground },
                 ]}
               >
-                <feature.icon
+                <OriginalAppIcon
                   color={feature.accent}
-                  size={20}
-                  strokeWidth={2.1}
+                  name={feature.icon}
+                  size={22}
                 />
               </View>
-              <View style={styles.featureTextWrap}>
-                <View style={styles.featureTitleRow}>
-                  <Text style={styles.featureTitle}>{feature.title}</Text>
-                  {!feature.implemented ? <UnimplementedBadge compact /> : null}
-                </View>
-                <Text style={styles.featureSubtitle}>{feature.subtitle}</Text>
-              </View>
-              <SemanticIcon
-                color={Colors.iconMuted}
-                name="chevronRight"
-                size={18}
+            );
+
+            return (
+              <RowActionCard
+                key={feature.title}
+                leading={leading}
+                onPress={() => {
+                  if (!feature.route) {
+                    return;
+                  }
+
+                  setEntryPoint(
+                    feature.title === 'AI 신발 추천' ? 'shoe' : 'default',
+                  );
+                  navigation.navigate({ name: feature.route, params: {} });
+                }}
+                subtitle={feature.subtitle}
+                title={feature.title}
+                variant="aiFeature"
               />
-            </Pressable>
-          ))}
+            );
+          })}
         </ScrollView>
       )}
     </TabPageLayout>
@@ -140,19 +127,6 @@ export function AiHubScreen() {
 }
 
 const styles = StyleSheet.create({
-  featureCard: {
-    alignItems: 'center',
-    backgroundColor: Colors.card,
-    borderRadius: 14,
-    flexDirection: 'row',
-    gap: 14,
-    minHeight: 72,
-    paddingHorizontal: 16,
-    paddingVertical: 19,
-  },
-  featureCardPressed: {
-    opacity: 0.78,
-  },
   featureCircle: {
     alignItems: 'center',
     borderRadius: 999,
@@ -160,26 +134,6 @@ const styles = StyleSheet.create({
     height: 34,
     justifyContent: 'center',
     width: 34,
-  },
-  featureSubtitle: {
-    color: Colors.textMuted,
-    fontFamily: 'Pretendard-Regular',
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  featureTextWrap: {
-    flex: 1,
-    gap: 2,
-  },
-  featureTitle: {
-    color: Colors.text,
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 16,
-  },
-  featureTitleRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 8,
   },
   scrollContent: {
     gap: 10,

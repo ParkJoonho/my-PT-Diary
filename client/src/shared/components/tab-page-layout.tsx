@@ -20,7 +20,7 @@ export type TabPageMetrics = {
 };
 
 type TabPageLayoutProps = {
-  activeKey: MemberTabKey;
+  activeKey: MemberTabKey | null;
   children: (metrics: TabPageMetrics) => ReactNode;
   contentBottomSpacing?: number;
   minimumContentBottomInset?: number;

@@ -18,7 +18,7 @@ export type MemberTabKey =
   | 'condition';
 
 type MemberTabBarProps = {
-  activeKey: MemberTabKey;
+  activeKey: MemberTabKey | null;
   height: number;
   horizontalPadding: number;
   safeAreaBottom: number;

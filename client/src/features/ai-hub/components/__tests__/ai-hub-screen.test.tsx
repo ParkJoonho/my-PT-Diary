@@ -1,4 +1,4 @@
-import { describe, expect, it, jest } from '@jest/globals';
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import type React from 'react';
 import { AiHubScreen } from '../ai-hub-screen';
@@ -28,22 +28,11 @@ jest.mock('shared/components/tab-page-layout', () => ({
     }),
 }));
 
-jest.mock('lucide-react-native', () => {
-  const { Text } = require('react-native');
-
-  return new Proxy(
-    {},
-    {
-      get: (_target, key) => {
-        return function MockIcon() {
-          return <Text>{String(key)}</Text>;
-        };
-      },
-    },
-  );
-});
-
 describe('AI Hub 화면', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('원본 기준 6개 카드만 렌더링한다', () => {
     render(<AiHubScreen />);
 
@@ -55,13 +44,12 @@ describe('AI Hub 화면', () => {
     expect(screen.getByText('AI 통합 피트니스 분석')).toBeTruthy();
     expect(screen.queryByText('AI Hub')).toBeNull();
     expect(screen.queryByText('나의 몸매 & 스타일')).toBeNull();
-    expect(screen.getByText('Accessibility')).toBeTruthy();
   });
 
-  it('미구현 카드에 뱃지를 표시한다', () => {
+  it('원본 디자인에 없는 구현 상태 뱃지를 표시하지 않는다', () => {
     render(<AiHubScreen />);
 
-    expect(screen.getAllByText('미구현')).toHaveLength(3);
+    expect(screen.queryByText('미구현')).toBeNull();
   });
 
   it('식단 분석 카드에서 실제 식단 화면으로 이동한다', () => {
@@ -73,5 +61,13 @@ describe('AI Hub 화면', () => {
       name: '/meal-analysis',
       params: {},
     });
+  });
+
+  it('대응 route가 없는 카드는 잘못된 화면으로 이동시키지 않는다', () => {
+    render(<AiHubScreen />);
+
+    fireEvent.press(screen.getByText('AI 트레이너 아테나'));
+
+    expect(mockNavigate).not.toHaveBeenCalled();
   });
 });

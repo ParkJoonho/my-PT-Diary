@@ -5,26 +5,15 @@ import {
   StyleSheet,
   Text,
   View,
-} from "react-native";
-import Colors from "shared/constants/colors";
-import type {
-  BodyPartFilterItem,
-  EquipmentFilterItem,
-} from "../types/exercise-guide";
+} from 'react-native';
+import Colors from 'shared/constants/colors';
+import type { BodyPartFilterItem } from '../types/exercise-guide';
 
-type ExerciseGuideFilterRowProps =
-  | {
-      items: BodyPartFilterItem[];
-      mode: "body";
-      selectedKey: string;
-      onSelect: (key: string) => void;
-    }
-  | {
-      items: EquipmentFilterItem[];
-      mode: "equipment";
-      selectedKey: string;
-      onSelect: (key: string) => void;
-    };
+type ExerciseGuideFilterRowProps = {
+  items: BodyPartFilterItem[];
+  selectedKey: string;
+  onSelect: (key: string) => void;
+};
 
 export function ExerciseGuideFilterRow(props: ExerciseGuideFilterRowProps) {
   return (
@@ -42,31 +31,12 @@ export function ExerciseGuideFilterRow(props: ExerciseGuideFilterRowProps) {
             onPress={() => props.onSelect(item.key)}
             style={styles.item}
           >
-            <View
-              style={[
-                styles.iconWrap,
-                props.mode === "equipment" && styles.labelWrap,
-                active && styles.iconWrapActive,
-              ]}
-            >
-              {props.mode === "body" ? (
-                "image" in item && item.image ? (
-                  <Image source={item.image} style={styles.bodyImage} />
-                ) : (
-                  <Text
-                    style={[styles.allText, active && styles.allTextActive]}
-                  >
-                    All
-                  </Text>
-                )
+            <View style={[styles.iconWrap, active && styles.iconWrapActive]}>
+              {item.image ? (
+                <Image source={item.image} style={styles.bodyImage} />
               ) : (
-                <Text
-                  style={[
-                    styles.equipmentText,
-                    active && styles.equipmentTextActive,
-                  ]}
-                >
-                  {item.label}
+                <Text style={[styles.allText, active && styles.allTextActive]}>
+                  All
                 </Text>
               )}
             </View>
@@ -82,8 +52,8 @@ export function ExerciseGuideFilterRow(props: ExerciseGuideFilterRowProps) {
 
 const styles = StyleSheet.create({
   allText: {
-    color: "#b0b0b0",
-    fontFamily: "Pretendard-Medium",
+    color: '#b0b0b0',
+    fontFamily: 'Pretendard-Medium',
     fontSize: 15,
   },
   allTextActive: {
@@ -93,22 +63,14 @@ const styles = StyleSheet.create({
     height: 40,
     width: 40,
   },
-  equipmentText: {
-    color: Colors.textMuted,
-    fontFamily: "Pretendard-SemiBold",
-    fontSize: 12,
-  },
-  equipmentTextActive: {
-    color: Colors.accent,
-  },
   iconWrap: {
-    alignItems: "center",
+    alignItems: 'center',
     backgroundColor: Colors.card,
-    borderColor: "transparent",
+    borderColor: 'transparent',
     borderRadius: 10,
     borderWidth: 2,
     height: 44,
-    justifyContent: "center",
+    justifyContent: 'center',
     width: 44,
   },
   iconWrapActive: {
@@ -116,22 +78,18 @@ const styles = StyleSheet.create({
     borderColor: Colors.accent,
   },
   item: {
-    alignItems: "center",
+    alignItems: 'center',
     gap: 6,
-    width: 60,
+    width: 52,
   },
   label: {
     color: Colors.textMuted,
-    fontFamily: "Pretendard-Regular",
+    fontFamily: 'Pretendard-Regular',
     fontSize: 11,
   },
   labelActive: {
     color: Colors.accent,
-    fontFamily: "Pretendard-SemiBold",
-  },
-  labelWrap: {
-    paddingHorizontal: 8,
-    width: 60,
+    fontFamily: 'Pretendard-SemiBold',
   },
   scroll: {
     gap: 10,

@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(240, 242, 245, 0.45)',
     paddingBottom: 16,
     paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingTop: 14,
   },
   header: {
     alignItems: 'center',
@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
   },
   label: {
     color: Colors.text,
-    fontFamily: 'Pretendard-Medium',
+    fontFamily: 'Pretendard-Regular',
     fontSize: 15,
   },
   pressed: {
@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
   restNoteRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 8,
+    gap: 6,
     marginBottom: 24,
   },
   restNoteText: {
@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
     justifyContent: 'center',
-    marginTop: 8,
+    marginTop: 24,
     minHeight: 52,
     paddingHorizontal: 16,
   },
@@ -175,15 +175,16 @@ const styles = StyleSheet.create({
   },
   stepContent: {
     flex: 1,
-    paddingBottom: 28,
+    paddingBottom: 32,
   },
   stepContentLast: {
-    paddingBottom: 12,
+    paddingBottom: 0,
   },
   stepDetail: {
     color: Colors.accent,
     fontFamily: 'Pretendard-SemiBold',
-    fontSize: 14,
+    flexShrink: 0,
+    fontSize: 13,
   },
   stepLeft: {
     alignItems: 'center',
@@ -192,14 +193,15 @@ const styles = StyleSheet.create({
   stepLine: {
     backgroundColor: '#E8EAF0',
     flex: 1,
-    marginTop: 4,
-    width: 1,
+    marginVertical: 4,
+    minHeight: 14,
+    width: 2,
   },
   stepName: {
     color: Colors.text,
     flex: 1,
-    fontFamily: 'Pretendard-Medium',
-    fontSize: 15,
+    fontFamily: 'Pretendard-SemiBold',
+    fontSize: 14,
   },
   stepRow: {
     flexDirection: 'row',
@@ -208,7 +210,7 @@ const styles = StyleSheet.create({
   stepTag: {
     alignSelf: 'flex-start',
     backgroundColor: '#F2F2F7',
-    borderRadius: 999,
+    borderRadius: 100,
     marginTop: 10,
     paddingHorizontal: 8,
     paddingVertical: 3,

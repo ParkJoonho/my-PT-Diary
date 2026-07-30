@@ -1,4 +1,5 @@
 import type { WorkoutReportSummaryDto } from 'shared/api/generated/models';
+import type { OriginalAppIconName } from 'shared/components/icons/pt-diary-icons';
 
 export type WorkoutReportTab =
   | 'volume'
@@ -8,14 +9,15 @@ export type WorkoutReportTab =
   | 'frequency';
 
 export const WORKOUT_REPORT_TABS: Array<{
+  icon: OriginalAppIconName;
   key: WorkoutReportTab;
   label: string;
 }> = [
-  { key: 'volume', label: '볼륨' },
-  { key: 'weight', label: '체중' },
-  { key: 'bodyComp', label: '체성분' },
-  { key: 'condition', label: '컨디션' },
-  { key: 'frequency', label: '빈도' },
+  { icon: 'barbell', key: 'volume', label: '볼륨' },
+  { icon: 'body', key: 'weight', label: '체중' },
+  { icon: 'pulse', key: 'bodyComp', label: '체성분' },
+  { icon: 'heart', key: 'condition', label: '컨디션' },
+  { icon: 'calendar', key: 'frequency', label: '빈도' },
 ];
 
 export function formatShortDate(date: string) {
