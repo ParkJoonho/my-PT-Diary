@@ -93,7 +93,7 @@ services:
   nginx:
     image: nginx:1.28-alpine
     ports:
-      - "${AI_PT_PUBLIC_PORT:-18443}:80"
+      - "${AI_PT_BIND_ADDRESS:-127.0.0.1}:${AI_PT_PUBLIC_PORT:-18443}:80"
     depends_on:
       backend:
         condition: service_healthy

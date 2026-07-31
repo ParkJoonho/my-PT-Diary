@@ -2,14 +2,14 @@
 
 이 배포 구성은 다음 컨테이너를 실행한다.
 
-- `nginx`: 호스트의 TCP `18443`에서 요청을 받고 도메인에 따라 전달한다.
+- `nginx`: 기본적으로 호스트 loopback의 TCP `18443`에서 요청을 받고 도메인에 따라 전달한다.
 - `backend`: NestJS API이며 Docker 내부 `3000` 포트만 사용한다.
 - `minio`: 공개 정적 에셋 저장소이며 Docker 내부 `9000` 포트만 사용한다.
 - `minio-init`: 공개 bucket을 만들고 `infra/minio/seed`의 에셋을 동기화한다.
 - `postgres`: 애플리케이션 DB이며 Docker 내부 `5432` 포트만 사용한다.
 
-호스트에 게시되는 포트는 기본적으로 `18443` 하나뿐이다. PostgreSQL, 백엔드,
-MinIO API 및 MinIO 관리 콘솔 포트는 호스트에 게시하지 않는다.
+호스트에 게시되는 포트는 기본적으로 `127.0.0.1:18443` 하나뿐이다. PostgreSQL,
+백엔드, MinIO API 및 MinIO 관리 콘솔 포트는 호스트에 게시하지 않는다.
 
 ## 환경변수 공급 방식
 
@@ -45,8 +45,8 @@ Linux 셀프호스티드 러너가 필요하다.
 저장소 루트에서 환경 파일을 준비한다.
 
 ```bash
-cp .env.example .env
-cp server/.env.example server/.env
+test -f .env || cp .env.example .env
+test -f server/.env || cp server/.env.example server/.env
 ```
 
 이미 파일이 있다면 덮어쓰지 말고 필요한 값만 반영한다.
@@ -55,6 +55,7 @@ cp server/.env.example server/.env
 
 | 변수                        | 설명                                               |
 | --------------------------- | -------------------------------------------------- |
+| `AI_PT_BIND_ADDRESS`        | Nginx 게시 주소. 기본값은 `127.0.0.1`              |
 | `AI_PT_PUBLIC_PORT`         | ai-pt Nginx를 게시할 호스트 포트. 기본값은 `18443` |
 | `AI_PT_POSTGRES_DB`         | PostgreSQL 데이터베이스 이름                       |
 | `AI_PT_POSTGRES_USER`       | PostgreSQL 사용자                                  |
@@ -85,9 +86,14 @@ Compose 파일에는 `env_file` 서비스 설정이 없으므로 이 로컬 파�
 
 ### 18443 포트 연결
 
-서버 방화벽과 배포 환경에서 필요한 호출 주체가 이 서버의 TCP `18443`에 접근할 수
-있도록 허용한다. 가능하면 모든 인터넷 주소에 공개하지 말고 실제 호출 주체의
-주소만 허용한다.
+같은 서버의 Nginx나 Caddy가 TLS를 종료한다면 `AI_PT_BIND_ADDRESS=127.0.0.1`을
+유지한다. 이 경우 TCP `18443`은 서버 외부에 공개되지 않고 로컬 프록시만 접근한다.
+
+별도 서버의 프록시나 CDN이 TCP `18443`으로 직접 접근해야 한다면
+`AI_PT_BIND_ADDRESS=0.0.0.0` 또는 전용 사설 인터페이스 주소를 설정하고, 실제 호출
+주체의 주소만 허용하도록 Docker의 `DOCKER-USER` 체인을 포함한 방화벽 정책을
+구성한다. Docker가 게시한 포트는 UFW 규칙을 우회할 수 있으므로 UFW 설정만으로
+외부 접근이 차단된다고 가정하지 않는다.
 
 ai-pt Nginx는 `18443`에서 HTTP 요청을 받고 요청의 `Host` 헤더로 목적지를 구분한다.
 
@@ -228,6 +234,7 @@ Deployment branches와 Required reviewers를 설정한다.
 
 | Variable                          | 예시 또는 설명              |
 | --------------------------------- | --------------------------- |
+| `AI_PT_BIND_ADDRESS`              | `127.0.0.1`                 |
 | `AI_PT_PUBLIC_PORT`               | `18443`                     |
 | `AI_PT_POSTGRES_DB`               | `at_pt`                     |
 | `AI_PT_POSTGRES_USER`             | `a2t`                       |

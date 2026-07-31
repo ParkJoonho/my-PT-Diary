@@ -1,6 +1,7 @@
 SHELL := /bin/sh
 
 COMPOSE := docker compose --env-file .env --env-file server/.env --project-name ai-pt-deploy --file docker-compose.deploy.yml
+AI_PT_BIND_ADDRESS ?= 127.0.0.1
 AI_PT_PUBLIC_PORT ?= 18443
 SERVICE ?=
 

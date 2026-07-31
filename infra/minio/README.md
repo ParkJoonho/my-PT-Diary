@@ -31,7 +31,7 @@ docker volume inspect <위 목록에 표시된 volume 이름>
 
 ```bash
 docker compose up -d postgres minio minio-init
-docker compose ps
+docker compose ps --all
 ```
 
 MinIO API는 `http://127.0.0.1:9000`, 관리 콘솔은 `http://127.0.0.1:9001`에서 열린다.
