@@ -25,7 +25,8 @@ AI Hub의 `AI 체형 분석` 기능 중 전신 사진 기반 체형 분석 본�
 | 저장 위치 | PostgreSQL `analysis_records` |
 | 저장 타입 | `analysis_type = 'body'` |
 | 사진 raw base64 저장 여부 | 저장하지 않음 |
-| 사진 선택 방식 | Toss/Granite 네이티브 모듈 `openCamera`, `fetchAlbumPhotos` |
+| 사진 선택 방식 | `@apps-in-toss/framework`의 `openCamera`, `fetchAlbumPhotos` |
+| 사진 권한 | `camera/access`, `photos/read` |
 | 아이콘 | `lucide-react-native` |
 
 ## 3. 구현 원칙
@@ -146,6 +147,7 @@ AI Hub의 `AI 체형 분석` 기능 중 전신 사진 기반 체형 분석 본�
 | BA-014 | 원본 체형 분석 화면의 핵심 UI 블록을 유지해야 한다. | 정면 사진, 다각도 추가 사진, 키/증상 입력, 분석 결과 카드 구조를 원본 흐름에 맞춰 재구성했다. | 구현 | `client/src/features/body-analysis/components/body-analysis-screen.tsx`, `client/src/features/body-analysis/components/body-analysis-result.tsx` |
 | BA-015 | 원본 `/ai-analysis` 안의 전·후 비교 흐름을 같은 화면 안에 유지해야 한다. | 체형 분석 화면 안에 실제 전·후 비교 토글 섹션을 이식했다. | 구현 | `client/src/features/body-analysis/components/body-analysis-screen.tsx`, `client/src/features/body-analysis/components/body-comparison-section.tsx` |
 | BA-016 | 아직 안 옮긴 다른 파생 기능은 숨기지 말고 미구현 상태를 보여줘야 한다. | 신발 추천은 바로가기 카드와 미구현 배지로 남겨뒀다. | 구현 | `client/src/features/body-analysis/components/body-analysis-screen.tsx`, `client/src/features/ai-hub/components/ai-hub-screen.tsx` |
+| BA-017 | 카메라와 앨범은 앱인토스 공식 권한 및 공개 SDK로 열어야 한다. | Granite manifest에 `camera/access`, `photos/read`를 선언하고 권한 확인·요청 후 `@apps-in-toss/framework`의 이미지 API를 호출한다. | 구현 | `client/granite.config.ts`, `client/src/features/body-analysis/lib/pick-image.ts` |
 
 ## 9. 현재 수정된 원본 결함
 
@@ -175,6 +177,7 @@ AI Hub의 `AI 체형 분석` 기능 중 전신 사진 기반 체형 분석 본�
 | 컨트롤러 통합 | `server/src/modules/body-analysis/__tests__/body-analysis.controller.integration.spec.ts` |
 | OpenAI client | `server/src/modules/body-analysis/__tests__/openai-body-analysis.client.spec.ts` |
 | 클라이언트 API 래퍼 | `client/src/features/body-analysis/api/__tests__/body-analysis.test.ts` |
+| 클라이언트 이미지 선택 | `client/src/features/body-analysis/lib/__tests__/pick-image.test.ts` |
 | 클라이언트 타입체크 | `client/package.json`의 `npm run typecheck` |
 | 서버 타입체크 | `server/package.json`의 `npm run typecheck` |
 | 클라이언트 전체 테스트 | `client/package.json`의 `npm test -- --runInBand` |

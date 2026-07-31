@@ -24,7 +24,8 @@
 | 저장 위치 | PostgreSQL `analysis_records` |
 | 저장 타입 | `analysis_type = 'body-comparison'` |
 | 사진 raw base64 저장 여부 | 저장하지 않음 |
-| 사진 선택 방식 | Toss/Granite 네이티브 모듈 `openCamera`, `fetchAlbumPhotos` |
+| 사진 선택 방식 | `@apps-in-toss/framework`의 `fetchAlbumPhotos` |
+| 사진 권한 | `photos/read` |
 | 아이콘 | `lucide-react-native` |
 
 ## 3. 구현 원칙
@@ -42,7 +43,7 @@
 | 범위 | 현재 상태 |
 | --- | --- |
 | Before / After 사진 각각 선택 | 구현 |
-| 카메라 / 앨범 선택 | 구현 |
+| Before / After 앨범 선택 | 구현 |
 | 키 입력 연동 | 구현 |
 | 전·후 비교 AI 분석 | 구현 |
 | 결과 자동 저장 | 구현 |
@@ -121,6 +122,7 @@
 | BC-006 | AI 키가 없을 때 원인 불명 500 대신 명시적 실패를 반환해야 한다. | 503 `체형 비교 분석 AI 기능이 아직 설정되지 않았어요.`를 반환한다. | 구현 | `server/src/modules/body-comparison/openai-body-comparison.client.ts` |
 | BC-007 | 원본 `/ai-analysis` 흐름 안에서 비교 UI를 유지해야 한다. | 체형 분석 화면 안에 토글 섹션으로 이식했다. | 구현 | `client/src/features/body-analysis/components/body-analysis-screen.tsx`, `client/src/features/body-analysis/components/body-comparison-section.tsx` |
 | BC-008 | 비교 결과는 분석 이력에서 다시 열어볼 수 있어야 한다. | `body-comparison` 카드와 상세 모달 렌더러를 추가했다. | 구현 | `client/src/features/body-analysis/components/analysis-history-screen.tsx`, `client/src/features/body-analysis/components/body-comparison-result.tsx` |
+| BC-009 | Before / After 앨범 선택은 앱인토스 공식 권한 및 공개 SDK를 사용해야 한다. | Granite manifest에 `photos/read`를 선언하고 공통 picker가 권한 확인·요청 후 `fetchAlbumPhotos`를 호출한다. | 구현 | `client/granite.config.ts`, `client/src/features/body-analysis/lib/pick-image.ts` |
 
 ## 9. 현재 수정된 원본 결함
 
@@ -148,6 +150,7 @@
 | 컨트롤러 통합 | `server/src/modules/body-comparison/__tests__/body-comparison.controller.integration.spec.ts` |
 | OpenAI client | `server/src/modules/body-comparison/__tests__/openai-body-comparison.client.spec.ts` |
 | 클라이언트 API 래퍼 | `client/src/features/body-analysis/api/__tests__/body-comparison.test.ts` |
+| 클라이언트 이미지 선택 | `client/src/features/body-analysis/lib/__tests__/pick-image.test.ts` |
 | 클라이언트 컴포넌트 | `client/src/features/body-analysis/components/__tests__/body-comparison-result.test.tsx` |
 | 클라이언트 표시 로직 | `client/src/features/body-analysis/lib/__tests__/analysis-record-presentation.test.ts` |
 | 클라이언트 타입체크 | `client/package.json`의 `npm run typecheck` |

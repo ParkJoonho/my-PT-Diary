@@ -43,7 +43,20 @@ export default defineConfig({
         primaryColor: '#3182F6', // 화면에 노출될 앱의 기본 색상으로 바꿔주세요.
         icon: `${assetBaseUrl}/images/icon.png`,
       },
-      permissions: [],
+      permissions: [
+        {
+          name: 'camera',
+          access: 'access',
+        },
+        {
+          name: 'geolocation',
+          access: 'access',
+        },
+        {
+          name: 'photos',
+          access: 'read',
+        },
+      ],
     }),
     env({
       API_BASE_URL: apiBaseUrl,

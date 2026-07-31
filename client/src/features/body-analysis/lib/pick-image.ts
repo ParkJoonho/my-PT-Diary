@@ -1,14 +1,41 @@
-import { fetchAlbumPhotos, openCamera } from '@apps-in-toss/native-modules';
+import { fetchAlbumPhotos, openCamera } from '@apps-in-toss/framework';
 import { Platform } from 'react-native';
 
 export type PickedImage = {
   base64: string;
-  capturedAt?: string;
   uri: string;
 };
 
 function toDataUri(base64: string) {
   return `data:image/jpeg;base64,${base64}`;
+}
+
+async function requestCameraPermission() {
+  let permission = await openCamera.getPermission();
+
+  if (permission !== 'allowed') {
+    permission = await openCamera.openPermissionDialog();
+  }
+
+  if (permission !== 'allowed') {
+    throw new Error(
+      '카메라 접근 권한이 필요합니다.\n설정에서 카메라 권한을 허용해 주세요.',
+    );
+  }
+}
+
+async function requestAlbumPermission() {
+  let permission = await fetchAlbumPhotos.getPermission();
+
+  if (permission !== 'allowed') {
+    permission = await fetchAlbumPhotos.openPermissionDialog();
+  }
+
+  if (permission !== 'allowed') {
+    throw new Error(
+      '사진 접근 권한이 필요합니다.\n설정에서 사진 접근을 허용해 주세요.',
+    );
+  }
 }
 
 async function pickWebImage({
@@ -66,7 +93,6 @@ async function pickWebImage({
 
         resolve({
           base64,
-          capturedAt: useCamera ? new Date().toISOString() : undefined,
           uri: result,
         });
       };
@@ -89,17 +115,24 @@ export async function pickSingleImage({
   }
 
   if (useCamera) {
+    await requestCameraPermission();
+
     const image = await openCamera({
       base64: true,
       maxWidth: 1280,
     });
 
+    if (!image.dataUri) {
+      throw new Error('이미지 데이터를 읽지 못했어요.');
+    }
+
     return {
       base64: image.dataUri,
-      capturedAt: new Date().toISOString(),
       uri: toDataUri(image.dataUri),
     };
   }
+
+  await requestAlbumPermission();
 
   const images = await fetchAlbumPhotos({
     base64: true,
@@ -110,6 +143,10 @@ export async function pickSingleImage({
 
   if (!image) {
     return null;
+  }
+
+  if (!image.dataUri) {
+    throw new Error('이미지 데이터를 읽지 못했어요.');
   }
 
   return {

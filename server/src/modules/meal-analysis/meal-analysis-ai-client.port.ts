@@ -14,6 +14,8 @@ export abstract class MealAnalysisAiClientPort {
     eatingDurationMinutes?: number;
     imageBase64: string;
     mealType: MealType;
+    previousResponse?: string;
+    retryFeedback?: string;
   }): Promise<string>;
 
   abstract generateDietGuide(params: {

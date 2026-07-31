@@ -32,7 +32,8 @@
 | 실제 지도/길찾기/등산로 분석 부재 | 원본 존중 | 직선 좌표 + 고도 샘플 기반 계획 유지 |
 | GPS 실측 추적 부재 | 원본 존중 | 거리, 페이스, 고도 변화, 경로 이탈 추적 없음 |
 | 계획값 기반 저장 | 원본 존중 | 실제 세션 측정값이 아니라 계획 추정값으로 저장 |
-| 위치 fallback 사용 | 원본 존중 | 브라우저 geolocation 실패 시 고정 좌표 fallback |
+| 현재 위치 획득 | 원본 존중 | 앱인토스 위치 권한과 공식 SDK로 실제 좌표 획득, 실패 시 고정 좌표 fallback |
+| 역지오코딩 실패 | 원본 존중 | 실제 좌표는 유지하고 표시명은 `내 위치` 사용 |
 | 서버 저장 실패 표시 | 수정 | 실패 시 성공처럼 처리하지 않음 |
 | 결과 전달 전역 변수 + sessionStorage | 수정 | zustand store로 교체 |
 | 헤더 하트/더보기 무동작 버튼 | 수정 | 제거 |
@@ -44,7 +45,7 @@
 | 순서 | 사용자 행동 | 현재 구현 |
 | --- | --- | --- |
 | 1 | 홈에서 `야외운동` 카드를 누른다. | 홈 카드가 `/outdoor-workout`로 이동한다. |
-| 2 | 입력 화면에서 위치를 확인한다. | 브라우저 geolocation을 시도하고 실패하면 `37.5665, 126.978` fallback을 사용한다. 표시명은 실제 위치면 `내 위치`, fallback이면 `서초동`이다. |
+| 2 | 입력 화면에서 위치를 확인한다. | 앱인토스 위치 권한을 확인·요청하고 `getCurrentLocation`으로 실제 좌표를 가져온다. 위치 획득 실패 시 `37.5665, 126.978`과 `서초동`을 사용하고, 실제 좌표의 역지오코딩을 사용할 수 없으면 `내 위치`로 표시한다. |
 | 3 | 걷기/러닝 또는 등산을 고른다. | 상태값은 원본과 동일하게 `walking` 또는 `hiking`만 사용한다. |
 | 4 | 1km, 2km, 3km 중 하나를 고른다. | 선택값은 `radiusKm`으로 유지한다. |
 | 5 | 자동 목적지 토글을 켠다. | 현재 위치 주변 반경 안에서 임의 목적지 좌표를 만든다. |
@@ -61,7 +62,7 @@
 | OW-001 | 홈의 야외운동 카드에서 실제 화면으로 진입해야 한다. | `QuickActionCard`가 `/outdoor-workout`로 이동하고 더 이상 미구현 배지를 붙이지 않는다. | 구현 | `client/src/features/home/components/home-screen.tsx` |
 | OW-002 | 입력/결과 화면은 별도 라우트여야 한다. | `/outdoor-workout`, `/outdoor-workout-result`를 각각 분리했다. | 구현 | `client/src/pages/outdoor-workout.tsx`, `client/src/pages/outdoor-workout-result.tsx` |
 | OW-003 | 결과 전달은 전역 변수나 sessionStorage에 의존하지 않아야 한다. | zustand `planResult` store로 전달한다. | 구현 | `client/src/features/outdoor-workout/stores/use-outdoor-workout-store.ts` |
-| OW-004 | 위치 조회 실패 시 화면이 막히지 않아야 한다. | geolocation 실패 시 fallback 좌표를 사용해 계속 진행한다. | 구현 | `client/src/features/outdoor-workout/lib/get-current-location.ts` |
+| OW-004 | 앱인토스에서 현재 위치를 가져와야 한다. | `geolocation/access` 권한을 선언하고 공식 `getCurrentLocation` SDK로 실제 좌표를 가져오며, 실패 시 원본의 고정 좌표 fallback을 사용한다. | 구현 | `client/granite.config.ts`, `client/src/features/outdoor-workout/lib/get-current-location.ts` |
 | OW-005 | 입력 화면은 운동 모드, 거리, 자동 목적지 선택 UI를 유지해야 한다. | 원본과 같은 정보 구조를 유지한 단순화된 UI를 제공한다. | 구현 | `client/src/features/outdoor-workout/components/outdoor-workout-screen.tsx` |
 | OW-006 | 자동 목적지는 반경 안 임의 좌표로 생성해야 한다. | 현재 위치 기준 반경의 30~100% 구간에서 임의 방위 좌표를 만든다. | 구현 | `client/src/features/outdoor-workout/components/outdoor-workout-screen.tsx` |
 | OW-007 | 계획 생성 입력은 직선 route point와 고도 샘플을 사용해야 한다. | 11개 직선 point를 만들고 Open-Meteo elevation을 조회한다. | 구현 | `client/src/features/outdoor-workout/lib/generate-route-points.ts`, `client/src/features/outdoor-workout/lib/fetch-elevation-data.ts` |
@@ -168,7 +169,7 @@
 | OW-TODO-001 | 실제 지도/보행로/등산로 라우팅 엔진 연동 | 미구현 | 현재 plan 생성 입력은 실제 경로 geometry가 아니라 시작점-도착점 직선 + 샘플 고도다. AI가 설명하는 경로가 실제 통행 가능 경로와 다를 수 있다. | `server/src/modules/outdoor-workout/outdoor-workout.service.ts`, `client/src/features/outdoor-workout/components/outdoor-workout-screen.tsx` |
 | OW-TODO-002 | GPS 기반 실측 거리/고도/페이스 추적 | 미구현 | 현재 운동 세션은 실제 야외 활동 측정이 아니라 화면용 흐름이다. 저장값도 실측 기록이 아니라 계획 추정값이다. | `server/src/modules/outdoor-workout/outdoor-workout.service.ts`, `client/src/features/outdoor-workout/components/outdoor-workout-screen.tsx`, `client/src/features/outdoor-workout/components/outdoor-workout-result-screen.tsx`, `client/src/features/outdoor-workout/lib/build-outdoor-workout-record-payload.ts` |
 | OW-TODO-003 | 체형분석 서버 재조회 연동 | 미구현 | 현재 서버는 optional `bodyAnalysis` payload를 받을 수 있지만, 장기적으로는 `analysis-records`가 마이그레이션되면 서버가 `x-user-key` 기준 최신 분석을 직접 조회해야 한다. 현재 클라이언트는 bodyAnalysis를 보내지 않는다. | `server/src/modules/outdoor-workout/outdoor-workout.service.ts` |
-| OW-TODO-004 | 네이티브 위치 권한/역지오코딩 마이그레이션 | 미구현 | 현재 Granite 클라이언트는 브라우저 geolocation + fallback만 사용한다. 네이티브 권한 요청, 지역명 역지오코딩, 플랫폼별 오류 안내가 없다. | `client/src/features/outdoor-workout/lib/get-current-location.ts` |
+| OW-TODO-004 | 지역명 역지오코딩 연동 | 미구현 | 현재 위치 권한과 좌표 획득은 앱인토스 SDK로 마이그레이션했다. 앱인토스 SDK는 주소를 반환하지 않아 표시명은 원본의 역지오코딩 실패 fallback인 `내 위치`를 사용한다. | `client/src/features/outdoor-workout/lib/get-current-location.ts` |
 | OW-TODO-005 | 음성안내 실제 기능 연결 | 미구현 | 결과 화면의 `음성안내 ON/OFF`는 UI 상태만 바뀌고 TTS나 음성 안내 엔진은 연결돼 있지 않다. | `client/src/features/outdoor-workout/components/outdoor-workout-result-screen.tsx` |
 | OW-TODO-006 | 계획값과 실측값 저장 구조 분리 | 미구현 | 현재는 원본 존중을 위해 `estimatedTime`, 추정 steps, AI 보조 운동을 그대로 manual workout record에 저장한다. 추후 GPS 세션이 들어오면 실측값과 계획값을 분리해야 한다. | `client/src/features/outdoor-workout/lib/build-outdoor-workout-record-payload.ts`, `client/src/features/outdoor-workout/components/outdoor-workout-result-screen.tsx` |
 | OW-TODO-007 | 재진입/앱 재시작 후 계획 복원 정책 정의 | 부분구현 | 전역 변수 + sessionStorage는 제거했지만 현재 zustand store도 메모리 기반이라 앱 재시작 후 결과 복원은 되지 않는다. 현재는 결과가 없으면 안내 화면을 보여준다. | `client/src/features/outdoor-workout/stores/use-outdoor-workout-store.ts`, `client/src/features/outdoor-workout/components/outdoor-workout-result-screen.tsx` |

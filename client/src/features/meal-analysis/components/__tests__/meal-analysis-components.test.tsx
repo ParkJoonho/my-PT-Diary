@@ -158,4 +158,31 @@ describe('식단 분석 원본 UI 구성', () => {
     expect(screen.getByText('12분')).toBeTruthy();
     expect(screen.getByText('조금 빠름')).toBeTruthy();
   });
+
+  it('원본 식사 시간 card에서 EXIF 대체 시간을 키보드 없이 선택한다', () => {
+    const onChangeDuration = jest.fn();
+
+    render(
+      <MealDurationCard
+        durationMinutes={10}
+        onChangeDuration={onChangeDuration}
+      />,
+    );
+
+    expect(screen.getByText('식사 소요 시간')).toBeTruthy();
+    expect(screen.getByText('10분')).toBeTruthy();
+    expect(screen.getByText('조금 빠름')).toBeTruthy();
+
+    fireEvent.press(screen.getByLabelText('식사 시간 1분 늘리기'));
+    expect(onChangeDuration).toHaveBeenCalledWith(11);
+
+    fireEvent.press(screen.getByLabelText('식사 시간 1분 줄이기'));
+    expect(onChangeDuration).toHaveBeenCalledWith(9);
+
+    fireEvent.press(screen.getByLabelText('식사 시간 5분 늘리기'));
+    expect(onChangeDuration).toHaveBeenCalledWith(15);
+
+    fireEvent.press(screen.getByLabelText('식사 시간 5분 줄이기'));
+    expect(onChangeDuration).toHaveBeenCalledWith(5);
+  });
 });

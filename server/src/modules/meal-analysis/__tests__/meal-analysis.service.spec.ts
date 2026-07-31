@@ -25,7 +25,7 @@ describe('식단 분석 서비스', () => {
   it('원본의 전후 사진과 식사 시간 입력을 AI 분석에 전달한다', async () => {
     aiClient.analyzeMeal.mockResolvedValue(JSON.stringify(식단분석예시));
 
-    const result = await service.analyzeMeal({
+    const result = await service.analyzeMeal('user-a', {
       afterImageBase64: 'b'.repeat(200),
       eatingDurationMinutes: 20,
       imageBase64: 'a'.repeat(200),
@@ -53,11 +53,65 @@ describe('식단 분석 서비스', () => {
     );
 
     await expect(
-      service.analyzeMeal({
+      service.analyzeMeal('user-a', {
         imageBase64: 'a'.repeat(200),
         mealType: 'breakfast',
       }),
     ).rejects.toBeInstanceOf(BadGatewayException);
+    expect(aiClient.analyzeMeal).toHaveBeenCalledTimes(2);
+  });
+
+  it('AI 응답 검증 오류를 전달해 한 번 다시 분석한다', async () => {
+    aiClient.analyzeMeal
+      .mockResolvedValueOnce(
+        JSON.stringify({
+          ...식단분석예시,
+          eatingSpeedAnalysis: {
+            ...식단분석예시.eatingSpeedAnalysis,
+            durationMinutes: 0,
+          },
+        }),
+      )
+      .mockResolvedValueOnce(JSON.stringify(식단분석예시));
+
+    await expect(
+      service.analyzeMeal('user-a', {
+        imageBase64: 'a'.repeat(200),
+        mealType: 'snack',
+      }),
+    ).resolves.toEqual(
+      expect.objectContaining({
+        analysis: 식단분석예시,
+      }),
+    );
+
+    expect(aiClient.analyzeMeal).toHaveBeenCalledTimes(2);
+    expect(aiClient.analyzeMeal.mock.calls[1]?.[0]).toEqual(
+      expect.objectContaining({
+        previousResponse: expect.stringContaining('"durationMinutes":0'),
+        retryFeedback: expect.stringContaining(
+          'eatingSpeedAnalysis.durationMinutes',
+        ),
+      }),
+    );
+  });
+
+  it('JSON 파싱 오류 메시지를 전달해 한 번 다시 분석한다', async () => {
+    aiClient.analyzeMeal
+      .mockResolvedValueOnce('JSON이 아닌 응답')
+      .mockResolvedValueOnce(JSON.stringify(식단분석예시));
+
+    await service.analyzeMeal('user-a', {
+      imageBase64: 'a'.repeat(200),
+      mealType: 'breakfast',
+    });
+
+    expect(aiClient.analyzeMeal.mock.calls[1]?.[0]).toEqual(
+      expect.objectContaining({
+        previousResponse: 'JSON이 아닌 응답',
+        retryFeedback: '식단 분석 응답에서 JSON을 찾지 못했어요.',
+      }),
+    );
   });
 
   it('분석 결과 총합을 사용자 식단 기록으로 저장한다', async () => {

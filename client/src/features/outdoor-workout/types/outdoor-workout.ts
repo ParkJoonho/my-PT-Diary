@@ -7,6 +7,7 @@ export type OutdoorWorkoutMode = 'walking' | 'hiking';
 export type OutdoorWorkoutRadius = 1 | 2 | 3;
 
 export type OutdoorWorkoutLocation = {
+  accuracy: number;
   isFallback: boolean;
   latitude: number;
   longitude: number;

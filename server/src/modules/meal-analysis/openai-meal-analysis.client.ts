@@ -56,7 +56,16 @@ export class OpenAiMealAnalysisClient
     eatingDurationMinutes?: number;
     imageBase64: string;
     mealType: MealType;
+    previousResponse?: string;
+    retryFeedback?: string;
   }) {
+    const logContext = {
+      afterImageProvided: Boolean(params.afterImageBase64),
+      afterImageSize: params.afterImageBase64?.length ?? 0,
+      eatingDurationMinutes: params.eatingDurationMinutes ?? null,
+      imageSize: params.imageBase64.length,
+      mealType: params.mealType,
+    };
     const content: Array<
       | { text: string; type: 'text' }
       | {
@@ -89,6 +98,7 @@ export class OpenAiMealAnalysisClient
 
     return this.requestJson({
       content,
+      logContext,
       maxCompletionTokens: params.afterImageBase64 ? 4000 : 3000,
       model: MEAL_ANALYSIS_MODEL,
       temperature: 0.3,
@@ -101,6 +111,10 @@ export class OpenAiMealAnalysisClient
   }) {
     return this.requestJson({
       content: this.buildDietGuidePrompt(params),
+      logContext: {
+        date: params.date,
+        mealCount: params.meals.length,
+      },
       maxCompletionTokens: 3000,
       model: DIET_GUIDE_MODEL,
       temperature: 0.4,
@@ -117,6 +131,7 @@ export class OpenAiMealAnalysisClient
               type: 'image_url';
             }
         >;
+    logContext: Record<string, unknown>;
     maxCompletionTokens: number;
     model: string;
     temperature: number;
@@ -161,7 +176,7 @@ export class OpenAiMealAnalysisClient
         error instanceof Error ? error.message : 'Unknown fetch error';
 
       this.logger.error(
-        `Meal AI request could not reach upstream (${baseUrl}): ${message}`,
+        `Meal AI request could not reach upstream (${baseUrl}): ${message}. Context: ${JSON.stringify(params.logContext)}`,
       );
       throw new BadGatewayException(
         '식단 AI 요청 중 네트워크 오류가 발생했어요.',
@@ -172,7 +187,7 @@ export class OpenAiMealAnalysisClient
       const errorText = await response.text();
 
       this.logger.error(
-        `Meal AI upstream request failed with status ${response.status}. Body: ${errorText.slice(0, 500)}`,
+        `Meal AI upstream request failed with status ${response.status}. Context: ${JSON.stringify(params.logContext)}. Body: ${errorText.slice(0, 500)}`,
       );
       throw new BadGatewayException({
         details: errorText || undefined,
@@ -184,6 +199,9 @@ export class OpenAiMealAnalysisClient
     const content = data.choices?.[0]?.message?.content?.trim();
 
     if (!content) {
+      this.logger.error(
+        `Meal AI response content was empty. Context: ${JSON.stringify(params.logContext)}`,
+      );
       throw new BadGatewayException('식단 AI 응답 본문이 비어 있어요.');
     }
 
@@ -194,6 +212,8 @@ export class OpenAiMealAnalysisClient
     afterImageBase64?: string;
     eatingDurationMinutes?: number;
     mealType: MealType;
+    previousResponse?: string;
+    retryFeedback?: string;
   }) {
     const comparisonInstruction = params.afterImageBase64
       ? `
@@ -209,11 +229,43 @@ eatingSpeedAnalysis를 포함하고 grade는 15분 미만 fast, 15~20분 moderat
       : `
 식사 시간이 제공되지 않았으므로 eatingSpeedAnalysis 필드는 작성하지 않아요.`;
 
+    // 선택 데이터가 없는 필드는 JSON 예시에서도 빼 모델이 임의의 기본값을 만들지 않게 해요.
+    const eatingSpeedJsonExample = params.eatingDurationMinutes
+      ? `,
+  "eatingSpeedAnalysis": {
+    "durationMinutes": ${params.eatingDurationMinutes},
+    "grade": "fast/moderate/good 중 하나",
+    "advice": "식사 속도 조언",
+    "healthRisks": ["주의점"],
+    "tips": ["실천 방법"]
+  }`
+      : '';
+
+    // 직전 결과와 오류를 나란히 보여줘 모델이 고칠 위치와 이유를 함께 이해하게 해요.
+    const retryInstruction =
+      params.retryFeedback && params.previousResponse
+        ? `
+
+이전에 작성한 JSON 응답은 다음과 같아요.
+<previous_response>
+${params.previousResponse}
+</previous_response>
+
+이전 응답은 아래 오류로 검증에 실패했어요.
+<validation_error>
+${params.retryFeedback}
+</validation_error>
+
+이전 응답과 오류를 함께 검토해 잘못된 필드를 바로잡아요.
+수정한 일부 필드만 반환하지 말고, 아래 계약을 만족하는 완전한 JSON 객체 전체를 처음부터 다시 작성해요.`
+        : '';
+
     return `당신은 전문 영양사이자 식품 분석 전문가예요. 제공된 음식 사진을 분석해 음식 종류, 칼로리와 영양소를 추정해요.
 식사 유형은 ${MEAL_TYPE_LABELS[params.mealType]}이에요.
 상품 데이터베이스나 외부 검증 결과를 가장하지 말고 사진과 일반적인 1인분 기준으로 원본 앱과 같은 추정 결과를 작성해요.
 ${comparisonInstruction}
 ${speedInstruction}
+${retryInstruction}
 
 반드시 아래 구조의 JSON 객체만 응답해요.
 {
@@ -249,14 +301,7 @@ ${speedInstruction}
     "running": 0,
     "cycling": 0
   },
-  "summary": "전체 식단 분석 요약",
-  "eatingSpeedAnalysis": {
-    "durationMinutes": 0,
-    "grade": "fast/moderate/good 중 하나",
-    "advice": "식사 속도 조언",
-    "healthRisks": ["주의점"],
-    "tips": ["실천 방법"]
-  }
+  "summary": "전체 식단 분석 요약"${eatingSpeedJsonExample}
 }
 
 한국 음식을 우선 인식하고 사진에 보이는 음식을 개별 항목으로 작성해요.

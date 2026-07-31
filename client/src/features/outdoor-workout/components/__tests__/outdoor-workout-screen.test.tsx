@@ -29,7 +29,8 @@ jest.mock('../../api/outdoor-workout', () => ({
 
 jest.mock('../../lib/get-current-location', () => ({
   getCurrentLocation: jest.fn(),
-  getLocationDisplayName: () => '서초동',
+  getLocationDisplayName: (location: { isFallback: boolean }) =>
+    location.isFallback ? '서초동' : '내 위치',
 }));
 
 jest.mock('../../lib/fetch-elevation-data', () => ({
@@ -46,6 +47,7 @@ describe('야외운동 설정 화면', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockedGetCurrentLocation.mockResolvedValue({
+      accuracy: 10,
       isFallback: false,
       latitude: 37.5665,
       longitude: 126.978,
@@ -61,7 +63,7 @@ describe('야외운동 설정 화면', () => {
     render(<OutdoorWorkoutScreen contentBottomInset={100} />);
 
     await waitFor(() => {
-      expect(screen.getByText('서초동')).toBeTruthy();
+      expect(screen.getByText('내 위치')).toBeTruthy();
     });
 
     expect(screen.getByText('야외운동')).toBeTruthy();
@@ -113,6 +115,21 @@ describe('야외운동 설정 화면', () => {
           'AI 체형 분석 결과 상체(V) 체형에 가까워요. 코스 설계에 반영할게요.',
         ),
       ).toBeTruthy();
+    });
+  });
+
+  it('위치 획득 실패 fallback이면 서초동을 표시한다', async () => {
+    mockedGetCurrentLocation.mockResolvedValue({
+      accuracy: 10,
+      isFallback: true,
+      latitude: 37.5665,
+      longitude: 126.978,
+    });
+
+    render(<OutdoorWorkoutScreen contentBottomInset={100} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('서초동')).toBeTruthy();
     });
   });
 });

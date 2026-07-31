@@ -90,7 +90,7 @@ TabPageLayout(activeKey=null)
 | 가이드 탭 기본 | 있음 | 있음 | 가능 | 거의 동일 |
 | 식사 전 사진만 선택 | 있음 | 있음 | 가능 | 동일 |
 | 식사 전/후 사진 선택 | 있음 | 있음 | 가능 | 동일 |
-| 카메라 전/후 촬영 시간 | 있음 | 있음 | 가능 | 복원 완료 |
+| 카메라 전/후 촬영 시간 | 있음 | 직접 입력 | 부분 | 플랫폼 API 제약 |
 | 앨범 EXIF 촬영 시간 | 있음 | 없음 | 부분 | 플랫폼 API 제약 |
 | 분석 결과 표시 | 있음 | 있음 | 가능 | 거의 동일 |
 | 오늘 기록/summary | 있음 | 있음 | 가능 | 동일 |
@@ -138,10 +138,10 @@ summary/history 계열은 이미 공통 card system 안에 잘 들어가 있다.
 | duration label/value | `12` Medium / `16` Medium | 동일 | 일치 |
 | speed hint | 너무 빠름/조금 빠름/적정/충분 | 동일 | 일치 |
 
-카메라 응답 시각을 `PickedImage.capturedAt`으로 저장한다. 두 촬영 시각 차이가
-`0분 초과 300분 미만`이면 원본과 같은 duration card를 표시하고
-`eatingDurationMinutes`를 Orval mutation에 전달한다. 앨범 API는 EXIF를 반환하지
-않으므로 앨범 선택만으로는 duration card를 만들지 않는다.
+Apps in Toss 카메라·앨범 API가 EXIF 촬영 시각을 반환하지 않으므로 원본 duration
+card의 아이콘·제목·속도 판정은 유지하고 값만 키보드 없는
+`-5 / -1 / 분 / +1 / +5` 인라인 피커로 확장했다. 기본값은 20분이며 1~60분 범위의
+`eatingDurationMinutes`를 Orval mutation에 전달한다.
 
 ### 4. 분석 / 저장 CTA
 
@@ -194,10 +194,10 @@ star-circle, pie-chart 등 원본 icon affordance를 공통 SVG registry로 교�
 - [`meal-analysis-screen.tsx`](../../../src/features/meal-analysis/components/meal-analysis-screen.tsx)는
   원본 고정 header/tab과 식사 타입 순서를 복원하고 summary, records, guide Suspense
   boundary를 각 query 소비처 가까이 분리했다.
-- [`pick-image.ts`](../../../src/features/body-analysis/lib/pick-image.ts)는 카메라
-  응답에 `capturedAt`을 기록하고,
+- [`pick-image.ts`](../../../src/features/body-analysis/lib/pick-image.ts)는 SDK에
+  없는 촬영 시각을 합성하지 않고,
   [`meal-photo-section.tsx`](../../../src/features/meal-analysis/components/meal-photo-section.tsx)는
-  실제 차이가 있을 때만 원본 duration card를 렌더링한다.
+  원본 duration card 안에서 식사 시간을 인라인 피커로 선택하도록 한다.
 - [`meal-analysis-result.tsx`](../../../src/features/meal-analysis/components/meal-analysis-result.tsx),
   [`diet-guide-tab.tsx`](../../../src/features/meal-analysis/components/diet-guide-tab.tsx),
   [`meal-today-sections.tsx`](../../../src/features/meal-analysis/components/meal-today-sections.tsx)의
@@ -210,8 +210,6 @@ star-circle, pie-chart 등 원본 icon affordance를 공통 SVG registry로 교�
 
 ## 남은 범위
 
-1. Apps in Toss의 `fetchAlbumPhotos`/`openCamera` 응답은 EXIF를 제공하지 않는다.
-   따라서 앨범 사진의 원본 촬영 시각 기반 계산은 별도 native picker 확장 전까지
-   복원할 수 없다.
-2. 카메라 전/후 촬영은 앱 응답 시각으로 원본 시간 분석을 사용할 수 있다.
-3. 실제 기기 캡처 기반 동일 상태 검증은 아직 진행하지 않았다.
+1. Apps in Toss의 `fetchAlbumPhotos`/`openCamera` 응답은 EXIF를 제공하지 않아
+   원본의 자동 계산 대신 직접 입력으로 동작한다.
+2. 실제 기기 캡처 기반 동일 상태 검증은 아직 진행하지 않았다.

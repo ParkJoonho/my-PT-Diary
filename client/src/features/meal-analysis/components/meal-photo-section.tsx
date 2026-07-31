@@ -147,8 +147,10 @@ export function MealPhotoSection({
 
 export function MealDurationCard({
   durationMinutes,
+  onChangeDuration,
 }: {
   durationMinutes: number;
+  onChangeDuration?: (value: number) => void;
 }) {
   const color =
     durationMinutes < 10
@@ -170,11 +172,89 @@ export function MealDurationCard({
       <OriginalAppIcon color={color} name="timeOutline" size={20} />
       <View style={styles.durationContent}>
         <Text style={styles.durationTitle}>식사 소요 시간</Text>
-        <Text style={[styles.durationValue, { color }]}>
-          {formatEatingDuration(durationMinutes)}
-        </Text>
+        {onChangeDuration ? (
+          // Apps in Toss가 EXIF 촬영 시각을 제공하지 않아 키보드 없는 인라인 피커로 원본 시간 값만 조절해요.
+          <InlineMinutePicker
+            color={color}
+            onChange={onChangeDuration}
+            value={durationMinutes}
+          />
+        ) : (
+          <Text style={[styles.durationValue, { color }]}>
+            {formatEatingDuration(durationMinutes)}
+          </Text>
+        )}
       </View>
       <Text style={styles.durationHint}>{hint}</Text>
+    </View>
+  );
+}
+
+function InlineMinutePicker({
+  color,
+  onChange,
+  value,
+}: {
+  color: string;
+  onChange: (value: number) => void;
+  value: number;
+}) {
+  return (
+    <View style={styles.minutePicker}>
+      <Pressable
+        accessibilityLabel="식사 시간 5분 줄이기"
+        accessibilityRole="button"
+        disabled={value <= 1}
+        onPress={() => onChange(Math.max(1, value - 5))}
+        style={[
+          styles.minutePickerButton,
+          value <= 1 && styles.minutePickerButtonDisabled,
+        ]}
+      >
+        <Text style={styles.minutePickerStepText}>-5</Text>
+      </Pressable>
+      <Pressable
+        accessibilityLabel="식사 시간 1분 줄이기"
+        accessibilityRole="button"
+        disabled={value <= 1}
+        onPress={() => onChange(Math.max(1, value - 1))}
+        style={[
+          styles.minutePickerButton,
+          value <= 1 && styles.minutePickerButtonDisabled,
+        ]}
+      >
+        <OriginalAppIcon color={Colors.textSecondary} name="remove" size={16} />
+      </Pressable>
+      <Text
+        accessibilityLabel={`식사 소요 시간 ${value}분`}
+        style={[styles.minutePickerValue, { color }]}
+      >
+        {value}분
+      </Text>
+      <Pressable
+        accessibilityLabel="식사 시간 1분 늘리기"
+        accessibilityRole="button"
+        disabled={value >= 60}
+        onPress={() => onChange(Math.min(60, value + 1))}
+        style={[
+          styles.minutePickerButton,
+          value >= 60 && styles.minutePickerButtonDisabled,
+        ]}
+      >
+        <OriginalAppIcon color={Colors.textSecondary} name="add" size={16} />
+      </Pressable>
+      <Pressable
+        accessibilityLabel="식사 시간 5분 늘리기"
+        accessibilityRole="button"
+        disabled={value >= 60}
+        onPress={() => onChange(Math.min(60, value + 5))}
+        style={[
+          styles.minutePickerButton,
+          value >= 60 && styles.minutePickerButtonDisabled,
+        ]}
+      >
+        <Text style={styles.minutePickerStepText}>+5</Text>
+      </Pressable>
     </View>
   );
 }
@@ -261,6 +341,34 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 18,
     marginTop: 12,
+    textAlign: 'center',
+  },
+  minutePicker: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 6,
+    marginTop: 2,
+  },
+  minutePickerButton: {
+    alignItems: 'center',
+    backgroundColor: Colors.inputBg,
+    borderRadius: 10,
+    height: 40,
+    justifyContent: 'center',
+    width: 40,
+  },
+  minutePickerButtonDisabled: {
+    opacity: 0.35,
+  },
+  minutePickerStepText: {
+    color: Colors.textSecondary,
+    fontFamily: 'Pretendard-SemiBold',
+    fontSize: 12,
+  },
+  minutePickerValue: {
+    fontFamily: 'Pretendard-Medium',
+    fontSize: 16,
+    minWidth: 42,
     textAlign: 'center',
   },
   photoColumn: {

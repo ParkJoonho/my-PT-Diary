@@ -1,6 +1,6 @@
 import { useNavigation } from '@granite-js/react-native';
 import { pickSingleImage } from 'features/body-analysis/lib/pick-image';
-import { Suspense, useMemo } from 'react';
+import { Suspense, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -144,20 +144,8 @@ function MealAnalysisScreenData({
   const setDietGuide = useMealAnalysisStore((state) => state.setDietGuide);
   const setMealType = useMealAnalysisStore((state) => state.setMealType);
   const setPhoto = useMealAnalysisStore((state) => state.setPhoto);
-  const eatingDurationMinutes = useMemo(() => {
-    if (!beforePhoto?.capturedAt || !afterPhoto?.capturedAt) {
-      return undefined;
-    }
-
-    const differenceMinutes =
-      (new Date(afterPhoto.capturedAt).getTime() -
-        new Date(beforePhoto.capturedAt).getTime()) /
-      60_000;
-
-    return differenceMinutes > 0 && differenceMinutes < 300
-      ? differenceMinutes
-      : undefined;
-  }, [afterPhoto?.capturedAt, beforePhoto?.capturedAt]);
+  // Apps in Toss에서는 EXIF 촬영 시각을 받을 수 없어 원본 카드 UI를 유지한 직접 입력값을 사용해요.
+  const [eatingDurationMinutes, setEatingDurationMinutes] = useState(20);
 
   const handlePickPhoto = async (
     target: MealPhotoTarget,
@@ -183,10 +171,7 @@ function MealAnalysisScreenData({
     try {
       const response = await analyzeMeal.mutateAsync({
         afterImageBase64: afterPhoto?.base64,
-        eatingDurationMinutes:
-          eatingDurationMinutes === undefined
-            ? undefined
-            : Math.round(eatingDurationMinutes),
+        eatingDurationMinutes,
         imageBase64: beforePhoto.base64,
         mealType,
       });
@@ -274,9 +259,10 @@ function MealAnalysisScreenData({
                 onPick={handlePickPhoto}
                 onRemove={removePhoto}
               />
-              {eatingDurationMinutes !== undefined ? (
-                <MealDurationCard durationMinutes={eatingDurationMinutes} />
-              ) : null}
+              <MealDurationCard
+                durationMinutes={eatingDurationMinutes}
+                onChangeDuration={setEatingDurationMinutes}
+              />
               <Pressable
                 disabled={!beforePhoto || analyzeMeal.isPending}
                 onPress={handleAnalyze}

@@ -117,7 +117,7 @@ describe('AI 식단 분석 화면', () => {
     expect(screen.getByText('AI 가이드 미리 보기')).toBeTruthy();
   });
 
-  it('카메라 전/후 촬영 시각을 소요 시간과 분석 payload에 반영한다', async () => {
+  it('EXIF 없이 입력한 식사 시간을 원본 전후 분석 payload에 반영한다', async () => {
     mockAnalyze.mockResolvedValue({
       analysis: {
         dietaryAdvice: [],
@@ -143,25 +143,26 @@ describe('AI 식단 분석 화면', () => {
     useMealAnalysisStore.setState({
       afterPhoto: {
         base64: 'after',
-        capturedAt: '2026-07-30T12:12:00.000Z',
         uri: 'after-uri',
       },
       beforePhoto: {
         base64: 'before',
-        capturedAt: '2026-07-30T12:00:00.000Z',
         uri: 'before-uri',
       },
     });
 
     render(<MealAnalysisScreen contentBottomInset={80} />);
 
-    expect(screen.getByText('12분')).toBeTruthy();
+    expect(screen.getByText('20분')).toBeTruthy();
+    expect(screen.getByText('적정')).toBeTruthy();
+    fireEvent.press(screen.getByLabelText('식사 시간 5분 늘리기'));
+    fireEvent.press(screen.getByLabelText('식사 시간 1분 늘리기'));
     fireEvent.press(screen.getByText('AI 전/후 비교 분석'));
 
     await waitFor(() => {
       expect(mockAnalyze).toHaveBeenCalledWith({
         afterImageBase64: 'after',
-        eatingDurationMinutes: 12,
+        eatingDurationMinutes: 26,
         imageBase64: 'before',
         mealType: 'breakfast',
       });

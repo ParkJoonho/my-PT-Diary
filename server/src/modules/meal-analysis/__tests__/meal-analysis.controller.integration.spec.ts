@@ -93,6 +93,7 @@ describe('식단 분석 컨트롤러 통합', () => {
       .expect(200);
 
     expect(service.analyzeMeal.mock.calls[0]).toEqual([
+      'integration-user',
       {
         afterImageBase64: 'b'.repeat(200),
         eatingDurationMinutes: 20,

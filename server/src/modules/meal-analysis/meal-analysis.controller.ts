@@ -62,11 +62,16 @@ export class MealAnalysisController {
   @Post('analyze')
   @HttpCode(200)
   analyzeMeal(
-    @UserKey() _userKey: string,
-    @Body(new ZodValidationPipe(createMealAnalysisSchema))
+    @UserKey() userKey: string,
+    @Body(
+      new ZodValidationPipe(
+        createMealAnalysisSchema,
+        'MealAnalysisController.analyzeMeal',
+      ),
+    )
     dto: CreateMealAnalysisDto,
   ) {
-    return this.mealAnalysisService.analyzeMeal(dto);
+    return this.mealAnalysisService.analyzeMeal(userKey, dto);
   }
 
   @ApiOperation({

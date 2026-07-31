@@ -84,6 +84,86 @@ describe('OpenAI 식단 분석 클라이언트', () => {
     );
   });
 
+  it('식사 시간이 없으면 속도 분석 예시를 프롬프트에서 제외한다', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      json: jest.fn().mockResolvedValue({
+        choices: [{ message: { content: '{"foods":[]}' } }],
+      }),
+      ok: true,
+    }) as typeof fetch;
+
+    await thisClient().analyzeMeal({
+      afterImageBase64: 'b'.repeat(200),
+      imageBase64: 'a'.repeat(200),
+      mealType: 'snack',
+    });
+
+    const requestInit = (global.fetch as jest.MockedFunction<typeof fetch>).mock
+      .calls[0]?.[1];
+
+    if (typeof requestInit?.body !== 'string') {
+      throw new Error('Expected a JSON request body.');
+    }
+
+    const payload = z
+      .object({
+        messages: z.array(
+          z.object({
+            content: z.array(z.object({ text: z.string().optional() })),
+          }),
+        ),
+      })
+      .parse(JSON.parse(requestInit.body));
+    const prompt = payload.messages[0]?.content[0]?.text ?? '';
+
+    expect(prompt).toContain(
+      '식사 시간이 제공되지 않았으므로 eatingSpeedAnalysis 필드는 작성하지 않아요.',
+    );
+    expect(prompt).not.toContain('"eatingSpeedAnalysis"');
+    expect(prompt).not.toContain('"durationMinutes": 0');
+  });
+
+  it('재시도 오류 메시지를 교정 프롬프트에 포함한다', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      json: jest.fn().mockResolvedValue({
+        choices: [{ message: { content: '{"foods":[]}' } }],
+      }),
+      ok: true,
+    }) as typeof fetch;
+
+    await thisClient().analyzeMeal({
+      imageBase64: 'a'.repeat(200),
+      mealType: 'lunch',
+      previousResponse: '{"eatingSpeedAnalysis":{"durationMinutes":0}}',
+      retryFeedback:
+        'eatingSpeedAnalysis.durationMinutes: expected number to be >0',
+    });
+
+    const requestInit = (global.fetch as jest.MockedFunction<typeof fetch>).mock
+      .calls[0]?.[1];
+
+    if (typeof requestInit?.body !== 'string') {
+      throw new Error('Expected a JSON request body.');
+    }
+
+    const payload = z
+      .object({
+        messages: z.array(
+          z.object({
+            content: z.array(z.object({ text: z.string().optional() })),
+          }),
+        ),
+      })
+      .parse(JSON.parse(requestInit.body));
+    const prompt = payload.messages[0]?.content[0]?.text ?? '';
+
+    expect(prompt).toContain('{"eatingSpeedAnalysis":{"durationMinutes":0}}');
+    expect(prompt).toContain(
+      'eatingSpeedAnalysis.durationMinutes: expected number to be >0',
+    );
+    expect(prompt).toContain('완전한 JSON 객체 전체를 처음부터 다시 작성해요.');
+  });
+
   it('식단 가이드는 화면이 소비하는 필드 계약을 요청한다', async () => {
     global.fetch = jest.fn().mockResolvedValue({
       json: jest.fn().mockResolvedValue({
