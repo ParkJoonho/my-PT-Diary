@@ -1,0 +1,143 @@
+name: ai-pt production deploy
+
+on:
+  # Actions 화면에서 선택한 브랜치 또는 태그를 수동으로 배포한다.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ai-pt-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: production
+    environment: production
+    runs-on: [self-hosted, linux, x64, ai-pt-prod]
+    timeout-minutes: 30
+    env:
+      AI_PT_PUBLIC_PORT: ${{ vars.AI_PT_PUBLIC_PORT }}
+      AI_PT_POSTGRES_DB: ${{ vars.AI_PT_POSTGRES_DB }}
+      AI_PT_POSTGRES_USER: ${{ vars.AI_PT_POSTGRES_USER }}
+      AI_PT_POSTGRES_PASSWORD: ${{ secrets.AI_PT_POSTGRES_PASSWORD }}
+      AI_PT_MINIO_ROOT_USER: ${{ vars.AI_PT_MINIO_ROOT_USER }}
+      AI_PT_MINIO_ROOT_PASSWORD: ${{ secrets.AI_PT_MINIO_ROOT_PASSWORD }}
+      AI_PT_MINIO_PUBLIC_BUCKET: ${{ vars.AI_PT_MINIO_PUBLIC_BUCKET }}
+      AI_INTEGRATIONS_OPENAI_API_KEY: ${{ secrets.AI_INTEGRATIONS_OPENAI_API_KEY }}
+      AI_INTEGRATIONS_OPENAI_BASE_URL: ${{ vars.AI_INTEGRATIONS_OPENAI_BASE_URL }}
+      SERVICE_ROLE_KEY: ${{ secrets.SERVICE_ROLE_KEY }}
+
+    steps:
+      - name: 배포 소스 checkout
+        uses: actions/checkout@v6
+
+      - name: 러너 실행 환경 확인
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          docker version
+          docker compose version
+          curl --version
+
+      - name: 배포 환경변수 확인
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          required_variables=(
+            AI_PT_PUBLIC_PORT
+            AI_PT_POSTGRES_DB
+            AI_PT_POSTGRES_USER
+            AI_PT_POSTGRES_PASSWORD
+            AI_PT_MINIO_ROOT_USER
+            AI_PT_MINIO_ROOT_PASSWORD
+            AI_PT_MINIO_PUBLIC_BUCKET
+            AI_INTEGRATIONS_OPENAI_API_KEY
+            AI_INTEGRATIONS_OPENAI_BASE_URL
+            SERVICE_ROLE_KEY
+          )
+
+          for variable_name in "${required_variables[@]}"; do
+            value="${!variable_name:-}"
+
+            if [[ -z "$value" || "$value" == replace-with-* ]]; then
+              echo "::error::$variable_name 값을 production Environment에 설정하세요."
+              exit 1
+            fi
+          done
+
+      - name: Compose 구성 검증
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          docker compose \
+            --env-file /dev/null \
+            --project-name ai-pt-deploy \
+            --file docker-compose.deploy.yml \
+            config --quiet
+
+      - name: 컨테이너 배포
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          compose=(
+            docker compose
+            --env-file /dev/null
+            --project-name ai-pt-deploy
+            --file docker-compose.deploy.yml
+          )
+
+          "${compose[@]}" up -d --build --remove-orphans
+          "${compose[@]}" run --rm minio-init
+          "${compose[@]}" restart nginx
+          "${compose[@]}" ps --all
+
+      - name: 배포 상태 확인
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          compose=(
+            docker compose
+            --env-file /dev/null
+            --project-name ai-pt-deploy
+            --file docker-compose.deploy.yml
+          )
+
+          api_ready=0
+
+          for attempt in $(seq 1 30); do
+            if curl \
+              --fail \
+              --silent \
+              --show-error \
+              --output /dev/null \
+              --header 'Host: api.a2t.jongchoi.com' \
+              "http://127.0.0.1:${AI_PT_PUBLIC_PORT}/health"; then
+              api_ready=1
+              break
+            fi
+
+            sleep 2
+          done
+
+          if [[ "$api_ready" != "1" ]]; then
+            "${compose[@]}" logs --tail=200 backend nginx
+            echo "::error::API가 제한 시간 안에 준비되지 않았습니다."
+            exit 1
+          fi
+
+          curl \
+            --fail \
+            --silent \
+            --show-error \
+            --output /dev/null \
+            --header 'Host: s3.a2t.jongchoi.com' \
+            "http://127.0.0.1:${AI_PT_PUBLIC_PORT}/pt-diary-assets/v1/muscles/chest.png"
+
+          echo "API와 정적 에셋 응답이 정상입니다."
